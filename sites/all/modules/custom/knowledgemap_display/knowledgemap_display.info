@@ -1,0 +1,6 @@
+name = Knowledge map display
+description = A field to represent a display of a knowledge map.
+package = CyberCourse
+core = 7.x
+files[] = knowledgemap_display.module
+files[] = knowledgemap_display.install

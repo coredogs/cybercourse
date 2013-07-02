@@ -1,0 +1,51 @@
+.km-drawing, .km-item-details {
+  border: 2px #CCCCCC solid;
+  display: inline-block;
+  min-height: 200px;
+}
+
+.km-item-details {
+  float: right;
+  
+}
+
+.km-item {
+  padding: 0.5em;
+  margin: 0;
+  position: absolute;
+}
+
+.km-item.concept {
+  background-color: BlanchedAlmond;
+  border: 1px solid BurlyWood;
+}
+
+.km-item.skill {
+  background-color: Khaki;
+  border: 1px solid GoldenRod;
+}
+
+.km-item.explanation {
+  background-color: MistyRose;
+  border: 1px solid LightCoral;
+  border-radius: 6px;
+}
+
+.km-item.example {
+  background-color: WhiteSmoke;
+  border: 1px solid Thistle;
+  border-radius: 6px;
+}
+
+.km-item.exercise {
+  background-color: PowderBlue;
+  border: 1px solid SlateBlue;
+  border-radius: 6px;
+}
+
+.km-item.pattern {
+  background-color: HoneyDew;
+  border: 1px solid Green;
+  border-radius: 6px;
+}
+
