@@ -1,0 +1,5 @@
+name = Modal form test
+description = Try some stuff.
+package = CyberCourse
+core = 7.x
+files[] = km_modal_form_test.module
