@@ -80,6 +80,7 @@
     },
     //User wants to add a new item at the clicked location.
     add_new_item: function(coord_x, coord_y) {
+      alert('ad new');
       var bp_place = 9;
 //      $.get(
 //          Drupal.settings.basePath + 'add-km-item/ajax/' 
@@ -96,6 +97,9 @@ url: Drupal.settings.basePath + 'add-km-item/ajax/'
 //          'coord_y' : coord_y,
 //        },
         success: function(data, textStatus, jqXHR){
+          //Get to here, then the add form has been sucessfully generated and
+          //returned.
+          alert('in sucess');
           var bp_place = 5;
           var options = {
             'title' : 'New knowledge item',
