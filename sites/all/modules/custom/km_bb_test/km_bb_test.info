@@ -1,0 +1,5 @@
+name = Backbone test
+description = Try some stuff.
+package = CyberCourse
+core = 7.x
+files[] = km_bb_test.module

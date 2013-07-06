@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * Implements hook_field_schema().
+ * 
+ * Don't know of this needs to exist.
+ */
+function knowledgemap_field_schema($field) {
+  $columns = array(
+      'knowledgemap' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+    ),
+  );
+  return array(
+    'columns' => $columns,
+  );
+}
