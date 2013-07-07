@@ -10,6 +10,13 @@ module_load_include('inc', 'knowledgemap', 'knowledgemap.utils');
  * Implements hook_menu.
  */
 function knowledgemap_menu() {
+//  //Return a list of all the KM items for a KM.
+//  $items['fetch-km-items-ajax/%'] = array(
+//    'page callback' => 'knowledgemap_fetch_km_items_ajax',
+//    'page arguments' => array(1),
+//    'access callback' => TRUE,
+//    'type' => MENU_CALLBACK,
+//  );
   $items['show-km-item/%'] = array(
     'page callback' => 'knowledgemap_show_item',
     'page arguments' => array(1),
@@ -18,12 +25,17 @@ function knowledgemap_menu() {
   );
   //Add a new item. Passing in the coords of the mouse click, and the 
   //nid of the KM that will own the new item.
-  $items['add-km-item/%dialog_js/%/%/%'] = array(
-    'page callback' => 'knowledgemap_add_item',
-    'page arguments' => array(1, 2, 3, 4),
+  $items['add-km-item-ajax'] = array(
+    'page callback' => 'knowledgemap_add_item_ajax',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
+//  $items['add-km-item/%dialog_js/%/%/%'] = array(
+//    'page callback' => 'knowledgemap_add_item',
+//    'page arguments' => array(1, 2, 3, 4),
+//    'access callback' => TRUE,
+//    'type' => MENU_CALLBACK,
+//  );
   $items['add-done/%dialog_js'] = array(
     'page callback' => 'knowledgemap_add_done',
     'page arguments' => array(1),
@@ -138,8 +150,8 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
     '#type' => 'markup',
     '#markup' => $output,
   ) + $base;
-  //Send the DOM ids and other things to the JS.
-  $knowledgemap_rep = array(); //knowledgemap_make_km_rep($node->nid);
+  //Send the map data to the JS.
+  $knowledgemap_rep = knowledgemap_make_km_rep($node->nid);
   $settings = array(
     'drawing_dom_id' => $drawing_dom_id,
     'km_nid' => $nid, //The nid of the KM being shown.
@@ -170,57 +182,104 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
   return $element;
 }
 
-function knowledgemap_node_view($node, $view_mode, $langcode) {
-  $r=5;
-}
 
-/**
- * 
- * @global type $user Logged in user.
- * @param type $ajax Is this an ajax call?
- * @param type $x X coord of the mouse click in the drawing area.
- * @param type $y Y coord of the mouse click in the drawing area.
- * @param type $km_nid Nid of the KM that will own this new item.
- * @return string
- */
-function knowledgemap_add_item( $ajax, $x, $y, $km_nid ) {
-  //Add the dialog library.
-  drupal_add_library('dialog','dialog');
-  if ( $ajax ) {
-    //Make a blank node, to pass to the node add form.
-    global $user;
-    $new_node = (object) array(
-      'title' => '(New modal)', 
-        //Tells form alter code that this is a new item being created in a 
-        //modal form.
-      'uid' => $user->uid, 
-      'name' => (isset($user->name) ? $user->name : ''), 
-      'type' => 'knowledge_map_item', 
-      'language' => LANGUAGE_NONE,
+function knowledgemap_make_km_rep($km_nid) {
+  //Run the view showing KM items linked to the given KM.
+  $view_results = views_get_view_result( 'items_related_to_km', 'default', $km_nid );
+  //Store in array for JSONing later.
+  $km_items = array();
+  foreach( $view_results as $record ) {
+    $nid = $record->nid;
+    $title = $record->node_title;
+    $body = isset( $record->field_body[0]['raw']['value'] ) 
+        ? $record->field_body[0]['raw']['value'] : '';
+    $coord_x = isset( $record->field_field_coord_x[0]['raw']['value'] ) 
+        ? $record->field_field_coord_x[0]['raw']['value'] : '';
+    $coord_y = isset( $record->field_field_coord_y[0]['raw']['value'] ) 
+        ? $record->field_field_coord_y[0]['raw']['value'] : '';
+    $item_type = isset( $record->field_field_item_type[0]['raw']['value'] ) 
+        ? $record->field_field_item_type[0]['raw']['value'] : '';
+    $km_items[] = array(
+      'nid' => $nid,
+      'title' => $title,
+      'body' => $body,
+      'coord_x' => $coord_x,
+      'coord_y' => $coord_y,
+      'item_type' => $item_type,
     );
-    //Store the mouse coords in the new item.
-    $new_node->field_coord_x[LANGUAGE_NONE][0]['value'] = $x;
-    $new_node->field_coord_y[LANGUAGE_NONE][0]['value'] = $y;
-    //Store for relation creation code.
-    $new_node->implied_km = $km_nid;
-    // Add the node.pages.inc so that functions from the form can be used.
-    module_load_include('inc', 'node', 'node.pages');
-    //Load the add form.
-    $form = drupal_get_form($new_node->type . '_node_form', $new_node); 
-    $html = drupal_render($form);
-    //Send the form to the browser.
-    print drupal_json_encode($html);
-    exit;
   }
-  else {
-    return 'Javascript must be enabled.';
+  //Get KM item connection data.
+  $view_results = views_get_view_result(
+      'km_items_linked_to_other_km_items', 
+      'default', 
+      $km_nid
+  );
+  $connections = array();
+  foreach ( $view_results as $record ) {
+    $entity = $record->_field_data['relation_node_rid']['entity'];
+    $rid = $entity->rid;
+    $from_nid = $entity->endpoints[LANGUAGE_NONE][0]['entity_id'];
+    $to_nid = $entity->endpoints[LANGUAGE_NONE][1]['entity_id'];
+    $required = $entity->field_required[LANGUAGE_NONE][0]['value'];
+    $connections[] = array(
+      'rid' => $rid,
+      'from_nid' => $from_nid,
+      'to_nid' => $to_nid,
+      'required' => $required,
+    );
   }
+  return array(
+    'km_items' => $km_items,
+    'connections' => $connections,
+  );
 }
 
-function knowledgemap_add_done( $ajax ) {
-  $output[] = dialog_command_dismiss();
-  ajax_render($output);
+//function knowledgemap_node_view($node, $view_mode, $langcode) {
+//  $r=5;
+//}
+
+
+function knowledgemap_add_item_ajax() {
+  $title = $_POST['title'];
+  $item_type = $_POST['item_type'];
+  $coord_x = $_POST['coord_x'];
+  $coord_y = $_POST['coord_y'];
+  $km_nid = $_POST['km_nid'];
+  //Make a blank node.
+  global $user;
+  $new_node = (object) array(
+    'title' => $title, 
+    'uid' => $user->uid, 
+    'name' => (isset($user->name) ? $user->name : ''), 
+    'type' => 'knowledge_map_item', 
+    'language' => LANGUAGE_NONE,
+  );
+  //Store the mouse coords in the new item.
+  $new_node->field_coord_x[LANGUAGE_NONE][0]['value'] = $coord_x;
+  $new_node->field_coord_y[LANGUAGE_NONE][0]['value'] = $coord_y;
+  $new_node->field_item_type[LANGUAGE_NONE][0]['value'] = $item_type;
+  node_save($new_node);
+  $new_node_id = $new_node->nid;
+  //Check for fail here.
+  //Add a new relation.
+  $endpoints = array(
+    array('entity_type' => 'node', 'entity_id' => $new_node_id),
+    array('entity_type' => 'node', 'entity_id' => $km_nid),
+  );
+  //Create new relation object.
+  $new_relation = relation_create(RELATION_NAME_ITEM_TO_KM, $endpoints);
+  //Save it.
+  $rid = relation_save($new_relation);
+  drupal_json_output( array( 
+        'status' => 'success',
+        'new_nid' => $new_node_id,
+        'message' => 'Item created'
+  ));
+  drupal_exit();
 }
+
+
+
 
 function knowledgemap_form_alter(&$form, &$form_state, $form_id) {
   if ( $form_id == 'knowledge_map_item_node_form' ) {
@@ -264,33 +323,3 @@ function knowledgemap_submit_item_form($form, &$form_state) {
   
 }
 
-/**
- * Implements hook_node_insert.
- * 
- * Add a new relationship, if this is a new KM item node that was
- * created in a modal from the KM editor thing. Don't have the 
- * nid until this point.
- */
-function knowledgemap_node_insert($node) {
-  //Check whether this is an add operation that needs a relation to be added.
-  if (    isset( $node->knowledgemap_operation )
-       && $node->knowledgemap_operation == 'add'
-     ) {
-    //Is there an implied KM? That means the new item was created in the
-    //KM GUI editor, and a KM nid has been cached for it.
-    if ( isset( $node->implied_km ) ) {
-      //Add a new relation. Use the implied KM nid stored earlier 
-      //in the node object.
-      $endpoints = array(
-        array('entity_type' => 'node', 'entity_id' => $node->nid),
-        array('entity_type' => 'node', 'entity_id' => $node->implied_km),
-      );
-      //Create new relation object.
-      $new_relation = relation_create(RELATION_NAME_ITEM_TO_KM, $endpoints);
-      //Save it.
-      $rid = relation_save($new_relation);
-      
-      drupal_goto($base_url . '/add-done/nojs');
-    } //End there is an implied KM nid.
-  }
-}
