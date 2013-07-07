@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="../libs/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.min.js"></script>
+    <script src="../libs/jquery-dialogextend/build/jquery.dialogextend.min.js"></script>
+    <script src="../js/knowledgemap_item_viewer.js"></script>
+    <link type="text/css" rel="stylesheet" href="../libs/jquery-ui-1.10.3.custom/css/smoothness/jquery-ui-1.10.3.custom.min.css" />
+    <script type="text/javascript">
+      $(document).ready(function() {
+      var kmItem = {
+        'nid' : 666,
+        'title' : 'Devilry',
+        'body' : 'YUM!',
+        'item_type' : 'example'
+      };
+      var t = new KmItemViewer(kmItem);
+      t.open();
+      });
+      
+    </script>
+  </head>
+  <body>
+    <div id="l">TODO write content</div>
+  </body>
+</html>

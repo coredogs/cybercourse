@@ -8,6 +8,26 @@
   $.fn.exitAddMode = function(data) {
     $drawing_area.exitAddMode(data);
   };
+  var requiredPaintStyle = {
+    strokeStyle: "blue",
+    lineWidth: 2,
+    dashstyle: "solid"
+  };
+  var recommendedPaintStyle = {
+    strokeStyle: "blue",
+    lineWidth: 2,
+    dashstyle: "2 2"
+  };  
+  var defaultConnSourceAttribs = {
+    anchor: "AutoDefault",
+            filter:"span",
+    endpoint: "Rectangle"
+  };
+  var defaultConnTargetAttribs = {
+    anchor: "AutoDefault",
+            isTarget: true,
+    endpoint: "Dot"
+  };
   var controller = Drupal.behaviors.knowledgemap = {
     attach: function(context, settings) {
       if (done_once) {
@@ -20,6 +40,16 @@
       this.create_toolbar();
       this.add_methods_to_drawing_area();
       this.drawAllItems();
+      jsPlumb.ready(function() {
+        controller.setJsPlumbDefaults();
+        controller.drawAllConnections();
+        jsPlumb.bind("connection", function(info, originalEvent) {
+          console.log("Attach:" + info.connection);
+        });            
+        jsPlumb.bind("connectionDetached", function(info, originalEvent) {
+          console.log("Deattach:" + info.connection);
+        });  
+      });
       //Set up the Add button.
       $("#add-km-item").click(function() {
         //Move into adding state.
@@ -75,6 +105,15 @@
       }
 
     },
+    setJsPlumbDefaults : function() {
+      jsPlumb.importDefaults({
+        Anchor: "AutoDefault",
+        Endpoint: "Rectangle",
+        Detachable: true,
+        ReattachConnections : false,
+        ConnectionOverlays : [ "PlainArrow" ]
+      });	          
+    },
     drawAllItems : function() {
       //Draw all the items in the knowledge map.
       $(km_rep.km_items).each(function(index, item){
@@ -83,22 +122,41 @@
     },
     drawItem : function (itemData) {
       var html =
-              "<div id='km-item-" + itemData.nid + "' "
-              + "class='km-item " + itemData.item_type + "'>"
-              + "  <div class='title'>" + itemData.title + "</div>"
-      "</div>";
+          "<div id='km-item-" + itemData.nid + "' "
+          +      "class='km-item " + itemData.item_type + "'>"
+          + "<header>"
+          + "  <h1 class='title'>" + itemData.title + "<span>●</span></h1>"
+          + "</header>"
+          + "<section>"
+          +    itemData.body
+          + "</section> "
+          + "</div>";
       //Make a DOM element.
-      var item = $(html);
-      //Append to the drawing.
-      $drawing_area.append(item);
+      var $item = $(html);
       //Set position.
-      $(item).css({
+      $item.css({
         "left": parseInt(itemData.coord_x),
         "top": parseInt(itemData.coord_y)
       });
+      $item.dblclick(function(evnt) {
+        alert(5);
+      });
+      jsPlumb.makeSource(
+         $item, 
+        defaultConnSourceAttribs
+      );
+      jsPlumb.makeTarget(
+          $item, defaultConnTargetAttribs
+      );
+      jsPlumb.draggable(
+        $item, {
+        containment:"parent"
+      });
+      //Append to the drawing.
+      $drawing_area.append($item);
       //Adjust map dimensions to fit new item.
       //Compute pos of right edge of item.
-      var itemRight = $(item).position().left + $(item).outerWidth();
+      var itemRight = $item.position().left + $item.outerWidth();
       //Add a bit for look.
       var itemRightExtra = itemRight + 10;
       //Check drawing area width.
@@ -106,13 +164,27 @@
         $drawing_area.width( itemRightExtra );
       }
       //Compute pos of item bottom.
-      var itemBottom = $(item).position().top + $(item).outerHeight();
+      var itemBottom = $item.position().top + $item.outerHeight();
       //Add a bit for look.
       var itemBottomExtra = itemBottom + 10;
       //Check drawing area width.
       if ( itemBottomExtra > $drawing_area.height() ) {
         $drawing_area.height( itemBottomExtra );
       }      
+    },
+    drawAllConnections : function() {
+      //Draw all the connections in the knowledge map.
+      $(km_rep.connections).each(function(index, connection){
+        controller.drawConnection(connection);
+      });      
+    },
+    drawConnection : function(connection) {
+      jsPlumb.connect({
+       source : "km-item-" + connection.from_nid, 
+       target : "km-item-" + connection.to_nid,
+       paintStyle: connection.required == 'required' 
+          ? requiredPaintStyle : recommendedPaintStyle
+     });
     },
     createAddForm: function() {
       var formHtml = "<form id='add-new-form'>"

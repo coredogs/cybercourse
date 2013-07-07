@@ -162,7 +162,22 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
       'setting'
   );
   //Add JS libraries.
-  jsplumb_add_library();
+  drupal_add_library('system', 'ui.dialog');
+  drupal_add_js(
+      drupal_get_path('module', 'knowledgemap') 
+          . '/libs/jsPlumb/jquery.jsPlumb-1.4.1-all-min.js', 
+      'file'
+  );
+  drupal_add_js(
+    drupal_get_path('module', 'dialog') 
+        . '/jquery.xLazyLoader.js', 
+    'file'
+  );
+  drupal_add_js(
+    drupal_get_path('module', 'dialog') 
+        . '/dialog.js', 
+    'file'
+  );
   //Add the KM drawing code.
   drupal_add_js(
       drupal_get_path('module', 'knowledgemap') 
