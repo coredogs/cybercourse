@@ -3,3 +3,5 @@ description = Pure evil.
 package = CyberCourse
 core = 7.x
 files[] = knowledgemap.module
+files[] = knowledgemap.utils.inc
+dependencies[] = ctools

@@ -2,12 +2,12 @@
   var $drawing_area;
   var km_rep; //Data representing map.
   var done_once = false;
-  $.fn.drawItem = function(data) {
-    controller.drawItem(data);
-  };
-  $.fn.exitAddMode = function(data) {
-    $drawing_area.exitAddMode(data);
-  };
+//  $.fn.drawItem = function(data) {
+//    controller.drawItem(data);
+//  };
+//  $.fn.exitAddMode = function(data) {
+//    $drawing_area.exitAddMode(data);
+//  };
   var requiredPaintStyle = {
     strokeStyle: "blue",
     lineWidth: 2,
@@ -33,6 +33,11 @@
       if (done_once) {
         return;
       }
+      
+      var link = settings.knowledgemap.link;
+      $("#content").prepend(link);
+      
+      
       km_rep = settings.knowledgemap.knowledgemap_rep;
       var drawing_id = settings.knowledgemap.drawing_dom_id;
       $drawing_area = $('#' + drawing_id);
@@ -139,7 +144,8 @@
         "top": parseInt(itemData.coord_y)
       });
       $item.dblclick(function(evnt) {
-        alert(5);
+        var t = new KmItemViewer(itemData);
+        t.open();
       });
       jsPlumb.makeSource(
          $item, 

@@ -18,3 +18,12 @@
   position: absolute;
   bottom: 0;
 }
+
+.km-item-edit-link-original {
+  /*display: none;*/
+}
+
+.km-item-edit-link {
+  border: 1px #888 solid;
+  background-color: #CCCCCC;
+}

@@ -6,6 +6,15 @@ define( 'NEW_KM_ITEM_INDICATOR', '(New modal)');
 
 module_load_include('inc', 'knowledgemap', 'knowledgemap.utils');
 
+function knowledgemap_init() {
+  ctools_include('ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
+// return;
+    drupal_add_js('misc/ajax.js');
+
+}
+
 /**
  * Implements hook_menu.
  */
@@ -36,18 +45,28 @@ function knowledgemap_menu() {
 //    'access callback' => TRUE,
 //    'type' => MENU_CALLBACK,
 //  );
-  $items['add-done/%dialog_js'] = array(
-    'page callback' => 'knowledgemap_add_done',
-    'page arguments' => array(1),
-    'access callback' => TRUE,
+//  $items['add-done/%dialog_js'] = array(
+//    'page callback' => 'knowledgemap_add_done',
+//    'page arguments' => array(1),
+//    'access callback' => TRUE,
+//    'type' => MENU_CALLBACK,
+//  );
+  $items['edit-km-item/%node/%ctools_js'] = array(
+    'title' => 'Edit',
+    'page callback' => 'knowledgemap_edit_item_ctools',
+    'page arguments' => array(1, 2),
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'weight' => 0,
     'type' => MENU_CALLBACK,
   );
-  $items['edit-km-item/%'] = array(
-    'page callback' => 'knowledgemap_edit_item',
-    'page arguments' => array(1),
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
+
+//  $items['edit-km-item/%dialog_js/%'] = array(
+//    'page callback' => 'knowledgemap_edit_item',
+//    'page arguments' => array(1, 2),
+//    'access callback' => TRUE,
+//    'type' => MENU_CALLBACK,
+//  );
   $items['confirm-delete-km-item/%'] = array(
     'page callback' => 'knowledgemap_confirm_delete',
     'page arguments' => array(1),
@@ -134,7 +153,7 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
   }
   //This is a node edit.
   $node = $form_state['node'];
-  drupal_add_js('misc/ajax.js');
+//  drupal_add_js('misc/ajax.js');
   //What is the DOM id of the drawing area?
   $nid = $node->nid;
   $drawing_dom_id 
@@ -161,24 +180,49 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
       array('knowledgemap' => $settings),
       'setting'
   );
-  //Add JS libraries.
+  //Add libraries.
+  ctools_include('modal');
+  ctools_modal_add_js();
+  ctools_modal_add_js('ajax-responder');
+  ctools_modal_add_js('modal');
+//  drupal_add_js('http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js', 'external');
   drupal_add_library('system', 'ui.dialog');
   drupal_add_js(
       drupal_get_path('module', 'knowledgemap') 
           . '/libs/jsPlumb/jquery.jsPlumb-1.4.1-all-min.js', 
       'file'
   );
+//  drupal_add_js(
+//    drupal_get_path('module', 'dialog') 
+//        . '/jquery.xLazyLoader.js', 
+//    'file'
+//  );
+//  drupal_add_js(
+//    drupal_get_path('module', 'dialog') 
+//        . '/dialog.js', 
+//    'file'
+//  );
   drupal_add_js(
-    drupal_get_path('module', 'dialog') 
-        . '/jquery.xLazyLoader.js', 
-    'file'
-  );
-  drupal_add_js(
-    drupal_get_path('module', 'dialog') 
-        . '/dialog.js', 
-    'file'
+      drupal_get_path('module', 'knowledgemap') 
+          . '/libs/jquery-dialogextend/build/jquery.dialogextend.min.js', 
+      'file'
   );
   //Add the KM drawing code.
+  drupal_add_js(
+      drupal_get_path('module', 'knowledgemap') 
+          . '/js/knowledgemap_utils.js', 
+      'file'
+  );  
+  drupal_add_js(
+      drupal_get_path('module', 'knowledgemap') 
+          . '/js/knowledgemap_item_viewer.js', 
+      'file'
+  );
+  drupal_add_css(
+      drupal_get_path('module', 'knowledgemap') 
+          . '/css/knowledgemap_item_viewer.css', 
+      'file'
+  );
   drupal_add_js(
       drupal_get_path('module', 'knowledgemap') 
           . '/js/knowledgemap_common.js', 
@@ -293,48 +337,152 @@ function knowledgemap_add_item_ajax() {
   drupal_exit();
 }
 
-
-
-
+/**
+ * Implements hook_form_alter().
+ * 
+ * It adds a link to the KM edit form. That link can open a KM item edit
+ * form in a modal. The link is copied onto each item viewer dialog.
+ * It's done this way so that ctools will add the right event listener
+ * to the link. The link has to be on the form.
+ */
 function knowledgemap_form_alter(&$form, &$form_state, $form_id) {
-  if ( $form_id == 'knowledge_map_item_node_form' ) {
-    //The form could be in a modal, in which case the KM node the item
-    //should be associated with is known.
-    if ( $form['title']['#default_value'] == NEW_KM_ITEM_INDICATOR) {
-      //The form is in a modal.
-      $form['title']['#default_value'] = '';
-      //Remove the widget for the relation that 
-      //links the item to the knowledge map node. 
-      unset( $form['field_knowledge_map'] );
-      //Store whether his is an add or edit. Only the add needs
-      //special treatment later, to create the relationship after the 
-      //new nid is known.
-      $node = $form_state['node'];
-      $is_new_node = (!isset($node->nid) || isset($node->is_new));
-      $node->knowledgemap_operation 
-          = $is_new_node ? 'add' : 'edit';
-      //Hide the coord fields.
-      $form['field_coord_x']['#access'] = FALSE;
-      $form['field_coord_y']['#access'] = FALSE;
-      //Submit handler.
-      $form['#submit'][] = 'knowledgemap_submit_item_form';
-      //After build handler.
-      //$form['#after_build'][] = 'knowledgemap_submit_item_form';
-    }
+  if ( $form_id == 'knowledge_map_node_node_form' ) {
+    global $base_url;
+    $km_item_edit_link = ctools_modal_text_button(
+        t('Edit'),
+        $base_url . '/edit-km-item/km-item-nid/nojs',
+        t('Edit'),
+        'km-item-edit-link-original'
+    );
+    $form['km_item_edit_link'] = array(
+      '#weight' => 500,
+      '#type' => 'markup',
+      '#markup' => $km_item_edit_link,
+    );
+    
   }
-  
 }
 
-function knowledgemap_submit_item_form($form, &$form_state) {
-  global $base_url;
+
+//function knowledgemap_form_alter(&$form, &$form_state, $form_id) {
+//  if ( $form_id == 'knowledge_map_item_node_form' ) {
+//    //The form could be in a modal, in which case the KM node the item
+//    //should be associated with is known.
+//    if ( $form['title']['#default_value'] == NEW_KM_ITEM_INDICATOR) {
+//      //The form is in a modal.
+//      $form['title']['#default_value'] = '';
+//      //Remove the widget for the relation that 
+//      //links the item to the knowledge map node. 
+//      unset( $form['field_knowledge_map'] );
+//      //Store whether his is an add or edit. Only the add needs
+//      //special treatment later, to create the relationship after the 
+//      //new nid is known.
+//      $node = $form_state['node'];
+//      $is_new_node = (!isset($node->nid) || isset($node->is_new));
+//      $node->knowledgemap_operation 
+//          = $is_new_node ? 'add' : 'edit';
+//      //Hide the coord fields.
+//      $form['field_coord_x']['#access'] = FALSE;
+//      $form['field_coord_y']['#access'] = FALSE;
+//      //Submit handler.
+//      $form['#submit'][] = 'knowledgemap_submit_item_form';
+//      //After build handler.
+//      //$form['#after_build'][] = 'knowledgemap_submit_item_form';
+//    }
+//  }
+//  
+//}
+//
+//function knowledgemap_submit_item_form($form, &$form_state) {
+//  global $base_url;
+////  $form_state['redirect'][] = $base_url . '/add-done/nojs';
+////  unset($_REQUEST['destination'], $_REQUEST['edit']['destination']);
+//  $form_state['redirect'][] = drupal_get_destination();
 //  $form_state['redirect'][] = $base_url . '/add-done/nojs';
-//  unset($_REQUEST['destination'], $_REQUEST['edit']['destination']);
-  $form_state['redirect'][] = drupal_get_destination();
-  $form_state['redirect'][] = $base_url . '/add-done/nojs';
+//
+//  unset($_GET['destination']);
+//  drupal_static_reset('drupal_get_destination');
+//  drupal_get_destination();
+//  
+//}
 
-  unset($_GET['destination']);
-  drupal_static_reset('drupal_get_destination');
-  drupal_get_destination();
+
+//function knowledgemap_edit_item( $ajax, $km_item_nid ) {
+//  if ($ajax) {
+//    drupal_add_js('misc/ajax.js');
+//    drupal_add_library('system', 'drupal.ajax');
+//    dialog_display(TRUE);
+//    $title = 'Edit Item';
+//    module_load_include('inc', 'node', 'node.pages');
+//    $node = node_load($km_item_nid);
+//    $content = drupal_get_form('page_node_form', $node);
+//        $options = array(
+//      'height' => rand(25, 75) . '%',
+//      'width' => rand(25, 75) . '%',
+//      'position' => 'center',
+//      'title' => t('Dialog example'),
+//    );
+//
+//    $commands = array();
+//    $commands[] = dialog_command_display($content, $options);
+//    ajax_deliver(array('#type' => 'ajax', '#commands' => $commands));
+//  }
+//}
+
+
+
+/**
+ * Page Callback - Modal: Edit Node.
+ */
+function knowledgemap_edit_item_ctools($node, $js = NULL) {
+  // Check $js.
+//  if (!$js) {
+  if ( FALSE ) {
+    return drupal_access_denied();
+  }
+  drupal_add_js('misc/ajax.js');
+  ctools_include('ajax');
+  ctools_include('modal');
+  ctools_modal_add_js('ajax-responder');
+  ctools_modal_add_js('modal');
   
-}
+  
+  $type_name = node_type_get_name($node);
+  $title = t('<em>Edit @type</em> @title', 
+      array('@type' => $type_name, '@title' => $node->title)
+  );
 
+  $commands = array();
+
+  ctools_include('node.pages', 'node', '');
+  ctools_include('modal');
+  ctools_include('ajax');
+
+  $form_state = array(
+    'title' => $title,
+    'ajax'  => TRUE,
+    'build_info' => array(
+      'args'  => array($node),
+    ),
+  );
+
+  $commands = ctools_modal_form_wrapper($node->type . '_node_form', $form_state);
+
+  if (!empty($form_state['executed']) && empty($form_state['rebuild'])) {
+
+      // overwrite commands.
+      $commands = array();
+
+      ctools_add_js('ajax-responder');
+      $commands[] = ctools_modal_command_dismiss();
+//      if ($force_page_reload) {
+//        $commands[] = ctools_ajax_command_reload();
+//      }
+  }
+
+  // add CSS class to Modal-Frame
+//  $commands[] = ajax_command_invoke('#modalContent', 'addClass', array('custom-module-node', 'custom-module-node-form'));
+
+  print ajax_render($commands);
+  exit;
+}
