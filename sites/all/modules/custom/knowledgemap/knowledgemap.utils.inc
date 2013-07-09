@@ -47,3 +47,24 @@ function knowledgemap_edit_template( $drawing_dom_id ) {
        </div>';
   return $output;
 }
+
+/**
+ * Log an exception.
+ * @return Message.
+ */
+function knowledgemap_log_exception(Exception $e) {
+  $message = t(
+      'Exception: @messsage \n'
+    . 'Code: @code \n'
+    . 'File: @file \n'
+    . 'Line: @line',
+    array(
+      '@messsage' => $e->getMessage(),
+      '@code' => $e->getCode(),
+      '@file' => $e->getFile(),
+      '@line' => $e->getLine(),
+    )
+  );
+  watchdog( 'knowledgemap', $message, NULL, WATCHDOG_WARNING );
+  return $message;
+}

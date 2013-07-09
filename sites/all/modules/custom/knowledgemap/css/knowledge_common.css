@@ -16,6 +16,7 @@
   z-index: 100;
   cursor: pointer;
   min-width: 6em;
+  opacity: 0.8;
 }
 
 .km-item header {
@@ -37,6 +38,12 @@
 .km-item .km-item-type {
   color: #999;
   font-size: 90%
+}
+
+.km-item.selected {
+  -moz-box-shadow:0px 0px 10px 4px rgba(30, 144, 255, 0.5);
+  -webkit-box-shadow:0px 0px 10px 4px rgba(30, 144, 255, 0.5);
+  box-shadow:0px 0px 10px 4px rgba(30, 144, 255, 0.5);
 }
 
 .km-item.concept {
@@ -73,3 +80,23 @@
   border-radius: 6px;
 }
 
+/*
+svg.km-conn path {
+  stroke: blue;
+  stroke-width: 2;
+  stroke-opacity: 0.5;
+}
+
+svg.km-conn.required path {
+  
+}
+
+svg.km-conn.reinforcing path:first-of-type{
+  stroke-dasharray: 4, 4;
+}
+
+svg.km-conn.selected path{
+  stroke-width: 4;
+  stroke: rgba(255, 0, 0, 0.5);
+}
+*/

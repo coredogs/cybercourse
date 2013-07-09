@@ -3,12 +3,6 @@ var evilGlobalController;
 
 (function($) {
   var done_once = false;
-//  $.fn.drawItem = function(data) {
-//    controller.drawItem(data);
-//  };
-//  $.fn.exitAddMode = function(data) {
-//    $drawing_area.exitAddMode(data);
-//  };
   var controller = Drupal.behaviors.knowledgemap = {
     attach: function(context, settings) {
       if (done_once) {
@@ -18,6 +12,9 @@ var evilGlobalController;
       this.km_rep = settings.knowledgemap.knowledgemap_rep;
       var drawing_id = settings.knowledgemap.drawing_dom_id;
       this.$drawing_area = $('#' + drawing_id);
+      //Selected item.
+      this.selectedItem = '';
+      this.selectedConnection = '';
       //Add a toolbar to the drawing.
       this.create_toolbar();
       this.add_methods_to_drawing_area();
@@ -27,19 +24,18 @@ var evilGlobalController;
         controller.drawAllConnections();
         jsPlumb.bind("connection", function(info, evnt) {
           controller.makeNewConnection(info, evnt);
-//          console.log("Attach:" + info.connection);
         });            
         jsPlumb.bind("connectionDetached", function(info, evnt) {
-          console.log("Deattach:" + info.connection);
+          //console.log("Deattach:" + info.connection);
         });  
       });
       //Set up the Add button.
       $("#add-km-item").click(function() {
         //Move into adding state.
-        this.$drawing_area.addClass("adding-state");
-        this.$drawing_area.notify(
+        controller.$drawing_area.addClass("adding-state");
+        controller.$drawing_area.notify(
                 "Click in the drawing area to add a new item.\nEsc to cancel.");
-        this.$drawing_area.state = 'add';
+        controller.$drawing_area.state = 'add';
         return false; //No propagation. 
       });
       //Create the add-new form.
@@ -69,58 +65,91 @@ var evilGlobalController;
       }
       this.$drawing_area.state = 'normal';
       this.$drawing_area.click(function(evnt) {
-        if (this.$drawing_area.state == "add") {
+        if (controller.$drawing_area.state == "add") {
           controller.add_new_item(evnt.pageX, evnt.pageY);
+          evnt.stopPropagation();
+        }
+        else {
+          //Clear selection if there is any.
+          controller.clearSelection();
         }
       });
       $(document).keydown(function(evnt) {
-        if (evnt.keyCode == 27 && this.$drawing_area.state == "add") {
-          evnt.preventDefault();
-          this.$drawing_area.exitAddMode();
+        if ( evnt.keyCode == 27 ) {
+          //User pressed ESC key.
+          if ( controller.$drawing_area.state == "add" ) {
+            //Exit add mode.
+            evnt.preventDefault();
+            controller.$drawing_area.exitAddMode();
+          }
+          else {
+            controller.clearSelection();
+            evnt.preventDefault();
+          }
         }
       });
       this.$drawing_area.exitAddMode = function() {
-        this.$drawing_area.state = "normal";
-        this.$drawing_area
+        controller.$drawing_area.state = "normal";
+        controller.$drawing_area
                 .removeClass("adding-state")
                 .clear_notification();
         $(".sendback").remove();
       }
 
     },
+    clearSelection : function() {
+      //Clear the item selection
+      if ( controller.selectedItem ) {
+        $("#" + controller.selectedItem.domId).removeClass("selected");
+        controller.selectedItem = '';
+      }
+      if ( controller.selectedConnection ) {
+        var conn = controller.selectedConnection.display;
+        controller.selectedConnection = '';
+        var style = controller.computeConnPaintStyle( conn );
+        conn.setPaintStyle( style );
+      }      
+    },
     setJsPlumbDefaults : function() {
       jsPlumb.importDefaults({
         Anchor: "AutoDefault",
         Endpoint: "Rectangle",
-        Detachable: true,
+        Detachable: false,
         ReattachConnections : true,
         ConnectionOverlays : [ "PlainArrow" ]
+//        ConnectionOverlays : [[ "PlainArrow", { width : 20 } ]]
       });
+      //Paint styles for connections.
+      //They need to be merged to get the right effects.
       controller.requiredPaintStyle = {
-        strokeStyle: "blue",
-        lineWidth: 2,
         dashstyle: "solid"
       };
       controller.recommendedPaintStyle = {
-        strokeStyle: "blue",
-        lineWidth: 2,
         dashstyle: "2 2"
-      };  
+      };
+      controller.selectedPaintStyle = {
+        lineWidth: 4,
+        strokeStyle: "#1E90FF"
+      };
+      controller.unselectedPaintStyle = {
+        lineWidth: 2,
+        strokeStyle: "#4B0082"
+      };
       controller.defaultConnSourceAttribs = {
         anchor: "AutoDefault",
         filter:".connection-control",
-        endpoint: "Rectangle"
+        endpoint: "Blank"
       };
       controller.defaultConnTargetAttribs = {
         anchor: "AutoDefault",
                 isTarget: true,
-        endpoint: "Dot"
+        endpoint: "Blank"
       };
     },
     drawAllItems : function() {
       //Draw all the items in the knowledge map.
       var items = this.km_rep.km_items;
-      for ( index in items ) {
+      for ( var index in items ) {
         controller.drawItem( items[index] );
       };
     },
@@ -146,6 +175,28 @@ var evilGlobalController;
         "left": parseInt(itemData.coord_x),
         "top": parseInt(itemData.coord_y)
       });
+      $item.click( function(evnt) {
+        //Clicked on an item. 
+        var newDomId = $(evnt.currentTarget).attr('id');
+        var newNid = newDomId.replace("km-item-", "");
+        //Clicked on selected item?
+        if ( controller.selectedItem && newDomId == controller.selectedItem.domId ) {
+          //Unselect it.
+          controller.clearSelection();
+          evnt.stopPropagation();
+        }
+        else {
+          //Unselect the old one.
+          controller.clearSelection();
+          //Select the new item.
+          controller.selectedItem = {
+            'domId' : newDomId,
+            'nid' : newNid
+          };
+          $("#" + newDomId).addClass("selected");
+          evnt.stopPropagation();
+        }
+      });
       $item.dblclick(function(evnt) {
         //Double-clicked on an item. 
         //Get a viewer for it.
@@ -159,37 +210,16 @@ var evilGlobalController;
       jsPlumb.makeTarget(
           $item, controller.defaultConnTargetAttribs
       );
+      //Make the item draggable.
       jsPlumb.draggable(
         $item, {
-        containment:"parent",
-        stop : function(evnt, ui) {
-          var coord_x = ui.position.left;
-          var coord_y = ui.position.top;
-          var domId = evnt.target.id;
-          var kmItemNid = domId.replace("km-item-", "")
-          $.ajax({
-            type: "POST",
-            url: Drupal.settings.basePath + 'update-km-item-pos/nojs',
-            data: {
-              "coord_x" : coord_x,
-              "coord_y" : coord_y,
-              "km_item_nid" : kmItemNid
-            },
-            success: function(data, textStatus, jqXHR) {
-              if ( data.status == 'success' ) {
-                //Nowt to do.
-              }
-              else {
-                alert(data.message);
-              }
-            },
-            fail: function (jqXHR, textStatus) {
-              alert( "Request failed: " + textStatus );
-            },
-          });
-          
+          containment : "parent",
+          stop : function(evnt, ui) {
+            //WHen KM item dragged, save its new position.
+            controller.saveNewPosition( evnt, ui );
+          }
         }
-      });
+      );
       //Append to the drawing.
       this.$drawing_area.append($item);
       //Adjust map dimensions to fit new item.
@@ -215,17 +245,65 @@ var evilGlobalController;
     },
     drawAllConnections : function() {
       //Draw all the connections in the knowledge map.
-      $(this.km_rep.connections).each(function(index, connection){
-        controller.drawConnection(connection);
-      });      
+      var connections = this.km_rep.connections;
+      for ( var index in connections ) {
+        controller.drawConnection( connections[index] );
+      }
     },
-    drawConnection : function(connection) {
-      jsPlumb.connect({
-       source : "km-item-" + connection.from_nid, 
-       target : "km-item-" + connection.to_nid,
-       paintStyle: connection.required == 'required' 
-          ? controller.requiredPaintStyle : controller.recommendedPaintStyle
-     });
+    drawConnection : function(connData) {
+      var connection = jsPlumb.connect({
+        source : "km-item-" + connData.from_nid, 
+        target : "km-item-" + connData.to_nid,
+        //Add the relationship id, index into km_rep.
+        'parameters' : { 'rid' : connData.rid }
+      });
+      connection.setPaintStyle(
+        controller.computeConnPaintStyle( connection )
+      );
+      //Store ref to the new connection in the map array.
+      controller.km_rep.connections[connData.rid].display = connection;
+      connection.bind("click", function(conn, evnt) {
+        controller.connectionClicked( conn, evnt );
+      });
+    },
+    connectionClicked : function( conn, evnt ) {
+      var rid = conn.getParameter('rid');
+      //Unselect if clicked on selected conn.
+      if ( controller.selectedConnection 
+              && controller.selectedConnection.rid == rid ) {
+        controller.clearSelection();
+        evnt.stopPropagation();
+      }
+      else {
+        //Clicked on a conn not selected.
+        controller.clearSelection();
+        controller.selectedConnection = {
+          'rid' : rid,
+          'display' : conn
+        };
+        conn.setPaintStyle( controller.computeConnPaintStyle( conn ) );
+        evnt.stopPropagation();
+      }
+    },
+    computeConnPaintStyle : function( conn ) {
+      //Compute the style for a connection, based on its type, and whether
+      //it is selected.
+      var rid = conn.getParameter('rid');
+      var selected = ( 
+           controller.selectedConnection
+        && controller.selectedConnection.rid == rid 
+      );
+      var required = controller.km_rep.connections[rid].required;
+      var base = $.extend( {}, 
+                      selected 
+                        ? controller.selectedPaintStyle 
+                        : controller.unselectedPaintStyle
+                 );
+      $.extend( base, ( required == 'required' )
+                  ? controller.requiredPaintStyle
+                  : controller.recommendedPaintStyle
+              );
+      return base;
     },
     createAddForm: function() {
       var formHtml = "<form id='add-new-form'>"
@@ -243,6 +321,7 @@ var evilGlobalController;
           height: 500,
           width: 700,
           modal: true,
+          title: "Add new item",
           buttons: {
             "Save": function() {
               var newTitle = $('#add-new-title').val();
@@ -253,6 +332,7 @@ var evilGlobalController;
               }
               else {
                 var $dialogRef = $(this);
+                //Create data record.
                 var newItem = controller.createNewItemFromInput();
                 $.ajax({
                   type: "POST",
@@ -260,10 +340,13 @@ var evilGlobalController;
                   data: newItem,
                   success: function(data, textStatus, jqXHR) {
                     if ( data.status == 'success' ) {
-                      $dialogRef.dialog("close");
-                      this.$drawing_area.exitAddMode();
+                      //Add data record to map array.
                       newItem.nid = data.new_nid;
+                      controller.km_rep.km_items[newItem.nid] = newItem;
+                      //Draw the new item.
                       controller.drawItem(newItem);
+                      $dialogRef.dialog("close");
+                      controller.$drawing_area.exitAddMode();
                     }
                     else {
                       alert(data.message);
@@ -277,7 +360,7 @@ var evilGlobalController;
             },
             "Cancel": function() {
               $(this).dialog("close");
-              $drawing_area.exitAddMode();
+              controller.$drawing_area.exitAddMode();
             }
           },
           close: function() {
@@ -296,9 +379,11 @@ var evilGlobalController;
     },
     //User wants to add a new item at the clicked location.
     add_new_item: function(coord_x, coord_y) {
+      //Kill the selection.
+      controller.clearSelection();
       //Adjust X and Y to make them relative to the drawing area.
-      coord_x -= $drawing_area.position().left;
-      coord_y -= $drawing_area.position().top;
+      coord_x -= controller.$drawing_area.position().left;
+      coord_y -= controller.$drawing_area.position().top;
       $('#add-new-title').val('');
       $('#add-new-type').val('');
       $("#coord_x").val(coord_x);
@@ -321,13 +406,17 @@ var evilGlobalController;
       return false;
     },
     makeNewConnection: function(connInfo, evnt) {
+      //Kill the selection.
+      controller.clearSelection();
       //Check whether the connection is allowed. Modify if necessary.
       if ( this.checkConnection( connInfo ) ) {
-        var connection = connInfo.connection;
-        //Set the style of the link.
-        connection.setPaintStyle( controller.requiredPaintStyle );
         //Tell the server about it.
-        
+        this.saveConnectionToServer( connInfo );
+        //Set the style of the connection.
+        var connection = connInfo.connection;
+        connection.setPaintStyle(
+            controller.computeConnPaintStyle( connection )
+        );
       }
     },
     checkConnection: function ( connInfo ) {
@@ -371,6 +460,14 @@ var evilGlobalController;
       }
       //Warn user about potential problems.
       var message = '';
+      if ( sourceNid == targetNid ) {
+        message = "Sorry, you cannot connect an element to itself.\n\n"
+                + "If you can think of a good reason why you would want to, "
+                + "please let Kieran know.";
+        alert( message );
+        return false;
+      }
+      
       if ( sourceCategory == 'experience' && targetCategory  == 'experience' ) {
         message = "Are you sure you want to link two experiences?" + 
                 "\n\nNormally, experiences are only linked to knowledge " +
@@ -380,7 +477,7 @@ var evilGlobalController;
         // @todo Offer to flip the link.
         message = "Are you sure you want to link from a knowledge element "
                   + "to an experience?" 
-                  + "\n\nNormally, experiences are the sources of links, and knowledge " +
+                  + "\n\nNormally, experiences are the sources of links, and knowledge "
                   + "elements (skills or concepts) are the targets.";
       }
       if ( message ) {
@@ -394,7 +491,7 @@ var evilGlobalController;
       return true;
     },
     getItemType : function( itemNid ) {
-      var result = getItemData( itemNid );
+      var result = this.getItemData( itemNid );
       if ( result != 'not found' ) {
         result = result.item_type;
       } 
@@ -442,6 +539,72 @@ var evilGlobalController;
           = new KmItemViewer(itemData);
       }
       return controller.kmItemViewers[ itemData.nid ];
+    },
+    saveNewPosition : function ( evnt, ui ) {
+      //Save the new position of an item.
+      var coord_x = ui.position.left;
+      var coord_y = ui.position.top;
+      var domId = evnt.target.id;
+      var kmItemNid = domId.replace("km-item-", "")
+      $.ajax({
+        type: "POST",
+        url: Drupal.settings.basePath + 'update-km-item-pos',
+        data: {
+          "coord_x" : coord_x,
+          "coord_y" : coord_y,
+          "km_item_nid" : kmItemNid
+        },
+        success: function(data, textStatus, jqXHR) {
+          if ( data.status == 'success' ) {
+            //Nowt to do.
+          }
+          else {
+            alert(data.message);
+          }
+        },
+        fail: function (jqXHR, textStatus) {
+          alert( "Request failed: " + textStatus );
+        },
+      });
+    },
+    saveConnectionToServer : function ( connInfo ) {
+      //Save data about a new connection to the server.
+      //@todo Spinny thing.
+      var sourceNid = connInfo.sourceId.replace("km-item-", "");
+      var targetNid = connInfo.targetId.replace("km-item-", "");
+      var required = "required";
+      $.ajax({
+        type: "POST",
+        async: false,
+        url: Drupal.settings.basePath + 'save-new-connection',
+        data: {
+          "source_km_item_nid" : sourceNid,
+          "target_km_item_nid" : targetNid,
+          "required" : required
+        },
+        success: function(data, textStatus, jqXHR) {
+          if ( data.status == 'success' ) {
+            //Add to map data array.
+            var rid = data.rid;
+            controller.km_rep.connections[rid] = {
+              "rid" : rid,
+              "from_nid" : sourceNid,
+              "to_nid" : targetNid,
+              "required" : "required",
+              "display" : connInfo.connection
+            };
+            //Store rid in display object.
+            connInfo.connection.setParameter('rid', rid);
+          }
+          else {
+            alert(data.message + " You should refresh the page.");
+          }
+        },
+        fail: function (jqXHR, textStatus) {
+          alert( "Request failed: " + textStatus + " You should refresh the page.");
+        },
+      });
+      
     }
   };
   evilGlobalController = controller;

@@ -1,8 +1,10 @@
 <?php
 define( 'RELATION_NAME_ITEM_TO_KM', 'is_part_of_knowledge_map');
+define( 'RELATION_NAME_KM_ITEM_CONNECTION', 'is_connected_to');
+
 define( 'DRAWING_ID_CACHE_NAME', 'knowledgemap_drawing_id_cache');
 
-define( 'NEW_KM_ITEM_INDICATOR', '(New modal)');
+//define( 'NEW_KM_ITEM_INDICATOR', '(New modal)');
 
 module_load_include('inc', 'knowledgemap', 'knowledgemap.utils');
 
@@ -41,9 +43,14 @@ function knowledgemap_menu() {
     'weight' => 0,
     'type' => MENU_CALLBACK,
   );
-  $items['update-km-item-pos/%ctools_js'] = array(
+  $items['update-km-item-pos'] = array(
     'page callback' => 'knowledgemap_save_item_position',
-    'page arguments' => array(1),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  //User made a new connection. Save it.
+  $items['save-new-connection'] = array(
+    'page callback' => 'knowledgemap_save_new_connection',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -260,7 +267,7 @@ function knowledgemap_make_km_rep($km_nid) {
     $from_nid = $entity->endpoints[LANGUAGE_NONE][0]['entity_id'];
     $to_nid = $entity->endpoints[LANGUAGE_NONE][1]['entity_id'];
     $required = $entity->field_required[LANGUAGE_NONE][0]['value'];
-    $connections[] = array(
+    $connections[$rid] = array(
       'rid' => $rid,
       'from_nid' => $from_nid,
       'to_nid' => $to_nid,
@@ -299,7 +306,7 @@ function knowledgemap_add_item_ajax() {
   $new_node->field_item_type[LANGUAGE_NONE][0]['value'] = $item_type;
   node_save($new_node);
   $new_node_id = $new_node->nid;
-  //Check for fail here.
+  //@todo Check for fail here.
   //Add a new relation.
   $endpoints = array(
     array('entity_type' => 'node', 'entity_id' => $new_node_id),
@@ -480,4 +487,105 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
 
   print ajax_render($commands);
   exit;
+}
+
+/**
+ * Save the new screen position os an item.
+ */
+function knowledgemap_save_item_position() {
+  try {
+    //Check that required data is in call.
+    if (    ! isset( $_POST['coord_x'] ) 
+         || ! isset( $_POST['coord_y'] )
+         || ! isset( $_POST['km_item_nid'] )
+       ) {
+      throw new Exception('Required data missing. Need x, y, and km_nid.');
+    }
+    //Get data from call.
+    $coord_x = $_POST['coord_x'];
+    $coord_y = $_POST['coord_y'];
+    $km_item_nid = $_POST['km_item_nid'];  
+    //Load the item to be updated.
+    $node = node_load( $km_item_nid );
+    if ( ! $node ) {
+      throw new Exception( 
+          t( 'Could not load node with nid !km_item_nid.', 
+              array( '!km_item_nid' => $km_item_nid )
+          )
+      );
+    }
+    //Change the node's data.
+    $node->field_coord_x[LANGUAGE_NONE][0]['value'] = $coord_x;
+    $node->field_coord_y[LANGUAGE_NONE][0]['value'] = $coord_y;
+    //Save.
+    node_save($node);
+    //Return success flag.
+    drupal_json_output( array( 
+        'status' => 'success',
+        'message' => 'Position saved.'
+    ));
+    drupal_exit();  
+  } catch (Exception $e) {
+    $message = knowledgemap_log_exception($e);
+    drupal_json_output( array( 
+        'status' => 'error',
+        'message' => $message,
+    ));
+    drupal_exit();
+  }
+}
+
+function knowledgemap_save_new_connection() {
+  try {
+    //Check that required data is in call.
+    if (    ! isset( $_POST['source_km_item_nid'] ) 
+         || ! isset( $_POST['target_km_item_nid'] )
+         || ! isset( $_POST['required'] )
+       ) {
+      throw new Exception(
+          'Required connection data missing. Need two nids, and type.'
+      );
+    }
+    //Get data from call.
+    $source_km_item_nid = $_POST['source_km_item_nid'];
+    $target_km_item_nid = $_POST['target_km_item_nid'];
+    $required = $_POST['required'];
+    //@todo check nodes exist.
+    //@todo check connection type.
+    //Add a new relation.
+    $endpoints = array(
+      array('entity_type' => 'node', 'entity_id' => $source_km_item_nid),
+      array('entity_type' => 'node', 'entity_id' => $target_km_item_nid),
+    );
+    //Create new relation object.
+    $new_relation = relation_create(RELATION_NAME_KM_ITEM_CONNECTION, $endpoints);
+    $new_relation->field_required[LANGUAGE_NONE][0]['value'] = $required;
+    //Save it.
+    $rid = relation_save($new_relation);
+    if ( ! $rid ) {
+      throw new Exception( 
+          t( 'Could not save relation from !source_km_item_nid to 
+              !target_km_item_nid.', 
+              array( 
+                '!source_km_item_nid' => $source_km_item_nid,
+                '!target_km_item_nid' => $target_km_item_nid,
+              )
+          )
+      );
+    }
+    //Return success flag.
+    drupal_json_output( array( 
+        'status' => 'success',
+        'message' => 'Connection saved.',
+        'rid' => $rid,
+    ));
+    drupal_exit();  
+  } catch (Exception $e) {
+    $message = knowledgemap_log_exception($e);
+    drupal_json_output( array( 
+        'status' => 'error',
+        'message' => $message,
+    ));
+    drupal_exit();
+  }
 }
