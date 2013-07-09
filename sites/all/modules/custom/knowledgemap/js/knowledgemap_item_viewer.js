@@ -1,3 +1,7 @@
+
+
+
+
 function KmItemViewer( itemData ) {
   this.itemData = itemData;
   var htmlElData = this.makeDialogHtml();
@@ -5,32 +9,6 @@ function KmItemViewer( itemData ) {
   jQuery("body").append(htmlElData.html);
   //Add the edit button to the footer.
   this.addEditLink( htmlElData.dialogDomId, this.itemData.nid );
-//  jQuery(".km-item-dialog footer .edit-button").click(function(evnt) {
-//    var itemNid = this.dataset.itemNid;
-//    
-//    jQuery.ajax({
-//      url: Drupal.settings.basePath + 'edit-km-item/ajax/' + itemNid,
-//      dataType: 'json',
-//      success: function(data, textStatus, jqXHR) {
-//        //Get to here, then the add form has been sucessfully generated and
-//        //returned.
-//        alert('in edut siccess');
-//        var bp_place = 5;
-//        var options = {
-//          'title': 'Edit knowledge item',
-//          'width': '600',
-//          'height': 'auto',
-//          'position': 'center'
-//        };
-//        if ( jQuery("#km-item-edit-form").length == 0 ) {
-//          var html = "<div id='km-item-edit-form' class='km-item-edit-form'/>";
-//          jQuery("body").append(html);
-//        }
-//        jQuery("#km-item-edit-form").html(data);
-//        jQuery("#km-item-edit-form").dialog(options);
-//      }
-//    })    
-//  });
   var dialogOptions = {
     autoOpen : false
   };
@@ -61,7 +39,20 @@ function KmItemViewer( itemData ) {
 }
 
 KmItemViewer.prototype.open = function() {
+  this.updateFields();
   this.dialog.dialog("open");
+}
+
+KmItemViewer.prototype.updateFields = function() {
+  //Update the data the dialog is showing.
+  
+  var dialogDomId = this.itemData.dialogDomId;
+  jQuery("#" + dialogDomId).dialog({ title: this.itemData.title });
+//  jQuery("#" + dialogDomId).attr('title', this.itemData.title);
+  jQuery("#" + dialogDomId + " .km-item-type")
+      .html(capitaliseFirstLetter(this.itemData.item_type));
+  jQuery("#" + dialogDomId + " .km-item-body")
+      .html(capitaliseFirstLetter(this.itemData.body));
 }
 
 KmItemViewer.prototype.makeDialogHtml = function() {
@@ -112,3 +103,19 @@ KmItemViewer.prototype.addEditLink = function( dialogDomId, kmItemNid ) {
   jQuery('#' + dialogDomId + " footer").append($newLink);
 }
 
+jQuery.fn.returnFromEditSave = function(nid) {
+  //var currentItemData = evilGlobalController.getItemData( nid );
+  //Get new data passed by the server edit code.
+  var newItemData = Drupal.settings.knowledgemap.new_item_data;
+  //Replace bits. Better way?
+  evilGlobalController.km_rep.km_items[nid].title = newItemData.title;
+  evilGlobalController.km_rep.km_items[nid].item_type = newItemData.item_type;
+  evilGlobalController.km_rep.km_items[nid].body = newItemData.body;
+  //Update the viewer.
+  var itemViewer = evilGlobalController.kmItemViewers[ nid ];
+  if ( ! itemViewer ) {
+    throw "Error: viewer not found for nid " + nid;
+  }
+  itemViewer.updateFields();
+  evilGlobalController.updateItemFields( nid );
+}

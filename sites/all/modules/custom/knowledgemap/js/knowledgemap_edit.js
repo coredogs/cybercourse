@@ -1,6 +1,7 @@
+//Wrong way to do it, but it worx.
+var evilGlobalController; 
+
 (function($) {
-  var $drawing_area;
-  var km_rep; //Data representing map.
   var done_once = false;
 //  $.fn.drawItem = function(data) {
 //    controller.drawItem(data);
@@ -8,60 +9,37 @@
 //  $.fn.exitAddMode = function(data) {
 //    $drawing_area.exitAddMode(data);
 //  };
-  var requiredPaintStyle = {
-    strokeStyle: "blue",
-    lineWidth: 2,
-    dashstyle: "solid"
-  };
-  var recommendedPaintStyle = {
-    strokeStyle: "blue",
-    lineWidth: 2,
-    dashstyle: "2 2"
-  };  
-  var defaultConnSourceAttribs = {
-    anchor: "AutoDefault",
-            filter:"span",
-    endpoint: "Rectangle"
-  };
-  var defaultConnTargetAttribs = {
-    anchor: "AutoDefault",
-            isTarget: true,
-    endpoint: "Dot"
-  };
   var controller = Drupal.behaviors.knowledgemap = {
     attach: function(context, settings) {
       if (done_once) {
         return;
       }
-      
-      var link = settings.knowledgemap.link;
-      $("#content").prepend(link);
-      
-      
-      km_rep = settings.knowledgemap.knowledgemap_rep;
+      //Set some convenience vars.
+      this.km_rep = settings.knowledgemap.knowledgemap_rep;
       var drawing_id = settings.knowledgemap.drawing_dom_id;
-      $drawing_area = $('#' + drawing_id);
+      this.$drawing_area = $('#' + drawing_id);
       //Add a toolbar to the drawing.
       this.create_toolbar();
       this.add_methods_to_drawing_area();
-      this.drawAllItems();
       jsPlumb.ready(function() {
         controller.setJsPlumbDefaults();
+        controller.drawAllItems();
         controller.drawAllConnections();
-        jsPlumb.bind("connection", function(info, originalEvent) {
-          console.log("Attach:" + info.connection);
+        jsPlumb.bind("connection", function(info, evnt) {
+          controller.makeNewConnection(info, evnt);
+//          console.log("Attach:" + info.connection);
         });            
-        jsPlumb.bind("connectionDetached", function(info, originalEvent) {
+        jsPlumb.bind("connectionDetached", function(info, evnt) {
           console.log("Deattach:" + info.connection);
         });  
       });
       //Set up the Add button.
       $("#add-km-item").click(function() {
         //Move into adding state.
-        $drawing_area.addClass("adding-state");
-        $drawing_area.notify(
+        this.$drawing_area.addClass("adding-state");
+        this.$drawing_area.notify(
                 "Click in the drawing area to add a new item.\nEsc to cancel.");
-        $drawing_area.state = 'add';
+        this.$drawing_area.state = 'add';
         return false; //No propagation. 
       });
       //Create the add-new form.
@@ -70,7 +48,7 @@
     },
     //Create a toolbar for thr drawing area.
     create_toolbar: function() {
-      $drawing_area.prepend(
+      this.$drawing_area.prepend(
               '<div class="km-toolbar">' +
               '  <input id="add-km-item" type="button" class="form-submit" value="Add item" />' +
               '   <span id="drawing-message"></span>' +
@@ -78,32 +56,32 @@
               );
     },
     add_methods_to_drawing_area: function() {
-      $drawing_area.notify = function(message) {
+      this.$drawing_area.notify = function(message) {
         $("#drawing-message")
                 .hide()
                 .html(message)
                 .show('medium');
       }
-      $drawing_area.clear_notification = function() {
+      this.$drawing_area.clear_notification = function() {
         $("#drawing-message")
                 .hide('medium')
                 .html('');
       }
-      $drawing_area.state = 'normal';
-      $drawing_area.click(function(evnt) {
-        if ($drawing_area.state == "add") {
+      this.$drawing_area.state = 'normal';
+      this.$drawing_area.click(function(evnt) {
+        if (this.$drawing_area.state == "add") {
           controller.add_new_item(evnt.pageX, evnt.pageY);
         }
       });
       $(document).keydown(function(evnt) {
-        if (evnt.keyCode == 27 && $drawing_area.state == "add") {
+        if (evnt.keyCode == 27 && this.$drawing_area.state == "add") {
           evnt.preventDefault();
-          $drawing_area.exitAddMode();
+          this.$drawing_area.exitAddMode();
         }
       });
-      $drawing_area.exitAddMode = function() {
-        $drawing_area.state = "normal";
-        $drawing_area
+      this.$drawing_area.exitAddMode = function() {
+        this.$drawing_area.state = "normal";
+        this.$drawing_area
                 .removeClass("adding-state")
                 .clear_notification();
         $(".sendback").remove();
@@ -115,26 +93,51 @@
         Anchor: "AutoDefault",
         Endpoint: "Rectangle",
         Detachable: true,
-        ReattachConnections : false,
+        ReattachConnections : true,
         ConnectionOverlays : [ "PlainArrow" ]
-      });	          
+      });
+      controller.requiredPaintStyle = {
+        strokeStyle: "blue",
+        lineWidth: 2,
+        dashstyle: "solid"
+      };
+      controller.recommendedPaintStyle = {
+        strokeStyle: "blue",
+        lineWidth: 2,
+        dashstyle: "2 2"
+      };  
+      controller.defaultConnSourceAttribs = {
+        anchor: "AutoDefault",
+        filter:".connection-control",
+        endpoint: "Rectangle"
+      };
+      controller.defaultConnTargetAttribs = {
+        anchor: "AutoDefault",
+                isTarget: true,
+        endpoint: "Dot"
+      };
     },
     drawAllItems : function() {
       //Draw all the items in the knowledge map.
-      $(km_rep.km_items).each(function(index, item){
-        controller.drawItem(item);
-      });
+      var items = this.km_rep.km_items;
+      for ( index in items ) {
+        controller.drawItem( items[index] );
+      };
     },
     drawItem : function (itemData) {
       var html =
           "<div id='km-item-" + itemData.nid + "' "
           +      "class='km-item " + itemData.item_type + "'>"
           + "<header>"
-          + "  <h1 class='title'>" + itemData.title + "<span>●</span></h1>"
+          + "  <h1 class='title'>" + trimLR(itemData.title) 
+          + "  </h1>"
           + "</header>"
-          + "<section>"
-          +    itemData.body
+          + "<section class='km-item-type'>"
+          +    capitaliseFirstLetter( itemData.item_type )
           + "</section> "
+          + "<footer>"
+          + "  <div class='connection-control'>●</div>"
+          + "</footer>"
           + "</div>";
       //Make a DOM element.
       var $item = $(html);
@@ -144,43 +147,75 @@
         "top": parseInt(itemData.coord_y)
       });
       $item.dblclick(function(evnt) {
-        var t = new KmItemViewer(itemData);
-        t.open();
+        //Double-clicked on an item. 
+        //Get a viewer for it.
+        var viewer = controller.getKmItemViewer(itemData);
+        viewer.open();
       });
       jsPlumb.makeSource(
-         $item, 
-        defaultConnSourceAttribs
+        $item, 
+        controller.defaultConnSourceAttribs
       );
       jsPlumb.makeTarget(
-          $item, defaultConnTargetAttribs
+          $item, controller.defaultConnTargetAttribs
       );
       jsPlumb.draggable(
         $item, {
-        containment:"parent"
+        containment:"parent",
+        stop : function(evnt, ui) {
+          var coord_x = ui.position.left;
+          var coord_y = ui.position.top;
+          var domId = evnt.target.id;
+          var kmItemNid = domId.replace("km-item-", "")
+          $.ajax({
+            type: "POST",
+            url: Drupal.settings.basePath + 'update-km-item-pos/nojs',
+            data: {
+              "coord_x" : coord_x,
+              "coord_y" : coord_y,
+              "km_item_nid" : kmItemNid
+            },
+            success: function(data, textStatus, jqXHR) {
+              if ( data.status == 'success' ) {
+                //Nowt to do.
+              }
+              else {
+                alert(data.message);
+              }
+            },
+            fail: function (jqXHR, textStatus) {
+              alert( "Request failed: " + textStatus );
+            },
+          });
+          
+        }
       });
       //Append to the drawing.
-      $drawing_area.append($item);
+      this.$drawing_area.append($item);
       //Adjust map dimensions to fit new item.
       //Compute pos of right edge of item.
       var itemRight = $item.position().left + $item.outerWidth();
       //Add a bit for look.
       var itemRightExtra = itemRight + 10;
       //Check drawing area width.
-      if ( itemRightExtra > $drawing_area.width() ) {
-        $drawing_area.width( itemRightExtra );
+      if ( itemRightExtra > this.$drawing_area.width() ) {
+        this.$drawing_area.width( itemRightExtra );
       }
       //Compute pos of item bottom.
       var itemBottom = $item.position().top + $item.outerHeight();
       //Add a bit for look.
       var itemBottomExtra = itemBottom + 10;
       //Check drawing area width.
-      if ( itemBottomExtra > $drawing_area.height() ) {
-        $drawing_area.height( itemBottomExtra );
+      if ( itemBottomExtra > this.$drawing_area.height() ) {
+        this.$drawing_area.height( itemBottomExtra );
       }      
+    },
+    updateItemFields : function ( nid ) {
+      $("#km-item-" + nid + " header h1").html(this.km_rep.km_items[nid].title); 
     },
     drawAllConnections : function() {
       //Draw all the connections in the knowledge map.
-      $(km_rep.connections).each(function(index, connection){
+      $(this.km_rep.connections).each(function(index, connection){
         controller.drawConnection(connection);
       });      
     },
@@ -189,7 +224,7 @@
        source : "km-item-" + connection.from_nid, 
        target : "km-item-" + connection.to_nid,
        paintStyle: connection.required == 'required' 
-          ? requiredPaintStyle : recommendedPaintStyle
+          ? controller.requiredPaintStyle : controller.recommendedPaintStyle
      });
     },
     createAddForm: function() {
@@ -222,12 +257,13 @@
                 $.ajax({
                   type: "POST",
                   url: Drupal.settings.basePath + 'add-km-item-ajax',
-                  data: item,
+                  data: newItem,
                   success: function(data, textStatus, jqXHR) {
                     if ( data.status == 'success' ) {
                       $dialogRef.dialog("close");
-                      $drawing_area.exitAddMode();
-                      controller.drawNewItem(newItem);
+                      this.$drawing_area.exitAddMode();
+                      newItem.nid = data.new_nid;
+                      controller.drawItem(newItem);
                     }
                     else {
                       alert(data.message);
@@ -260,38 +296,15 @@
     },
     //User wants to add a new item at the clicked location.
     add_new_item: function(coord_x, coord_y) {
+      //Adjust X and Y to make them relative to the drawing area.
+      coord_x -= $drawing_area.position().left;
+      coord_y -= $drawing_area.position().top;
       $('#add-new-title').val('');
       $('#add-new-type').val('');
       $("#coord_x").val(coord_x);
       $("#coord_y").val(coord_y);
  $('#add-new-type').val('example'); //TEMP      
       $("#add-new-form").dialog("open");
-    },
-    oldAddCode: function() {
-//      alert('ad new');
-//      var bp_place = 9;
-//      $.ajax({
-//        url: Drupal.settings.basePath + 'add-km-item/ajax/'
-//                + coord_x + '/' + coord_y + '/' + km_nid,
-//        dataType: 'json',
-//        success: function(data, textStatus, jqXHR) {
-//          //Get to here, then the add form has been sucessfully generated and
-//          //returned.
-//          alert('in sucess');
-//          var bp_place = 5;
-//          var options = {
-//            'title': 'New knowledge item',
-//            'width': '500',
-//            'height': 'auto',
-//            'position': 'center'
-//          };
-//          $("#add-item-form").html(data);
-//          $("#add-item-form").dialog(options);
-//          if (data[1].data !== undefined) {
-//            // the view results will be in data[1].data
-//          }
-//        }
-//      })
     },
     checkNewItemData: function(itemTitle, itemType) {
       var msg = '';
@@ -303,29 +316,134 @@
       }
       return msg;
     },
-    drawNewItem: function(newItem) {
-      var template =
-              "<div class='km-item " + newItem.type + "'>" +
-              "  <div class='title'>" + newItem.title + "</div>"
-      "</div>";
-      //Make a DOM element.
-      var item = $(template);
-      //Append to the drawing.
-      $drawing_area.append(item);
-      //Set position.
-      $(item).css({
-        "left": parseInt(newItem.coord_x),
-        "top": parseInt(newItem.coord_y)
-      });
-    },
     errorThrown: function(message) {
       alert(message);
       return false;
     },
-    nothing_to_do: function(response, status) {
-      Drupal.ajax.prototype.success(response, status);
-//      Drupal.CTools.Modal.show(stuff);
-      //Nothing to do.
+    makeNewConnection: function(connInfo, evnt) {
+      //Check whether the connection is allowed. Modify if necessary.
+      if ( this.checkConnection( connInfo ) ) {
+        var connection = connInfo.connection;
+        //Set the style of the link.
+        connection.setPaintStyle( controller.requiredPaintStyle );
+        //Tell the server about it.
+        
+      }
+    },
+    checkConnection: function ( connInfo ) {
+      //Check for duplicate connection.
+      var allConn = jsPlumb.getAllConnections().jsPlumb_DefaultScope;
+      var length = allConn.length;
+      for (var i = 0; i < length; i++) {
+        if (    allConn[i].sourceId == connInfo.sourceId 
+             && allConn[i].targetId == connInfo.targetId 
+           ) {
+          //Ids are the same, but this might be connection just made.
+          if ( connInfo.connection != allConn[i] ) {
+            alert("Those two elements are already connected.");
+            //Kill the connection.
+            jsPlumb.detach( connInfo.connection );
+            return false;
+          }
+        }
+      }
+      //Get the end types.
+      var sourceId = connInfo.sourceEndpoint.elementId;
+      var sourceNid = sourceId.replace("km-item-", "");
+      var sourceType = this.getItemType( sourceNid );
+      if ( sourceType == 'not found' ) {
+        throw "Source item not found. nid: " + sourceNid;
+      }
+      var sourceCategory = this.getItemCategory( sourceType );
+      if ( sourceCategory == "unknown" ){
+        throw "Source item type bad. Type: " + sourceType;
+      }
+      //Get data about connection target.
+      var targetId = connInfo.targetEndpoint.elementId;
+      var targetNid = targetId.replace("km-item-", "");
+      var targetType = this.getItemType( targetNid );
+      if ( targetType == 'not found' ) {
+        throw "Target item not found. nid: " + targetNid;
+      }
+      var targetCategory = this.getItemCategory( targetType );
+      if ( targetCategory == "unknown" ){
+        throw "Target item type bad. Type: " + targetType;
+      }
+      //Warn user about potential problems.
+      var message = '';
+      if ( sourceCategory == 'experience' && targetCategory  == 'experience' ) {
+        message = "Are you sure you want to link two experiences?" + 
+                "\n\nNormally, experiences are only linked to knowledge " +
+                "elements (skills or concepts).";
+      }
+      if ( sourceCategory == 'knowledge' && targetCategory  == 'experience' ) {
+        // @todo Offer to flip the link.
+        message = "Are you sure you want to link from a knowledge element "
+                  + "to an experience?" 
+                  + "\n\nNormally, experiences are the sources of links, and knowledge " +
+                  + "elements (skills or concepts) are the targets.";
+      }
+      if ( message ) {
+        var response = confirm( message );
+        if ( ! response ) {
+          //Kill the connection.
+          jsPlumb.detach( connInfo.connection );
+          return false;
+        }
+      }
+      return true;
+    },
+    getItemType : function( itemNid ) {
+      var result = getItemData( itemNid );
+      if ( result != 'not found' ) {
+        result = result.item_type;
+      } 
+      return result;
+    },
+    getItemData : function( itemNid ) {
+      //Fetch item data for the item with the given nid.
+      var items = this.km_rep.km_items;
+      for ( var index in items ) {
+        if ( items[index].nid == itemNid ) {
+          return items[index];
+        }
+      }
+      return 'not found';      
+    },
+    getItemCategory : function( itemType ) {
+      var category = "unknown";
+      switch ( itemType ) {
+        case 'concept':
+          category = 'knowledge';
+          break;
+        case 'skill':
+          category = 'knowledge';
+          break;
+        case 'explanation':
+          category = 'experience';
+          break;
+        case 'example':
+          category = 'experience';
+          break;
+        case 'exercise':
+          category = 'experience';
+          break;
+        case 'pattern':
+          category = 'experience';
+          break;
+        }
+        return category;
+    },
+    kmItemViewers : new Array(),
+    getKmItemViewer : function( itemData ) {
+      //Get an item viewer, either existing or new.
+      if ( ! controller.kmItemViewers[ itemData.nid ] ) {
+        controller.kmItemViewers[ itemData.nid ] 
+          = new KmItemViewer(itemData);
+      }
+      return controller.kmItemViewers[ itemData.nid ];
     }
-  }
+  };
+  evilGlobalController = controller;
 })(jQuery);
+

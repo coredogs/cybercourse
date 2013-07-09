@@ -19,13 +19,6 @@ function knowledgemap_init() {
  * Implements hook_menu.
  */
 function knowledgemap_menu() {
-//  //Return a list of all the KM items for a KM.
-//  $items['fetch-km-items-ajax/%'] = array(
-//    'page callback' => 'knowledgemap_fetch_km_items_ajax',
-//    'page arguments' => array(1),
-//    'access callback' => TRUE,
-//    'type' => MENU_CALLBACK,
-//  );
   $items['show-km-item/%'] = array(
     'page callback' => 'knowledgemap_show_item',
     'page arguments' => array(1),
@@ -39,18 +32,6 @@ function knowledgemap_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-//  $items['add-km-item/%dialog_js/%/%/%'] = array(
-//    'page callback' => 'knowledgemap_add_item',
-//    'page arguments' => array(1, 2, 3, 4),
-//    'access callback' => TRUE,
-//    'type' => MENU_CALLBACK,
-//  );
-//  $items['add-done/%dialog_js'] = array(
-//    'page callback' => 'knowledgemap_add_done',
-//    'page arguments' => array(1),
-//    'access callback' => TRUE,
-//    'type' => MENU_CALLBACK,
-//  );
   $items['edit-km-item/%node/%ctools_js'] = array(
     'title' => 'Edit',
     'page callback' => 'knowledgemap_edit_item_ctools',
@@ -60,13 +41,12 @@ function knowledgemap_menu() {
     'weight' => 0,
     'type' => MENU_CALLBACK,
   );
-
-//  $items['edit-km-item/%dialog_js/%'] = array(
-//    'page callback' => 'knowledgemap_edit_item',
-//    'page arguments' => array(1, 2),
-//    'access callback' => TRUE,
-//    'type' => MENU_CALLBACK,
-//  );
+  $items['update-km-item-pos/%ctools_js'] = array(
+    'page callback' => 'knowledgemap_save_item_position',
+    'page arguments' => array(1),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   $items['confirm-delete-km-item/%'] = array(
     'page callback' => 'knowledgemap_confirm_delete',
     'page arguments' => array(1),
@@ -258,7 +238,7 @@ function knowledgemap_make_km_rep($km_nid) {
         ? $record->field_field_coord_y[0]['raw']['value'] : '';
     $item_type = isset( $record->field_field_item_type[0]['raw']['value'] ) 
         ? $record->field_field_item_type[0]['raw']['value'] : '';
-    $km_items[] = array(
+    $km_items[$nid] = array(
       'nid' => $nid,
       'title' => $title,
       'body' => $body,
@@ -436,8 +416,8 @@ function knowledgemap_form_alter(&$form, &$form_state, $form_id) {
  */
 function knowledgemap_edit_item_ctools($node, $js = NULL) {
   // Check $js.
-//  if (!$js) {
-  if ( FALSE ) {
+  if (!$js) {
+//  if ( FALSE ) {
     return drupal_access_denied();
   }
   drupal_add_js('misc/ajax.js');
@@ -445,7 +425,6 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
   ctools_include('modal');
   ctools_modal_add_js('ajax-responder');
   ctools_modal_add_js('modal');
-  
   
   $type_name = node_type_get_name($node);
   $title = t('<em>Edit @type</em> @title', 
@@ -469,12 +448,28 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
   $commands = ctools_modal_form_wrapper($node->type . '_node_form', $form_state);
 
   if (!empty($form_state['executed']) && empty($form_state['rebuild'])) {
-
+      $node = $form_state['node'];
       // overwrite commands.
       $commands = array();
 
       ctools_add_js('ajax-responder');
       $commands[] = ctools_modal_command_dismiss();
+      //Send new item data to the client.
+      $new_item_data = array(
+        'knowledgemap' => array(
+          'new_item_data' => array(
+            'item_type' => $node->field_item_type[LANGUAGE_NONE][0]['value'],
+            'title' => $node->title,
+            'body' => $node->body[LANGUAGE_NONE][0]['value'],
+          ),
+        ),
+      );
+      $commands[] = ajax_command_settings($new_item_data, TRUE);
+      $commands[] = ajax_command_invoke(
+          'body', 
+          'returnFromEditSave', 
+          array( $node->nid )
+      );
 //      if ($force_page_reload) {
 //        $commands[] = ctools_ajax_command_reload();
 //      }

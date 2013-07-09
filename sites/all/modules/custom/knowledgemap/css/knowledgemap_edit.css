@@ -27,3 +27,17 @@
   border: 1px #888 solid;
   background-color: #CCCCCC;
 }
+
+.km-item footer {
+  position: absolute;
+  right: 0.1em;
+  bottom: 0.1em;
+  font-size: 2em;
+  line-height: 1em;
+  margin: 0;
+  padding: 0;
+}
+
+.connection-control:hover {
+  color: red;
+}
