@@ -12,6 +12,12 @@ var evilGlobalController;
       this.km_rep = settings.knowledgemap.knowledgemap_rep;
       var drawing_id = settings.knowledgemap.drawing_dom_id;
       this.$drawing_area = $('#' + drawing_id);
+      this.$drawing_area.resizable({ handles: "s" });
+      this.$itemToolbar = {}; //Make it later.
+      this.$connectionToolbar = {}; //Make it later.
+      this.$connectionFrom = {}; //Item title for toolbar. 
+      this.$connectionTo = {}; //Item title for toolbar. 
+      this.maxY = 0; //Highest Y coord.
       //Selected item.
       this.selectedItem = '';
       this.selectedConnection = '';
@@ -22,24 +28,37 @@ var evilGlobalController;
         controller.setJsPlumbDefaults();
         controller.drawAllItems();
         controller.drawAllConnections();
+        controller.adjustDrawingHeight();
         jsPlumb.bind("connection", function(info, evnt) {
           controller.makeNewConnection(info, evnt);
         });            
-        jsPlumb.bind("connectionDetached", function(info, evnt) {
-          //console.log("Deattach:" + info.connection);
-        });  
+//        jsPlumb.bind("connectionDetached", function(info, evnt) {
+//          console.log("Deattach:" + info.connection);
+//        });
       });
       //Set up the Add button.
-      $("#add-km-item").click(function() {
+      $("#add-km-item").click(function(evnt) {
+        controller.clearSelection();
+        //If already in add, exit state.
+        if ( controller.$drawing_area.state == 'add') {
+          //Exit add mode.
+          evnt.stopPropagation();
+          controller.$drawing_area.exitAddMode();
+          return;
+        }
         //Move into adding state.
+        evnt.stopPropagation();
         controller.$drawing_area.addClass("adding-state");
         controller.$drawing_area.notify(
-                "Click in the drawing area to add a new item.\nEsc to cancel.");
+              "Click in the drawing area to add a new item.\n"
+            + "Click Add again to cancel.");
         controller.$drawing_area.state = 'add';
         return false; //No propagation. 
       });
       //Create the add-new form.
       this.createAddForm();
+      //Create the floating toolbars.
+      this.createFloatingToolbars();
       done_once = true;
     },
     //Create a toolbar for thr drawing area.
@@ -51,18 +70,142 @@ var evilGlobalController;
               '</div>'
               );
     },
+    createFloatingToolbars: function() {
+      var itemToolbar = $(
+          "<div id='km-item-toolbar' class='knowledgemap-toolbar'>"
+        +   "<div id='km-item-show-details' "
+        +        "class='knowledgemap-toolbar-link'>Details</div>"
+        + "</div>"
+      );
+      controller.$drawing_area.append(itemToolbar);
+      controller.$itemToolbar = itemToolbar;
+      $("#km-item-show-details").click(function(evnt) {
+        //Get the selected item's data.
+        var itemNid = controller.selectedItem.nid;
+        var itemData = controller.km_rep.km_items[itemNid];
+        //Get a viewer for it.
+        var viewer = controller.getKmItemViewer(itemData);
+        viewer.open();
+      });
+      //Set up the connection toolbar.
+      var connectionToolbar = $(
+          "<div id='km-connection-toolbar' class='knowledgemap-toolbar'>"
+        +   "<div class='km-connection-from-to'>"
+        +     "From: <span id='km-connection-from'/>"
+        +   "</div>"
+        +   "<div class='km-connection-from-to'>"
+        +     "To: <span id='km-connection-to'/>"
+        +   "</div>"
+        +   "<div id='km-connection-reinforcing' "
+        +        "class='knowledgemap-toolbar-link'>Switch to reinforcing</div>"
+        +   "<div id='km-connection-required' "
+        +        "class='knowledgemap-toolbar-link'>Switch to required</div>"
+        +   "<div id='km-connection-delete' "
+        +        "class='knowledgemap-toolbar-link'>Delete</div>"
+        + "</div>"
+      );
+      controller.$drawing_area.append(connectionToolbar);
+      //Cache in controller.
+      controller.$connectionToolbar = connectionToolbar;
+      controller.$connectionFrom = $("#km-connection-from");
+      controller.$connectionTo = $("#km-connection-to");
+      $("#km-connection-reinforcing").click(function(evnt) {
+        //Switch from required to reinforcing.
+        controller.switchConnectionRequired( "reinforcing" );
+      });
+      $("#km-connection-required").click(function(evnt) {
+        //Switch from reinforcing to required.
+        controller.switchConnectionRequired( "required" );
+      });
+      $("#km-connection-delete").click(function(evnt) {
+        //Delete a connection.
+        controller.deleteConnection( );
+      });
+    },
+    switchConnectionRequired: function( newType ) {
+      //Confirm.
+      if ( ! confirm("Are you sure you want to change the connection type?") ) {
+        return;
+      }
+      //Change the type of the selected connection.
+      //Change the km data rep.
+      var connectionRid = controller.selectedConnection.rid;
+      controller.km_rep.connections[connectionRid].required = newType;
+      //Get the selected connection's data.
+      var connectionData = controller.km_rep.connections[connectionRid];
+      //Save to the server.
+      // @todo Show swirly thing.
+      $.ajax({
+        async: false,
+        type: "POST",
+        url: Drupal.settings.basePath + 'set-connection-required-ajax',
+        data: {
+          'rid' : connectionData.rid,
+          'required' : connectionData.required
+        },
+        success: function(data, textStatus, jqXHR) {
+          if ( data.status == 'success' ) {
+            //Change the display.
+            var display = connectionData.display;
+            var style = controller.computeConnPaintStyle( display );
+            display.setPaintStyle( style );
+          }
+          else {
+            alert(data.message);
+          }
+        },
+        fail: function(jqXHR, textStatus) {
+          alert( "Request failed: " + textStatus );
+        }
+      });
+    },
+    deleteConnection: function( ) {
+      //Confirm.
+      if ( ! confirm("Are you sure you want to delete the connection?") ) {
+        return;
+      }
+      //Change the km data rep.
+      var rid = controller.selectedConnection.rid;
+      //Save to the server.
+      // @todo Show swirly thing.
+      $.ajax({
+        async: false,
+        type: "POST",
+        url: Drupal.settings.basePath + 'delete-connection-ajax',
+        data: {
+          'rid' : rid
+        },
+        success: function(data, textStatus, jqXHR) {
+          if ( data.status == 'success' ) {
+            //Change the display.
+            var display = controller.selectedConnection.display;
+            jsPlumb.detach( display );
+            //Remove the connection from the km rep.
+            delete controller.km_rep.km_items[rid];
+            //Unselect.
+            controller.clearSelection();
+          }
+          else {
+            alert(data.message);
+          }
+        },
+        fail: function(jqXHR, textStatus) {
+          alert( "Request failed: " + textStatus );
+        }
+      });
+    },
     add_methods_to_drawing_area: function() {
       this.$drawing_area.notify = function(message) {
         $("#drawing-message")
                 .hide()
                 .html(message)
                 .show('medium');
-      }
+      };
       this.$drawing_area.clear_notification = function() {
         $("#drawing-message")
                 .hide('medium')
                 .html('');
-      }
+      };
       this.$drawing_area.state = 'normal';
       this.$drawing_area.click(function(evnt) {
         if (controller.$drawing_area.state == "add") {
@@ -97,17 +240,55 @@ var evilGlobalController;
       }
 
     },
+    adjustDrawingHeight : function() {
+      //Adjust resize range, since max height may have changed.
+      // @todo Speed up by checking just items or connections, depending on
+      //what the user changed. But this is tricky. E.g., dragging an item
+      //changes the positions of connectors.
+      controller.computeMaxY();
+      var currentSizerHeight = controller.$drawing_area.outerHeight();
+      if ( controller.maxY > currentSizerHeight ) {
+        controller.$drawing_area.resizable({ minHeight: controller.maxY + 10 });
+        controller.$drawing_area.height( controller.maxY + 10 );
+      }
+    },
+    computeMaxY : function() {
+      //What is the largest Y axis value to be shown?
+      var maxHeight = controller.maxY;
+      var itemDisplay;
+      var connDisplay;
+      var bottom;
+      //Loop over items.
+      for ( var i in controller.km_rep.km_items ) {
+        itemDisplay = controller.km_rep.km_items[i].display;
+        bottom = itemDisplay.position().top + itemDisplay.outerHeight();
+        if ( bottom > maxHeight ) {
+          maxHeight = bottom;
+        }
+      } // End loop over items.
+      //Loop over connections.
+      for ( i in controller.km_rep.connections ) {
+        connDisplay = controller.km_rep.connections[i].display.getConnector();
+        bottom = connDisplay.y + connDisplay.h;
+        if ( bottom > maxHeight ) {
+          maxHeight = bottom;
+        }
+      } // End loop over connections.
+      controller.maxY = maxHeight;
+    },
     clearSelection : function() {
       //Clear the item selection
       if ( controller.selectedItem ) {
         $("#" + controller.selectedItem.domId).removeClass("selected");
         controller.selectedItem = '';
+        controller.$itemToolbar.hide();
       }
       if ( controller.selectedConnection ) {
         var conn = controller.selectedConnection.display;
         controller.selectedConnection = '';
         var style = controller.computeConnPaintStyle( conn );
         conn.setPaintStyle( style );
+        controller.$connectionToolbar.hide();
       }      
     },
     setJsPlumbDefaults : function() {
@@ -150,10 +331,14 @@ var evilGlobalController;
       //Draw all the items in the knowledge map.
       var items = this.km_rep.km_items;
       for ( var index in items ) {
-        controller.drawItem( items[index] );
+        //Last param - don't adjust size of drawing element now.
+        controller.drawItem( items[index], true );
       };
     },
-    drawItem : function (itemData) {
+    drawItem : function (itemData, skipAdjustDrawingHeight ) {
+      //skipAdjustDrawingHeight is true if drawItem should not check whether 
+      //the item changes the max height of all elements in the drawing.
+      //This is false, except when drawing the initial items.
       var html =
           "<div id='km-item-" + itemData.nid + "' "
           +      "class='km-item " + itemData.item_type + "'>"
@@ -175,27 +360,9 @@ var evilGlobalController;
         "left": parseInt(itemData.coord_x),
         "top": parseInt(itemData.coord_y)
       });
+      //Set up select item click.
       $item.click( function(evnt) {
-        //Clicked on an item. 
-        var newDomId = $(evnt.currentTarget).attr('id');
-        var newNid = newDomId.replace("km-item-", "");
-        //Clicked on selected item?
-        if ( controller.selectedItem && newDomId == controller.selectedItem.domId ) {
-          //Unselect it.
-          controller.clearSelection();
-          evnt.stopPropagation();
-        }
-        else {
-          //Unselect the old one.
-          controller.clearSelection();
-          //Select the new item.
-          controller.selectedItem = {
-            'domId' : newDomId,
-            'nid' : newNid
-          };
-          $("#" + newDomId).addClass("selected");
-          evnt.stopPropagation();
-        }
+        controller.itemClicked ( evnt );
       });
       $item.dblclick(function(evnt) {
         //Double-clicked on an item. 
@@ -214,43 +381,137 @@ var evilGlobalController;
       jsPlumb.draggable(
         $item, {
           containment : "parent",
+          start : function(evnt, ui) {
+            controller.$itemToolbar.hide();
+            controller.$connectionToolbar.hide();
+          },
           stop : function(evnt, ui) {
             //WHen KM item dragged, save its new position.
             controller.saveNewPosition( evnt, ui );
+            controller.adjustDrawingHeight();
           }
         }
       );
       //Append to the drawing.
       this.$drawing_area.append($item);
-      //Adjust map dimensions to fit new item.
-      //Compute pos of right edge of item.
-      var itemRight = $item.position().left + $item.outerWidth();
-      //Add a bit for look.
-      var itemRightExtra = itemRight + 10;
-      //Check drawing area width.
-      if ( itemRightExtra > this.$drawing_area.width() ) {
-        this.$drawing_area.width( itemRightExtra );
+      //Store ref to it in km map rep.
+      controller.km_rep.km_items[itemData.nid].display = $item;
+      //Check whether it pushed the drawing bottom down.
+      if ( ! skipAdjustDrawingHeight ) {
+        controller.adjustDrawingHeight();
       }
-      //Compute pos of item bottom.
-      var itemBottom = $item.position().top + $item.outerHeight();
-      //Add a bit for look.
-      var itemBottomExtra = itemBottom + 10;
-      //Check drawing area width.
-      if ( itemBottomExtra > this.$drawing_area.height() ) {
-        this.$drawing_area.height( itemBottomExtra );
-      }      
+    },
+    itemClicked : function ( evnt ) {
+      //Clicked on an item. 
+      if ( controller.$drawing_area.state == "add" ) {
+        controller.$drawing_area.exitAddMode();
+      }
+      var newDomId = $(evnt.currentTarget).attr('id');
+      var newNid = newDomId.replace("km-item-", "");
+      var $newItemClicked = $("#" + newDomId);
+      //Clicked on new (not currently selected) item?
+      if ( ! controller.selectedItem || newDomId != controller.selectedItem.domId ) {
+        //Unselect the old one.
+        controller.clearSelection();
+        //Select the new item.
+        controller.selectedItem = {
+          'domId' : newDomId,
+          'nid' : newNid
+        };
+        //Highlight the item.
+        $("#" + newDomId).addClass("selected");
+      }
+      //Show the toolbar.
+      controller.positionItemToolbar( $newItemClicked );
+      controller.$itemToolbar.show('fast');
+      evnt.stopPropagation();
+    },
+    prepareConnectionToolbar : function ( connectionData ) {
+      if ( connectionData.required == "required" ) {
+        $('#km-connection-reinforcing').show();
+        $('#km-connection-required').hide();
+      }
+      else {
+        $('#km-connection-reinforcing').hide();
+        $('#km-connection-required').show();
+      }
+      controller.$connectionFrom.html(
+        controller.km_rep.km_items[ connectionData.from_nid ].title
+      );
+      controller.$connectionTo.html(
+        controller.km_rep.km_items[ connectionData.to_nid ].title
+      );
     },
     updateItemFields : function ( nid ) {
       $("#km-item-" + nid + " header h1").html(this.km_rep.km_items[nid].title); 
+    },
+    positionItemToolbar : function( $item ) {
+      var toolbarHeight = controller.$itemToolbar.outerHeight();
+      var toolbarWidth = controller.$itemToolbar.outerWidth();
+      var itemTop = $item.position().top;
+      var itemLeft = $item.position().left;
+      var itemWidth = $item.outerWidth();
+      var itemHeight = $item.outerHeight();
+      var drawingAreaWidth = controller.$drawing_area.width();
+      var drawingAreaHeight = controller.$drawing_area.height();
+      
+      var top = itemTop - toolbarHeight;
+      if ( top <= 10 ) {
+        top = 10;
+      }
+      if ( top > drawingAreaHeight ) {
+        top = drawingAreaHeight - toolbarHeight - 10;
+      }
+      
+      var left = itemLeft + itemWidth;
+      if ( (left + toolbarWidth) > drawingAreaWidth ) {
+        left = drawingAreaWidth - toolbarWidth - 10;
+      }
+      
+      controller.$itemToolbar
+          .css('left', left)
+          .css('top', top);
+    },
+    positionConnectionToolbar : function( $connection ) {
+      var toolbarHeight = controller.$connectionToolbar.outerHeight();
+      var toolbarWidth = controller.$connectionToolbar.outerWidth();
+      var connectionTop = $connection.getConnector().y;
+      var connectionLeft = $connection.getConnector().x;
+      var connectionWidth = $connection.getConnector().w;
+      var connectionHeight = $connection.getConnector().h;
+      var drawingAreaWidth = controller.$drawing_area.width();
+      var drawingAreaHeight = controller.$drawing_area.height();
+      
+      var top = connectionTop + connectionHeight/2 + 10;
+      if ( top <= 10 ) {
+        top = 10;
+      }
+      if ( (top + toolbarHeight) > drawingAreaHeight ) {
+        top = drawingAreaHeight - toolbarHeight - 10;
+      }
+      
+      if ( left <= 10 ) {
+        left = 10;
+      }
+      var left = connectionLeft + ( connectionWidth / 2 + 10 );
+      if ( (left + toolbarWidth) > drawingAreaWidth ) {
+        left = drawingAreaWidth - toolbarWidth - 10;
+      }
+      controller.$connectionToolbar
+          .css('left', left)
+          .css('top', top);
     },
     drawAllConnections : function() {
       //Draw all the connections in the knowledge map.
       var connections = this.km_rep.connections;
       for ( var index in connections ) {
-        controller.drawConnection( connections[index] );
+        controller.drawConnection( connections[index], true );
       }
     },
-    drawConnection : function(connData) {
+    drawConnection : function( connData, skipAdjustDrawingHeight ) {
+      //skipAdjustDrawingHeight is true if drawItem should not check whether 
+      //the connection changes the max height of all elements in the drawing.
+      //This is false, except when drawing the initial connections.
       var connection = jsPlumb.connect({
         source : "km-item-" + connData.from_nid, 
         target : "km-item-" + connData.to_nid,
@@ -262,38 +523,54 @@ var evilGlobalController;
       );
       //Store ref to the new connection in the map array.
       controller.km_rep.connections[connData.rid].display = connection;
+      //Check whether it pushed the drawing bottom down.
+      if ( ! skipAdjustDrawingHeight ) {
+        this.adjustDrawingHeight();
+      }
       connection.bind("click", function(conn, evnt) {
         controller.connectionClicked( conn, evnt );
       });
     },
-    connectionClicked : function( conn, evnt ) {
-      var rid = conn.getParameter('rid');
-      //Unselect if clicked on selected conn.
-      if ( controller.selectedConnection 
-              && controller.selectedConnection.rid == rid ) {
-        controller.clearSelection();
-        evnt.stopPropagation();
-      }
-      else {
+    connectionClicked : function( clickedConnJsPlumbDisplayObject, evnt ) {
+      //User clicked on a connection.
+      //The parameter is the JsPlumb connection object that was clicked on.
+      //Could have clicked on the currently selected connection, 
+      //or a new one.
+      var clickedRid = clickedConnJsPlumbDisplayObject.getParameter('rid');
+      var connectionData = controller.km_rep.connections[clickedRid];
+      //Clicked on new (not currently selected) connection?
+      if ( ! controller.selectedConnection 
+              || controller.selectedConnection.rid != clickedRid ) {
         //Clicked on a conn not selected.
         controller.clearSelection();
         controller.selectedConnection = {
-          'rid' : rid,
-          'display' : conn
+          'rid' : clickedRid,
+          'display' : clickedConnJsPlumbDisplayObject
         };
-        conn.setPaintStyle( controller.computeConnPaintStyle( conn ) );
-        evnt.stopPropagation();
+        clickedConnJsPlumbDisplayObject.setPaintStyle( 
+          controller.computeConnPaintStyle( 
+            clickedConnJsPlumbDisplayObject 
+          ) 
+        );
       }
+      //Reposition connection toolbar.
+      controller.positionConnectionToolbar( clickedConnJsPlumbDisplayObject );
+      //Prep the connection toolbar for display.
+      controller.prepareConnectionToolbar( connectionData );
+      controller.$connectionToolbar.show('fast');
+      evnt.stopPropagation();
     },
-    computeConnPaintStyle : function( conn ) {
+    computeConnPaintStyle : function( connJsPlumbDisplayObject ) {
       //Compute the style for a connection, based on its type, and whether
       //it is selected.
-      var rid = conn.getParameter('rid');
+      //conn is a jsPlumb display object.
+      var targetObjectRid = connJsPlumbDisplayObject.getParameter('rid');
+      //Is the passed in object selected by the user?
       var selected = ( 
            controller.selectedConnection
-        && controller.selectedConnection.rid == rid 
+        && controller.selectedConnection.rid == targetObjectRid 
       );
-      var required = controller.km_rep.connections[rid].required;
+      var required = controller.km_rep.connections[targetObjectRid].required;
       var base = $.extend( {}, 
                       selected 
                         ? controller.selectedPaintStyle 
@@ -318,6 +595,7 @@ var evilGlobalController;
         .hide()
         .dialog({
           autoOpen: false,
+          dialogClass: "no-close",
           height: 500,
           width: 700,
           modal: true,
@@ -335,6 +613,7 @@ var evilGlobalController;
                 //Create data record.
                 var newItem = controller.createNewItemFromInput();
                 $.ajax({
+                  async: false,
                   type: "POST",
                   url: Drupal.settings.basePath + 'add-km-item-ajax',
                   data: newItem,
@@ -354,7 +633,7 @@ var evilGlobalController;
                   },
                   fail: function (jqXHR, textStatus) {
                     alert( "Request failed: " + textStatus );
-                  },
+                  }
                 });
               }
             },
@@ -411,12 +690,15 @@ var evilGlobalController;
       //Check whether the connection is allowed. Modify if necessary.
       if ( this.checkConnection( connInfo ) ) {
         //Tell the server about it.
-        this.saveConnectionToServer( connInfo );
+        this.saveConnection( connInfo );
         //Set the style of the connection.
         var connection = connInfo.connection;
         connection.setPaintStyle(
             controller.computeConnPaintStyle( connection )
         );
+        connection.bind("click", function(conn, evnt) {
+          controller.connectionClicked( conn, evnt );
+        });
       }
     },
     checkConnection: function ( connInfo ) {
@@ -567,7 +849,7 @@ var evilGlobalController;
         },
       });
     },
-    saveConnectionToServer : function ( connInfo ) {
+    saveConnection : function ( connInfo ) {
       //Save data about a new connection to the server.
       //@todo Spinny thing.
       var sourceNid = connInfo.sourceId.replace("km-item-", "");

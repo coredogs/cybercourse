@@ -1,12 +1,18 @@
 .km-drawing {
-  border: 2px #CCCCCC solid;
+  border: 1px #444 solid;
   display: inline-block;
   min-height: 200px;
   width: 100%;
   position: relative;
+  /* User cannot select content for copy/paste. */
+  -webkit-user-select: none; /* webkit (safari, chrome) browsers */
+  -moz-user-select: none; /* mozilla browsers */
+  -khtml-user-select: none; /* webkit (konqueror) browsers */
+  -ms-user-select: none; /* IE10+ */
 }
 
 .km-item {
+  color: #444;
   font-size: 0.8em;
   border: 1px solid black;
   padding: 0;
@@ -21,7 +27,6 @@
 
 .km-item header {
   padding: 5px;
-  /*border-bottom: 1px solid black;*/
 }
 .km-item header h1 {
   font-size: 120%;
@@ -36,7 +41,7 @@
 }
 
 .km-item .km-item-type {
-  color: #999;
+  color: #888;
   font-size: 90%
 }
 
@@ -80,23 +85,46 @@
   border-radius: 6px;
 }
 
-/*
-svg.km-conn path {
-  stroke: blue;
-  stroke-width: 2;
-  stroke-opacity: 0.5;
+.no-close .ui-dialog-titlebar-close {
+  display: none;
 }
 
-svg.km-conn.required path {
-  
+.knowledgemap-toolbar {
+  position: absolute;
+  display: none;
+  z-index: 200;
+  padding: 5px;
+  border: 1px #1E90FF solid;
+  border-radius: 4px;
+  background-color: rgba(30, 144, 255, 0.5);
+  -moz-box-shadow:0px 0px 10px 4px rgba(30, 144, 255, 0.5);
+  -webkit-box-shadow:0px 0px 10px 4px rgba(30, 144, 255, 0.5);
+  box-shadow:0px 0px 10px 4px rgba(30, 144, 255, 0.5);
 }
 
-svg.km-conn.reinforcing path:first-of-type{
-  stroke-dasharray: 4, 4;
+.knowledgemap-toolbar .knowledgemap-toolbar-link {
+  float: left;
+  margin: 5px;
+  border: 1px solid #CCCCCC;
+  padding: 5px;
+  background-color: #EEEEEE;
+  corner-radius: 4px;
+  font-size: 70%;
+  cursor: pointer;
 }
 
-svg.km-conn.selected path{
-  stroke-width: 4;
-  stroke: rgba(255, 0, 0, 0.5);
+.knowledgemap-toolbar .km-connection-from-to {
+  font-size: 70%;
+  opacity: 1;
+  background-color: #87CEFA;
+  padding: 5px;
 }
-*/
+
+.ui-resizable-s {
+  height: 10px;
+  background-color: #EEEEEE;
+  background-repeat: no-repeat;
+  background-image: url('gripper.png');
+  background-position: center center;
+  border-top: 1px solid #CCC;
+}

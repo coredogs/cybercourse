@@ -48,21 +48,38 @@ function knowledgemap_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
+  $items['delete-item-ajax'] = array(
+    'page callback' => 'knowledgemap_delete_item',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+//  $items['confirm-delete-km-item/%'] = array(
+//    'page callback' => 'knowledgemap_confirm_delete',
+//    'page arguments' => array(1),
+//    'access callback' => TRUE,
+//    'type' => MENU_CALLBACK,
+//  );
+//  $items['delete-km-item-confirmed/%'] = array(
+//    'page callback' => 'knowledgemap_delete_confirmed',
+//    'page arguments' => array(1),
+//    'access callback' => TRUE,
+//    'type' => MENU_CALLBACK,
+//  );
   //User made a new connection. Save it.
   $items['save-new-connection'] = array(
     'page callback' => 'knowledgemap_save_new_connection',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  $items['confirm-delete-km-item/%'] = array(
-    'page callback' => 'knowledgemap_confirm_delete',
-    'page arguments' => array(1),
+  //Save connection required field for a connection. AJAX call.
+  $items['set-connection-required-ajax'] = array(
+    'page callback' => 'knowledgemap_set_connection_required',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  $items['delete-km-item-confirmed/%'] = array(
-    'page callback' => 'knowledgemap_delete_confirmed',
-    'page arguments' => array(1),
+  //User wants to delete a connection.
+  $items['delete-connection-ajax'] = array(
+    'page callback' => 'knowledgemap_delete_connection',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -588,4 +605,140 @@ function knowledgemap_save_new_connection() {
     ));
     drupal_exit();
   }
+}
+
+/**
+ * Set the required field of a connection. AJAX call.
+ * @throws Exception Something bad happened. 
+ */
+function knowledgemap_set_connection_required() {
+  try {
+    //Check that required data is in call.
+    if (    ! isset( $_POST['rid'] ) 
+         || ! isset( $_POST['required'] )
+       ) {
+      throw new Exception(
+          'knowledgemap_set_connection_type: Required connection data missing. 
+            Need rid, and required.'
+      );
+    }
+    //Get data from call.
+    $rid = $_POST['rid'];
+    //@todo check relation exists.
+    $required = $_POST['required'];
+    if ( $required != 'required' && $required != 'reinforcing' ) {
+      throw new Exception(
+          'knowledgemap_set_connection_type: Bad required option: ' . $required
+      );
+    }
+    //Edit the new relation.
+    $relation = relation_load($rid);
+    if ( ! $relation ) {
+      throw new Exception(
+          'knowledgemap_set_connection_type: Relation did not load. rid: ' 
+            . $rid
+      );
+    }
+    $relation->field_required[LANGUAGE_NONE][0]['value'] = $required;
+    //Save it.
+    relation_save($relation);
+    //Return success flag.
+    drupal_json_output( array( 
+        'status' => 'success',
+        'message' => 'Required field saved.',
+        'rid' => $rid,
+    ));
+    drupal_exit();  
+  } catch (Exception $e) {
+    $message = knowledgemap_log_exception($e);
+    drupal_json_output( array( 
+        'status' => 'error',
+        'message' => $message,
+    ));
+    drupal_exit();
+  }  
+}
+
+/**
+ * Delete a connection. AJAX call.
+ * @throws Exception Something bad happened. 
+ */
+function knowledgemap_delete_connection() {
+  try {
+    //Check that required data is in call.
+    if (    ! isset( $_POST['rid'] ) 
+       ) {
+      throw new Exception(
+          'Required connection data missing. Need rid.'
+      );
+    }
+    //Get data from call.
+    $rid = $_POST['rid'];
+    //Check that the relation exists.
+    $relation = relation_load($rid);
+    if ( ! $relation ) {
+      throw new Exception(
+          'Relation did not load. rid: ' 
+            . $rid
+      );
+    }
+    //Remove it.
+    relation_delete($rid);
+    //Return success flag.
+    drupal_json_output( array( 
+        'status' => 'success',
+        'message' => 'Relation deleted.',
+        'rid' => $rid,
+    ));
+    drupal_exit();  
+  } catch (Exception $e) {
+    $message = knowledgemap_log_exception($e);
+    drupal_json_output( array( 
+        'status' => 'error',
+        'message' => 'knowledgemap_delete_connection: ' . $message,
+    ));
+    drupal_exit();
+  }  
+}
+
+
+/**
+ * Delete an item. AJAX call.
+ * This will delete all connections as well.
+ * @throws Exception Something bad happened. 
+ */
+function knowledgemap_delete_item() {
+  try {
+    //Check that required data is in call.
+    if ( ! isset( $_POST['nid'] ) ) {
+      throw new Exception(
+          'Required item data missing. Need nid.'
+      );
+    }
+    //Get data from call.
+    $nid = $_POST['nid'];
+    //Check that the node exists.
+    $node = node_load($nid);
+    if ( ! $node ) {
+      throw new Exception(
+          'Node did not load. nid: ' . $nid
+      );
+    }
+    //Remove it.
+    node_delete($nid);
+    //Return success flag.
+    drupal_json_output( array( 
+        'status' => 'success',
+        'message' => 'Item deleted.',
+        'nid' => $nid,
+    ));
+    drupal_exit();  
+  } catch (Exception $e) {
+    $message = knowledgemap_log_exception($e);
+    drupal_json_output( array( 
+        'status' => 'error',
+        'message' => 'knowledgemap_delete_item: ' . $message,
+    ));
+    drupal_exit();
+  }  
 }

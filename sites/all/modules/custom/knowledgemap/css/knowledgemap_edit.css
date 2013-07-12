@@ -42,5 +42,15 @@
   color: red;
 }
 
-
+/* Links on the item view for edit and delete. */
+.km-item-action-link {
+  float: right;
+  margin: 5px;
+  border: 1px solid #CCCCCC;
+  padding: 5px;
+  background-color: #EEEEEE;
+  corner-radius: 4px;
+  font-size: 70%;
+  cursor: pointer;  
+}
 

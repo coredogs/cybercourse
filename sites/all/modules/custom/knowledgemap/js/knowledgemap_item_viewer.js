@@ -7,8 +7,8 @@ function KmItemViewer( itemData ) {
   var htmlElData = this.makeDialogHtml();
   this.itemData.dialogDomId = htmlElData.dialogDomId;
   jQuery("body").append(htmlElData.html);
-  //Add the edit button to the footer.
-  this.addEditLink( htmlElData.dialogDomId, this.itemData.nid );
+  //Add the action buttons to the footer.
+  this.addActionLlinks( htmlElData.dialogDomId, this.itemData.nid );
   var dialogOptions = {
     autoOpen : false
   };
@@ -75,7 +75,64 @@ KmItemViewer.prototype.makeDialogHtml = function() {
    };
 }
 
-KmItemViewer.prototype.addEditLink = function( dialogDomId, kmItemNid ) {
+
+KmItemViewer.prototype.addActionLlinks = function( dialogDomId, kmItemNid ) {
+  //Create edit link.
+  //Does some magic to simulate the logic of CTools modal links.
+  var editLink = this.addEditLink( kmItemNid );
+  //Add the button to the footer.
+  jQuery('#' + dialogDomId + " footer").append( editLink );
+  //Same for delete button, but it's simpler to create.
+  var $deleteLink = this.addDeleteLink( kmItemNid );
+  $deleteLink.click(function(evnt) {
+    if ( ! confirm("Are you sure you want to delete this item?") ) {
+      return;
+    }
+    var nid = jQuery(evnt.target).attr("data-nid");
+    jQuery.ajax({
+      async: false,
+      type: "POST",
+      url: Drupal.settings.basePath + 'delete-item-ajax',
+      data: { 'nid' : nid },
+      success: function(data, textStatus, jqXHR) {
+        if ( data.status == 'success' ) {
+          //Close viewer.
+          jQuery("#km-item-dialog-" + nid).dialog("close");
+          //Get ref to display object.
+          var itemDisplay = evilGlobalController.km_rep.km_items[nid].display;
+          //Remove from screen.
+          jsPlumb.detachAllConnections(itemDisplay)
+          itemDisplay.remove();
+          //Kill rep data for the item.
+          delete evilGlobalController.km_rep.km_items[nid];
+          //Remove all connections to/from the item.
+          var connData;
+          for ( var index in evilGlobalController.km_rep.connections ) {
+            connData = evilGlobalController.km_rep.connections[ index ];
+            if ( connData.from_nid == nid || connData.to_nid == nid ) {
+              //Remove the connection.
+              //jsPlumb.detach( connData.display );
+              //Drop map data.
+              delete evilGlobalController.km_rep.connections[index];
+            } //End nid matches.
+          }//End for
+        }//End AJAX success.
+        else {
+          alert(data.message);
+        }
+      },
+      fail: function (jqXHR, textStatus) {
+        alert( "Request failed: " + textStatus );
+      },
+    });
+    
+    
+    evnt.stopPropagation();
+  });
+  jQuery('#' + dialogDomId + " footer").append( $deleteLink );
+}
+
+KmItemViewer.prototype.addEditLink = function( kmItemNid ) {
   var originalLink = jQuery(".km-item-edit-link-original");
   var newLink = originalLink.clone();
   var $newLink = jQuery(newLink);
@@ -85,8 +142,7 @@ KmItemViewer.prototype.addEditLink = function( dialogDomId, kmItemNid ) {
   $newLink
       .attr("href", href)
       .removeClass('km-item-edit-link-original')
-      .addClass('km-item-edit-link');
-  
+      .addClass('km-item-edit-link km-item-action-link');
   //Copied from ctools modal.js. Registers the new link with the modal logic.
   $newLink.click(Drupal.CTools.Modal.clickAjaxLink);
   // Create a drupal ajax object
@@ -98,9 +154,19 @@ KmItemViewer.prototype.addEditLink = function( dialogDomId, kmItemNid ) {
   }
   var base = $newLink.attr('href');
   Drupal.ajax[base] = new Drupal.ajax(base, newLink, element_settings);
+  return $newLink;
+}
 
-  //Add the button to the footer.
-  jQuery('#' + dialogDomId + " footer").append($newLink);
+KmItemViewer.prototype.addDeleteLink = function( kmItemNid ) {
+  var link = 
+        "<a id='km-item-delete-link-" + kmItemNid + "' "
+      +     "data-nid='" + kmItemNid + "' "
+      +     "href='#'" //Click code does the server call.
+      +     "class='km-item-action-link' "
+      +     "title='Premanently delete this item.'>"
+      +   "Delete"
+      + "</a>";
+  return jQuery(link);
 }
 
 jQuery.fn.returnFromEditSave = function(nid) {
