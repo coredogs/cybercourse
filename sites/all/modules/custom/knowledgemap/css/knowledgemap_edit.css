@@ -54,3 +54,25 @@
   cursor: pointer;  
 }
 
+.km-help-content {
+  margin-left: 2em;
+  padding: 5px;
+  border: 1px solid #999;
+  border-radius: 6px;
+  background-color: #F8F8F8;
+  
+}
+
+/* For the create new item form. */
+.km-input-field-container{
+  margin-top: 2em;
+  margin-bottom: 2em;
+  
+}
+
+.km-input-field-hint {
+  font-size: 80%;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+

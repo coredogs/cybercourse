@@ -142,7 +142,8 @@ KmItemViewer.prototype.addEditLink = function( kmItemNid ) {
   $newLink
       .attr("href", href)
       .removeClass('km-item-edit-link-original')
-      .addClass('km-item-edit-link km-item-action-link');
+      .addClass('km-item-edit-link km-item-action-link')
+      .show();
   //Copied from ctools modal.js. Registers the new link with the modal logic.
   $newLink.click(Drupal.CTools.Modal.clickAjaxLink);
   // Create a drupal ajax object
@@ -184,4 +185,5 @@ jQuery.fn.returnFromEditSave = function(nid) {
   }
   itemViewer.updateFields();
   evilGlobalController.updateItemFields( nid );
+  evilGlobalController.redrawItem( nid );
 }

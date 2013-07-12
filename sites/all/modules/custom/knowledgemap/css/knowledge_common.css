@@ -120,11 +120,18 @@
   padding: 5px;
 }
 
-.ui-resizable-s {
+#edit-field-km .ui-resizable-s {
   height: 10px;
   background-color: #EEEEEE;
   background-repeat: no-repeat;
   background-image: url('gripper.png');
   background-position: center center;
   border-top: 1px solid #CCC;
+}
+
+/* Shows the resize handle on dialogs. */
+.ui-dialog .ui-resizable-se {
+    right:0 !important;
+    bottom:0 !important;
+    background-position: -64px -224px !important;
 }

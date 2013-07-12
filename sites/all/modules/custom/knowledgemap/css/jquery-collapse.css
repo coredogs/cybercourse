@@ -1,0 +1,22 @@
+/* 
+For the help collapse on the add form.
+*/
+
+#km-add-item-help p:first-of-type {
+  font-size: 1em;
+  font-weight: normal;
+}
+
+#km-add-item-help p:first-of-type span {
+  padding-left: 15px;
+}
+
+#km-add-item-help p:first-of-type a {
+  background: url("sprite.png") no-repeat 1px 5px; /* 15px 13px; */
+  font-size: 1em;
+  font-weight: normal;
+}
+
+#km-add-item-help p:first-of-type.open a { 
+  background-position: 1px -31px; /*13px -25px;  */
+}

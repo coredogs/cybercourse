@@ -3,12 +3,112 @@
   <head>
     <title>Form test</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+    <script src="../libs/jquery-collapse/src/jquery.collapse.js"></script>
+    <style>
+      label {
+        width: 6em;
+        display: inline-block;
+        text-align: right;
+        vertical-align: top;
+      }
+      .km-input-field-inner-container {
+        display: inline-block;
+        vertical-align: top;
+      }
+/*      .km-input-field-hint {
+        margin-left: 6em;
+      }*/
+    </style>
   </head>
   <body>
     <div>TODO write content</div>
+    
+    <p>Please enter a name for the knowledge item, and pick its type.</p>
+    
+    <div data-collapse>
+      <p>Help</p>
+      
+      <div>
+
+      <p>The name should be just a few words, like "Taking photographs" or
+        "Depth of field." </p>
+
+      <p>Item types are either knowledge elements, or experiences.</p>
+
+      <ul>
+        <li>
+          Knowledge elements are things students learn. There are two
+          types of knowledge elements:
+          <ul>
+            <li>Skills. Things that students learn how to do. E.g., 
+            "Taking photographs."</li>
+            <li>Concepts. Ideas students learn, e.g., "Depth of field."</li>
+          </ul>
+        </li>
+        <li>
+          Experiences are things students do to help them learn. There are four
+          types of knowledge elements:
+          <ul>
+            <li>Explanations. Didactic content to read or watch. 
+              E.g., "Taking good photos."
+            </li>
+            <li>
+              Examples. Samples of concepts or skills. Can be stories. 
+              E.g., "Good and bad photos," "Paula shoots a picnic."
+            </li>
+            <li>
+              Exercises. Things that students do.
+              E.g., "Pick the best photo."
+            </li>
+            <li>
+              Patterns. Common ways of doing things.
+              E.g., "Photographing social events."
+            </li>
+          </ul>
+        </li>
+
+      </ul>
+      </div>
+    </div>
+    
+
     <form>
-Title:<input type='text' name='add-new-title' id='add-new-title'><br>"
-Type: <input type='text' name='add-new-type' id='add-new-type'>"
+      <div class="km-input-field-container">
+        <label for="km-item-name">Name</label>
+        <div class="km-input-field-inner-container">
+          <input type="text" id="km-item-name" spellcheck 
+                 placeholder="E.g., Taking photographs" required autofocus
+                 title="Name of this item, e.g., Taking photographs"/>
+          <p class="km-input-field-hint">
+            Name of this item, e.g., Taking photographs.
+          </p>
+        </div>
+      </div>
+      <div class="km-input-field-container">
+        <label for="km-item-type">Type</label>
+        <div class="km-input-field-inner-container">
+          <select id="km-item-type" title="What type of item is this?">
+            <option value="not selected">- Choose one -</option>
+            <optgroup label="Knowledge item">
+              <option value="skill">Skill</option>
+              <option value="concept">Concept</option>
+            </optgroup>
+            <optgroup label="Experience">
+              <option value="explanation">Explanation</option>
+              <option value="example">Example</option>
+              <option value="exercise">Exercise</option>
+              <option value="pattern">Pattern</option>
+            </optgroup>
+          </select>
+          <p class="km-input-field-hint">
+            Item type, e.g., Skill.
+          </p>
+        </div>
+      </div>
     </form>
   </body>
 </html>
+
+
+

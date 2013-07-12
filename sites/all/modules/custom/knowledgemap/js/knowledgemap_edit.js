@@ -8,6 +8,7 @@ var evilGlobalController;
       if (done_once) {
         return;
       }
+      // @todo Show swirly thing.
       //Set some convenience vars.
       this.km_rep = settings.knowledgemap.knowledgemap_rep;
       var drawing_id = settings.knowledgemap.drawing_dom_id;
@@ -21,6 +22,14 @@ var evilGlobalController;
       //Selected item.
       this.selectedItem = '';
       this.selectedConnection = '';
+      //Hide the link created by CTools for modal form.
+      $(".km-item-edit-link-original").hide();
+      //Load the HTML for the add form.
+      //Dom id of container of both instructions and form.
+      this.addItemComtainerDomId = ''; 
+      //Dom id of the form. It's inside this.addItemComtainerDomId.
+      this.addItemFormDomId = ''; 
+      this.loadAddFormHtml(); 
       //Add a toolbar to the drawing.
       this.create_toolbar();
       this.add_methods_to_drawing_area();
@@ -55,11 +64,34 @@ var evilGlobalController;
         controller.$drawing_area.state = 'add';
         return false; //No propagation. 
       });
-      //Create the add-new form.
-      this.createAddForm();
       //Create the floating toolbars.
       this.createFloatingToolbars();
       done_once = true;
+    },
+    loadAddFormHtml : function() {
+      //Load the HTML for the add form from the server.
+      $.ajax({
+        type: "POST",
+        url: Drupal.settings.basePath + 'get-add-form-content-ajax',
+        success: function(data, textStatus, jqXHR) {
+          if ( data.status == 'success' ) {
+            $("body").append(data.form);
+            controller.addItemFormDomId = data.form_dom_id;
+            controller.addItemComtainerDomId = data.container_dom_id;
+            $("#" + data.container_dom_id).hide();
+            var helpDomId = data.help_dom_id;
+            $("#" + helpDomId).collapse();
+            //Set up the dialog.
+            controller.createAddForm();
+          }
+          else {
+            alert(data.message);
+          }
+        },
+        fail: function(jqXHR, textStatus) {
+          alert( "Request failed: " + textStatus );
+        }
+      });
     },
     //Create a toolbar for thr drawing area.
     create_toolbar: function() {
@@ -583,35 +615,29 @@ var evilGlobalController;
       return base;
     },
     createAddForm: function() {
-      var formHtml = "<form id='add-new-form'>"
-              + "Title:<input type='text' name='add-new-title' id='add-new-title'><br>"
-              + "Type: <input type='text' name='add-new-type' id='add-new-type'>"
-              + "<input type='hidden' name='coord_x' id='coord_x'>"
-              + "<input type='hidden' name='coord_y' id='coord_y'>"
-              + "<input type='hidden' name='km_nid' id='km_nid'>"
-              + "</form>";
-      $("body").append(formHtml);
-      $("#add-new-form")
+      $("#" + controller.addItemComtainerDomId)
         .hide()
         .dialog({
           autoOpen: false,
           dialogClass: "no-close",
-          height: 500,
+          height: 540,
           width: 700,
           modal: true,
           title: "Add new item",
           buttons: {
             "Save": function() {
-              var newTitle = $('#add-new-title').val();
-              var newType = $('#add-new-type').val();
-              var errorMessage = controller.checkNewItemData(newTitle, newType);
+              var newName = $('#km-item-name').val();
+              var newType = $('#km-item-type').val();
+              var errorMessage = controller.checkNewItemData(newName, newType);
               if ( errorMessage != '') {
                 alert(errorMessage);
               }
               else {
                 var $dialogRef = $(this);
                 //Create data record.
-                var newItem = controller.createNewItemFromInput();
+                var newItem = controller.createNewItemFromInput(
+                    newName, newType
+                );
                 $.ajax({
                   async: false,
                   type: "POST",
@@ -646,10 +672,10 @@ var evilGlobalController;
           }
         }); //End .dialog.
     },
-    createNewItemFromInput: function() {
+    createNewItemFromInput: function( newName, newType ) {
       var newItem = {
-        'title' : $("#add-new-title").val(),
-        'item_type' : $("#add-new-type").val(),
+        'title' : newName,
+        'item_type' : newType,
         'coord_x' : $("#coord_x").val(),
         'coord_y' : $("#coord_y").val(),
         'km_nid' : Drupal.settings.knowledgemap.km_nid
@@ -667,8 +693,7 @@ var evilGlobalController;
       $('#add-new-type').val('');
       $("#coord_x").val(coord_x);
       $("#coord_y").val(coord_y);
- $('#add-new-type').val('example'); //TEMP      
-      $("#add-new-form").dialog("open");
+      $("#" + controller.addItemComtainerDomId).dialog("open");
     },
     checkNewItemData: function(itemTitle, itemType) {
       var msg = '';
@@ -886,7 +911,11 @@ var evilGlobalController;
           alert( "Request failed: " + textStatus + " You should refresh the page.");
         },
       });
-      
+    },
+    redrawItem : function( nid ) {
+      //Redraw an item. Called after returning from editing, 
+      //since the size of the item might have changed.
+      jsPlumb.repaint( controller.km_rep.km_items[nid].display );
     }
   };
   evilGlobalController = controller;
