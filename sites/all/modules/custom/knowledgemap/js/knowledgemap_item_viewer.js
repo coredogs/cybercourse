@@ -39,11 +39,11 @@ function KmItemViewer( itemData ) {
 }
 
 KmItemViewer.prototype.open = function() {
-  this.updateFields();
+  this.updateDialogDisplayFields();
   this.dialog.dialog("open");
 }
 
-KmItemViewer.prototype.updateFields = function() {
+KmItemViewer.prototype.updateDialogDisplayFields = function() {
   //Update the data the dialog is showing.
   
   var dialogDomId = this.itemData.dialogDomId;
@@ -171,9 +171,9 @@ KmItemViewer.prototype.addDeleteLink = function( kmItemNid ) {
 }
 
 jQuery.fn.returnFromEditSave = function(nid) {
-  //var currentItemData = evilGlobalController.getItemData( nid );
   //Get new data passed by the server edit code.
   var newItemData = Drupal.settings.knowledgemap.new_item_data;
+  var oldItemType = evilGlobalController.km_rep.km_items[nid].item_type;
   //Replace bits. Better way?
   evilGlobalController.km_rep.km_items[nid].title = newItemData.title;
   evilGlobalController.km_rep.km_items[nid].item_type = newItemData.item_type;
@@ -183,7 +183,14 @@ jQuery.fn.returnFromEditSave = function(nid) {
   if ( ! itemViewer ) {
     throw "Error: viewer not found for nid " + nid;
   }
-  itemViewer.updateFields();
+  //Update 
+  itemViewer.updateDialogDisplayFields();
   evilGlobalController.updateItemFields( nid );
+  //Did the item type change?
+  if ( newItemData.item_type != oldItemType ) {
+    evilGlobalController.editChangedItemType( 
+        nid, oldItemType, newItemData.item_type
+    ); 
+  }
   evilGlobalController.redrawItem( nid );
 }

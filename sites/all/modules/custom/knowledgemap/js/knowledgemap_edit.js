@@ -475,7 +475,11 @@ var evilGlobalController;
       );
     },
     updateItemFields : function ( nid ) {
+      //Update the fields showing on an item display.
       $("#km-item-" + nid + " header h1").html(this.km_rep.km_items[nid].title); 
+      $("#km-item-" + nid + " section.km-item-type").html(
+         capitaliseFirstLetter( this.km_rep.km_items[nid].item_type )
+      ); 
     },
     positionItemToolbar : function( $item ) {
       var toolbarHeight = controller.$itemToolbar.outerHeight();
@@ -916,6 +920,30 @@ var evilGlobalController;
       //Redraw an item. Called after returning from editing, 
       //since the size of the item might have changed.
       jsPlumb.repaint( controller.km_rep.km_items[nid].display );
+    },
+    editChangedItemType : function ( nid, oldItemType, newItemType ) {
+      //User changed the item type when editing the item.
+      //Change the classes on the item.
+      var display = controller.km_rep.km_items[ nid ].display;
+      display
+          .removeClass( oldItemType )
+          .addClass( newItemType );
+      //Any connections on this item?
+      var sourceConnections = jsPlumb.getConnections( 
+        { source: "km-item-" + nid }
+      );
+      var targetConnections = jsPlumb.getConnections( 
+        { target: "km-item-" + nid }
+      );
+      var connectionCount 
+          = sourceConnections.length + targetConnections.length;
+      if ( connectionCount > 0 ) {
+        alert( 
+              "You have changed the item type. Please check the "
+            + "connections to this item, to ensure that they "
+            + "still make sense."
+        );
+      }
     }
   };
   evilGlobalController = controller;
