@@ -8,13 +8,15 @@ define( 'DRAWING_ID_CACHE_NAME', 'knowledgemap_drawing_id_cache');
 
 module_load_include('inc', 'knowledgemap', 'knowledgemap.utils');
 
+/**
+ * Implements hook_init().
+ * Load CTools stuff needed for the node edit form.
+ */
 function knowledgemap_init() {
   ctools_include('ajax');
   ctools_include('modal');
   ctools_modal_add_js();
-// return;
-    drupal_add_js('misc/ajax.js');
-
+  drupal_add_js('misc/ajax.js');
 }
 
 /**
@@ -53,18 +55,6 @@ function knowledgemap_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-//  $items['confirm-delete-km-item/%'] = array(
-//    'page callback' => 'knowledgemap_confirm_delete',
-//    'page arguments' => array(1),
-//    'access callback' => TRUE,
-//    'type' => MENU_CALLBACK,
-//  );
-//  $items['delete-km-item-confirmed/%'] = array(
-//    'page callback' => 'knowledgemap_delete_confirmed',
-//    'page arguments' => array(1),
-//    'access callback' => TRUE,
-//    'type' => MENU_CALLBACK,
-//  );
   //User made a new connection. Save it.
   $items['save-new-connection'] = array(
     'page callback' => 'knowledgemap_save_new_connection',
@@ -85,7 +75,6 @@ function knowledgemap_menu() {
   );
   return $items;
 }
-
 
 /**
  * Implements hook_field_info(). 
@@ -151,13 +140,12 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
   if ( $new_node ) {
     $element[$delta] = array(
       '#type' => 'markup',
-      '#markup' => '<p>' . t('(Add KM items after knowledge map has been created.)') . '</p>',
+      '#markup' => '<p>' . t('(Add knowledge map items after knowledge map has been created.)') . '</p>',
     ) + $base;
     return $element;
   }
   //This is a node edit.
   $node = $form_state['node'];
-//  drupal_add_js('misc/ajax.js');
   //What is the DOM id of the drawing area?
   $nid = $node->nid;
   $drawing_dom_id 
@@ -167,26 +155,29 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
   $output = '';
   //Make container.
   $output .= 
-         knowledgemap_edit_template($drawing_dom_id);
+         knowledgemap_template($drawing_dom_id);
   //Make <div> for the drawing and item areas.
   $element[$delta] = array(
     '#type' => 'markup',
     '#markup' => $output,
   ) + $base;
   //Send the map data to the JS.
+  //Set some other settings at the same time.
   $knowledgemap_rep = knowledgemap_make_km_rep($node->nid);
   $settings = array(
     'drawing_dom_id' => $drawing_dom_id,
     'km_nid' => $nid, //The nid of the KM being shown.
     'knowledgemap_rep' => $knowledgemap_rep,
+    'mode' => 'edit', //Editing mode.
   );
   drupal_add_js(
       array('knowledgemap' => $settings),
       'setting'
   );
   //Add libraries.
+  ctools_include('ajax');
+  drupal_add_js('misc/ajax.js');  
   ctools_include('modal');
-  ctools_modal_add_js();
   ctools_modal_add_js('ajax-responder');
   ctools_modal_add_js('modal');
   drupal_add_library('system', 'ui.dialog');
@@ -228,17 +219,12 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
   );
   drupal_add_js(
       drupal_get_path('module', 'knowledgemap') 
-          . '/js/knowledgemap_common.js', 
-      'file'
-  );
-  drupal_add_js(
-      drupal_get_path('module', 'knowledgemap') 
-          . '/js/knowledgemap_edit.js', 
+          . '/js/knowledgemap.js', 
       'file'
   );
   drupal_add_css(
       drupal_get_path('module', 'knowledgemap') 
-          . '/css/knowledgemap_edit.css', 
+          . '/css/knowledgemap.css', 
       'file'
   );
   return $element;
@@ -350,20 +336,29 @@ function knowledgemap_add_item_ajax() {
  */
 function knowledgemap_form_alter(&$form, &$form_state, $form_id) {
   if ( $form_id == 'knowledge_map_node_node_form' ) {
-    //The KM edit form, NOT the item edit form.
-    global $base_url;
-    $km_item_edit_link = ctools_modal_text_button(
-        t('Edit'),
-        $base_url . '/edit-km-item/km-item-nid/nojs',
-        t('Edit'),
-        'km-item-edit-link-original'
-    );
-    $form['km_item_edit_link'] = array(
-      '#weight' => 500,
-      '#type' => 'markup',
-      '#markup' => $km_item_edit_link,
-    );
-    
+    //The KM form, NOT the KM item form.
+    //Only add a modal edit link for edits, not adds.
+    $new_node = TRUE;
+    if ( isset( $form_state['node'] ) ) {
+      if ( isset( $form_state['node']->nid ) && ! isset($node->is_new)) {
+        $new_node = FALSE;
+      }
+    }
+    if ( ! $new_node ) {
+      ctools_include('modal');
+      global $base_url;
+      $km_item_edit_link = ctools_modal_text_button(
+          t('Edit'),
+          $base_url . '/edit-km-item/km-item-nid/nojs',
+          t('Edit'),
+          'km-item-edit-link-original'
+      );
+      $form['km_item_edit_link'] = array(
+        '#weight' => 500,
+        '#type' => 'markup',
+        '#markup' => $km_item_edit_link,
+      );
+    }    
   }
   else if ( $form_id == 'knowledge_map_item_node_form' ) {
     //The KM item edit form.
@@ -754,14 +749,11 @@ function knowledgemap_delete_item() {
  * Return the content for making the add form. AJAX call.
  */
 function knowledgemap_get_add_form_content() {
-  $container_dom_id = 'km-add-new-item-container';
-  $form_dom_id = 'km-add-new-item-form';
-  $help_dom_id = 'km-add-item-help';
   $html = '
-<div id="' . $container_dom_id . '">
+<div id="km-add-new-item-container">
 <p>Please enter a name for the knowledge item, and pick its type.</p>
 
-<div data-collapse id="' . $help_dom_id . '">
+<div data-collapse id="km-add-item-help">
   <p><span>Help</span></p>
   <div class="km-help-content">
       <p>The name should be just a few words, like "Taking photographs" or
@@ -804,7 +796,7 @@ function knowledgemap_get_add_form_content() {
   </div>
 </div>
 
-    <form id="' . $form_dom_id . '">
+    <form id="km-add-new-item-form">
       <div class="km-input-field-container">
         <label for="km-item-name">Name</label>
         <div class="km-input-field-inner-container">
@@ -846,9 +838,6 @@ function knowledgemap_get_add_form_content() {
     drupal_json_output( array( 
         'status' => 'success',
         'form' => $html,
-        'form_dom_id' => $form_dom_id,
-        'container_dom_id' => $container_dom_id,
-        'help_dom_id' => $help_dom_id,
     ));
     drupal_exit();  
   } catch (Exception $e) {
@@ -858,5 +847,118 @@ function knowledgemap_get_add_form_content() {
         'message' => 'knowledgemap_get_add_form_content' . $message,
     ));
     drupal_exit();
+  }
+}
+
+/**
+ * Implements hook_field_formattter_info().
+ */
+function knowledgemap_field_formatter_info() {
+  return array(
+    'knowledgemap_formatter' => array(
+      'label' => t('Knowledge map'),
+//      'description' => t('Allow the user to view KMs.'),
+      'field types' => array('knowledgemap'),
+    ),
+  );
+}
+
+function knowledgemap_field_formatter_view($entity_type, $entity, $field, 
+    $instance, $langcode, $items, $display) {
+  $element = array();
+  $settings = $display['settings'];
+  switch ($display['type']) {
+    case 'knowledgemap_formatter':
+      foreach ($items as $delta => $item) {
+        //This only runs once. Always single valued.
+        //What is the DOM id of the drawing area?
+        $nid = $entity->nid;
+        $drawing_dom_id 
+            = knowledgemap_compute_drawing_id( $nid );
+        //Cache for later.
+        knowledgemap_store_in_cache( DRAWING_ID_CACHE_NAME, $drawing_dom_id );
+        $output = '';
+        //Make container.
+        $output .= 
+               knowledgemap_template($drawing_dom_id);
+        //Make <div> for the drawing and item areas.
+        $element[$delta] = array(
+          '#type' => 'markup',
+          '#markup' => $output,
+        ); // + $base;
+        //Send the map data to the JS.
+        //Set some other settings at the same time.
+        $knowledgemap_rep = knowledgemap_make_km_rep($entity->nid);
+        $settings = array(
+          'drawing_dom_id' => $drawing_dom_id,
+          'km_nid' => $nid, //The nid of the KM being shown.
+          'knowledgemap_rep' => $knowledgemap_rep,
+          'mode' => 'view', //Viewing mode.
+        );
+
+        drupal_add_js(
+            array('knowledgemap' => $settings),
+            'setting'
+        );
+      } // End for each.
+  
+      //Add libraries.
+    //  ctools_include('modal');
+    //  ctools_modal_add_js('ajax-responder');
+    //  ctools_modal_add_js('modal');
+      drupal_add_library('system', 'ui.dialog');
+      drupal_add_js(
+          drupal_get_path('module', 'knowledgemap') 
+              . '/libs/jsPlumb/jquery.jsPlumb-1.4.1-all-min.js', 
+          'file'
+      );
+      drupal_add_js(
+          drupal_get_path('module', 'knowledgemap') 
+              . '/libs/jquery-dialogextend/build/jquery.dialogextend.min.js', 
+          'file'
+      );
+  ////  drupal_add_js(
+  ////      drupal_get_path('module', 'knowledgemap') 
+  ////          . '/libs/jquery-collapse/src/jquery.collapse.js', 
+  ////      'file'
+  ////  );
+  //  drupal_add_css(
+  //      drupal_get_path('module', 'knowledgemap') 
+  //          . '/css/jquery-collapse.css', 
+  //      'file'
+  //  );
+    //Add the KM drawing code.
+      drupal_add_js(
+          drupal_get_path('module', 'knowledgemap') 
+              . '/js/knowledgemap_utils.js', 
+          'file'
+      );  
+      drupal_add_js(
+          drupal_get_path('module', 'knowledgemap') 
+              . '/js/knowledgemap_item_viewer.js', 
+          'file'
+      );
+      drupal_add_js(
+          drupal_get_path('module', 'knowledgemap') 
+              . '/js/knowledgemap.js', 
+          'file'
+      );
+      drupal_add_css(
+          drupal_get_path('module', 'knowledgemap') 
+              . '/css/knowledgemap.css', 
+          'file'
+      );      
+      break;
+  } // End switch.
+  return $element;
+}
+
+/**
+ * Implements hook_node_save.
+ */
+function knowledgemap_node_presave( $node ) {
+  if ( $node->type == 'knowledge_map_node' ) {
+    //Make sure there is something in the field.
+    $node->field_km[LANGUAGE_NONE][0]['value'] = 'place holder';
   }
 }

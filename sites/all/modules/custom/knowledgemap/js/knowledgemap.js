@@ -10,6 +10,8 @@ var evilGlobalController;
       }
       // @todo Show swirly thing.
       //Set some convenience vars.
+      //Mode - edit or view.
+      this.mode = settings.knowledgemap.mode;
       this.km_rep = settings.knowledgemap.knowledgemap_rep;
       var drawing_id = settings.knowledgemap.drawing_dom_id;
       this.$drawing_area = $('#' + drawing_id);
@@ -22,29 +24,63 @@ var evilGlobalController;
       //Selected item.
       this.selectedItem = '';
       this.selectedConnection = '';
-      //Hide the link created by CTools for modal form.
-      $(".km-item-edit-link-original").hide();
-      //Load the HTML for the add form.
-      //Dom id of container of both instructions and form.
-      this.addItemComtainerDomId = ''; 
-      //Dom id of the form. It's inside this.addItemComtainerDomId.
-      this.addItemFormDomId = ''; 
-      this.loadAddFormHtml(); 
-      //Add a toolbar to the drawing.
-      this.create_toolbar();
+      if ( this.mode == "edit" ) {
+        //Hide the link created by CTools for modal node edit form.
+        $(".km-item-edit-link-original").hide();
+        //Load the HTML for the add form.
+        this.loadAddFormHtml(); 
+        //Add a toolbar to the drawing.
+        this.createTopToolbar();
+      } // End mode == edit
       this.add_methods_to_drawing_area();
       jsPlumb.ready(function() {
         controller.setJsPlumbDefaults();
         controller.drawAllItems();
         controller.drawAllConnections();
         controller.adjustDrawingHeight();
-        jsPlumb.bind("connection", function(info, evnt) {
-          controller.makeNewConnection(info, evnt);
-        });            
+        if ( controller.mode == "edit" ) {
+          jsPlumb.bind("connection", function(info, evnt) {
+            controller.makeNewConnection(info, evnt);
+          });            
 //        jsPlumb.bind("connectionDetached", function(info, evnt) {
 //          console.log("Deattach:" + info.connection);
 //        });
+        }
       });
+      //Create the floating toolbars.
+      this.createFloatingToolbars();
+      done_once = true;
+    },
+    loadAddFormHtml : function() {
+      //Load the HTML for the add form from the server.
+      $.ajax({
+        type: "POST",
+        url: Drupal.settings.basePath + 'get-add-form-content-ajax',
+        success: function(data, textStatus, jqXHR) {
+          if ( data.status == 'success' ) {
+            $("body").append(data.form);
+            $("#km-add-new-item-container").hide();
+            $("#km-add-item-help").collapse();
+            //Set up the dialog.
+            controller.createAddForm();
+          }
+          else {
+            alert(data.message);
+          }
+        },
+        fail: function(jqXHR, textStatus) {
+          alert( "Request failed: " + textStatus );
+        }
+      });
+    },
+    //Create a toolbar for thr drawing area.
+    createTopToolbar: function() {
+      this.$drawing_area.prepend(
+              '<div class="km-toolbar">' +
+              '  <input id="add-km-item" type="button" class="form-submit" value="Add item" />' +
+              '   <span id="drawing-message"></span>' +
+              '</div>'
+              );
       //Set up the Add button.
       $("#add-km-item").click(function(evnt) {
         controller.clearSelection();
@@ -64,43 +100,6 @@ var evilGlobalController;
         controller.$drawing_area.state = 'add';
         return false; //No propagation. 
       });
-      //Create the floating toolbars.
-      this.createFloatingToolbars();
-      done_once = true;
-    },
-    loadAddFormHtml : function() {
-      //Load the HTML for the add form from the server.
-      $.ajax({
-        type: "POST",
-        url: Drupal.settings.basePath + 'get-add-form-content-ajax',
-        success: function(data, textStatus, jqXHR) {
-          if ( data.status == 'success' ) {
-            $("body").append(data.form);
-            controller.addItemFormDomId = data.form_dom_id;
-            controller.addItemComtainerDomId = data.container_dom_id;
-            $("#" + data.container_dom_id).hide();
-            var helpDomId = data.help_dom_id;
-            $("#" + helpDomId).collapse();
-            //Set up the dialog.
-            controller.createAddForm();
-          }
-          else {
-            alert(data.message);
-          }
-        },
-        fail: function(jqXHR, textStatus) {
-          alert( "Request failed: " + textStatus );
-        }
-      });
-    },
-    //Create a toolbar for thr drawing area.
-    create_toolbar: function() {
-      this.$drawing_area.prepend(
-              '<div class="km-toolbar">' +
-              '  <input id="add-km-item" type="button" class="form-submit" value="Add item" />' +
-              '   <span id="drawing-message"></span>' +
-              '</div>'
-              );
     },
     createFloatingToolbars: function() {
       var itemToolbar = $(
@@ -119,42 +118,49 @@ var evilGlobalController;
         var viewer = controller.getKmItemViewer(itemData);
         viewer.open();
       });
-      //Set up the connection toolbar.
-      var connectionToolbar = $(
-          "<div id='km-connection-toolbar' class='knowledgemap-toolbar'>"
-        +   "<div class='km-connection-from-to'>"
-        +     "From: <span id='km-connection-from'/>"
-        +   "</div>"
-        +   "<div class='km-connection-from-to'>"
-        +     "To: <span id='km-connection-to'/>"
-        +   "</div>"
-        +   "<div id='km-connection-reinforcing' "
-        +        "class='knowledgemap-toolbar-link'>Switch to reinforcing</div>"
-        +   "<div id='km-connection-required' "
-        +        "class='knowledgemap-toolbar-link'>Switch to required</div>"
-        +   "<div id='km-connection-delete' "
-        +        "class='knowledgemap-toolbar-link'>Delete</div>"
-        + "</div>"
-      );
-      controller.$drawing_area.append(connectionToolbar);
-      //Cache in controller.
-      controller.$connectionToolbar = connectionToolbar;
-      controller.$connectionFrom = $("#km-connection-from");
-      controller.$connectionTo = $("#km-connection-to");
-      $("#km-connection-reinforcing").click(function(evnt) {
-        //Switch from required to reinforcing.
-        controller.switchConnectionRequired( "reinforcing" );
-      });
-      $("#km-connection-required").click(function(evnt) {
-        //Switch from reinforcing to required.
-        controller.switchConnectionRequired( "required" );
-      });
-      $("#km-connection-delete").click(function(evnt) {
-        //Delete a connection.
-        controller.deleteConnection( );
-      });
+      if ( controller.mode == "edit" ) {
+        //Set up the connection toolbar.
+        var connectionToolbar = $(
+            "<div id='km-connection-toolbar' class='knowledgemap-toolbar'>"
+          +   "<div class='km-connection-from-to'>"
+          +     "From: <span id='km-connection-from'/>"
+          +   "</div>"
+          +   "<div class='km-connection-from-to'>"
+          +     "To: <span id='km-connection-to'/>"
+          +   "</div>"
+          +   "<div id='km-connection-reinforcing' "
+          +        "class='knowledgemap-toolbar-link'>Switch to reinforcing</div>"
+          +   "<div id='km-connection-required' "
+          +        "class='knowledgemap-toolbar-link'>Switch to required</div>"
+          +   "<div id='km-connection-delete' "
+          +        "class='knowledgemap-toolbar-link'>Delete</div>"
+          + "</div>"
+        );
+        controller.$drawing_area.append(connectionToolbar);
+        //Cache in controller.
+        controller.$connectionToolbar = connectionToolbar;
+        controller.$connectionFrom = $("#km-connection-from");
+        controller.$connectionTo = $("#km-connection-to");
+        $("#km-connection-reinforcing").click(function(evnt) {
+          //Switch from required to reinforcing.
+          controller.switchConnectionRequired( "reinforcing" );
+        });
+        $("#km-connection-required").click(function(evnt) {
+          //Switch from reinforcing to required.
+          controller.switchConnectionRequired( "required" );
+        });
+        $("#km-connection-delete").click(function(evnt) {
+          //Delete a connection.
+          controller.deleteConnection( );
+        });
+      }
     },
     switchConnectionRequired: function( newType ) {
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: switchConnectionRequired: not in edit mode.");
+        return;
+      }
       //Confirm.
       if ( ! confirm("Are you sure you want to change the connection type?") ) {
         return;
@@ -192,6 +198,11 @@ var evilGlobalController;
       });
     },
     deleteConnection: function( ) {
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: deleteConnection: not in edit mode.");
+        return;
+      }
       //Confirm.
       if ( ! confirm("Are you sure you want to delete the connection?") ) {
         return;
@@ -227,20 +238,27 @@ var evilGlobalController;
       });
     },
     add_methods_to_drawing_area: function() {
-      this.$drawing_area.notify = function(message) {
-        $("#drawing-message")
-                .hide()
-                .html(message)
-                .show('medium');
-      };
-      this.$drawing_area.clear_notification = function() {
-        $("#drawing-message")
-                .hide('medium')
-                .html('');
-      };
+      if ( controller.mode == "edit" ) {
+        this.$drawing_area.notify = function(message) {
+          $("#drawing-message")
+                  .hide()
+                  .html(message)
+                  .show('medium');
+        };
+        this.$drawing_area.clear_notification = function() {
+          $("#drawing-message")
+                  .hide('medium')
+                  .html('');
+        };
+      }
       this.$drawing_area.state = 'normal';
       this.$drawing_area.click(function(evnt) {
         if (controller.$drawing_area.state == "add") {
+          if ( controller.mode != "edit" ) {
+            //Should never happen.
+            console.log("Error: $drawing_area.click add: not in edit mode.");
+            return;
+          }
           controller.add_new_item(evnt.pageX, evnt.pageY);
           evnt.stopPropagation();
         }
@@ -253,6 +271,11 @@ var evilGlobalController;
         if ( evnt.keyCode == 27 ) {
           //User pressed ESC key.
           if ( controller.$drawing_area.state == "add" ) {
+            if ( controller.mode != "edit" ) {
+              //Should never happen.
+              console.log("Error: ESC pressed: not in edit mode.");
+              return;
+            }
             //Exit add mode.
             evnt.preventDefault();
             controller.$drawing_area.exitAddMode();
@@ -326,11 +349,10 @@ var evilGlobalController;
     setJsPlumbDefaults : function() {
       jsPlumb.importDefaults({
         Anchor: "AutoDefault",
-        Endpoint: "Rectangle",
+        Endpoint: "Blank",
         Detachable: false,
-        ReattachConnections : true,
+        ReattachConnections : false,
         ConnectionOverlays : [ "PlainArrow" ]
-//        ConnectionOverlays : [[ "PlainArrow", { width : 20 } ]]
       });
       //Paint styles for connections.
       //They need to be merged to get the right effects.
@@ -371,6 +393,9 @@ var evilGlobalController;
       //skipAdjustDrawingHeight is true if drawItem should not check whether 
       //the item changes the max height of all elements in the drawing.
       //This is false, except when drawing the initial items.
+      var footer = (controller.mode == "edit")
+              ? "<footer><div class='connection-control'>●</div></footer>"
+              : '';
       var html =
           "<div id='km-item-" + itemData.nid + "' "
           +      "class='km-item " + itemData.item_type + "'>"
@@ -381,9 +406,7 @@ var evilGlobalController;
           + "<section class='km-item-type'>"
           +    capitaliseFirstLetter( itemData.item_type )
           + "</section> "
-          + "<footer>"
-          + "  <div class='connection-control'>●</div>"
-          + "</footer>"
+          + footer
           + "</div>";
       //Make a DOM element.
       var $item = $(html);
@@ -402,24 +425,30 @@ var evilGlobalController;
         var viewer = controller.getKmItemViewer(itemData);
         viewer.open();
       });
-      jsPlumb.makeSource(
-        $item, 
-        controller.defaultConnSourceAttribs
-      );
-      jsPlumb.makeTarget(
-          $item, controller.defaultConnTargetAttribs
-      );
+      if ( controller.mode == "edit" ) {
+        jsPlumb.makeSource(
+          $item, 
+          controller.defaultConnSourceAttribs
+        );
+        jsPlumb.makeTarget(
+            $item, controller.defaultConnTargetAttribs
+        );
+      }
       //Make the item draggable.
       jsPlumb.draggable(
         $item, {
           containment : "parent",
           start : function(evnt, ui) {
             controller.$itemToolbar.hide();
-            controller.$connectionToolbar.hide();
+            if ( controller.mode == "edit" ) {
+              controller.$connectionToolbar.hide();
+            }
           },
           stop : function(evnt, ui) {
-            //WHen KM item dragged, save its new position.
-            controller.saveNewPosition( evnt, ui );
+            if ( controller.mode == "edit" ) {
+              //When KM item dragged, save its new position.
+              controller.saveNewPosition( evnt, ui );
+            }
             controller.adjustDrawingHeight();
           }
         }
@@ -459,6 +488,11 @@ var evilGlobalController;
       evnt.stopPropagation();
     },
     prepareConnectionToolbar : function ( connectionData ) {
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: prepareConnectionToolbar: not in edit mode.");
+        return;
+      }
       if ( connectionData.required == "required" ) {
         $('#km-connection-reinforcing').show();
         $('#km-connection-required').hide();
@@ -509,6 +543,11 @@ var evilGlobalController;
           .css('top', top);
     },
     positionConnectionToolbar : function( $connection ) {
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: positionConnectionToolbar: not in edit mode.");
+        return;
+      }
       var toolbarHeight = controller.$connectionToolbar.outerHeight();
       var toolbarWidth = controller.$connectionToolbar.outerWidth();
       var connectionTop = $connection.getConnector().y;
@@ -563,11 +602,18 @@ var evilGlobalController;
       if ( ! skipAdjustDrawingHeight ) {
         this.adjustDrawingHeight();
       }
-      connection.bind("click", function(conn, evnt) {
-        controller.connectionClicked( conn, evnt );
-      });
+      if ( controller.mode == "edit" ) {
+        connection.bind("click", function(conn, evnt) {
+          controller.connectionClicked( conn, evnt );
+        });
+      }
     },
     connectionClicked : function( clickedConnJsPlumbDisplayObject, evnt ) {
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: connectionClicked: not in edit mode.");
+        return;
+      }
       //User clicked on a connection.
       //The parameter is the JsPlumb connection object that was clicked on.
       //Could have clicked on the currently selected connection, 
@@ -619,7 +665,12 @@ var evilGlobalController;
       return base;
     },
     createAddForm: function() {
-      $("#" + controller.addItemComtainerDomId)
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: createAddForm: not in edit mode.");
+        return;
+      }
+      $("#km-add-new-item-container")
         .hide()
         .dialog({
           autoOpen: false,
@@ -688,6 +739,11 @@ var evilGlobalController;
     },
     //User wants to add a new item at the clicked location.
     add_new_item: function(coord_x, coord_y) {
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: add_new_item: not in edit mode.");
+        return;
+      }
       //Kill the selection.
       controller.clearSelection();
       //Adjust X and Y to make them relative to the drawing area.
@@ -697,14 +753,17 @@ var evilGlobalController;
       $('#add-new-type').val('');
       $("#coord_x").val(coord_x);
       $("#coord_y").val(coord_y);
-      $("#" + controller.addItemComtainerDomId).dialog("open");
+      //Empty old data.
+      $("#km-item-name").val("");
+      $("#km-item-type").val("not selected");
+      $("#km-add-new-item-container").dialog("open");
     },
     checkNewItemData: function(itemTitle, itemType) {
       var msg = '';
       if ( ! itemTitle ) {
         msg += " Please enter a title.";
       }
-      if ( ! itemType ){
+      if ( ! itemType || itemType == "not selected" ){
         msg += " Please enter a type.";
       }
       return msg;
@@ -714,6 +773,11 @@ var evilGlobalController;
       return false;
     },
     makeNewConnection: function(connInfo, evnt) {
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: makeNewConnection: not in edit mode.");
+        return;
+      }
       //Kill the selection.
       controller.clearSelection();
       //Check whether the connection is allowed. Modify if necessary.
@@ -852,6 +916,11 @@ var evilGlobalController;
       return controller.kmItemViewers[ itemData.nid ];
     },
     saveNewPosition : function ( evnt, ui ) {
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: saveNewPosition: not in edit mode.");
+        return;
+      }
       //Save the new position of an item.
       var coord_x = ui.position.left;
       var coord_y = ui.position.top;
@@ -879,6 +948,11 @@ var evilGlobalController;
       });
     },
     saveConnection : function ( connInfo ) {
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: saveConnection: not in edit mode.");
+        return;
+      }
       //Save data about a new connection to the server.
       //@todo Spinny thing.
       var sourceNid = connInfo.sourceId.replace("km-item-", "");
@@ -922,6 +996,11 @@ var evilGlobalController;
       jsPlumb.repaint( controller.km_rep.km_items[nid].display );
     },
     editChangedItemType : function ( nid, oldItemType, newItemType ) {
+      if ( controller.mode != "edit" ) {
+        //Should never happen.
+        console.log("Error: editChangedItemType: not in edit mode.");
+        return;
+      }
       //User changed the item type when editing the item.
       //Change the classes on the item.
       var display = controller.km_rep.km_items[ nid ].display;

@@ -8,9 +8,10 @@
 function knowledgemap_field_schema($field) {
   $columns = array(
       'knowledgemap' => array(
-        'type' => 'text',
-        'size' => 'big',
+        'type' => 'varchar',
+        'length' => '20',
         'not null' => FALSE,
+        'default' => 'place holder',
     ),
   );
   return array(

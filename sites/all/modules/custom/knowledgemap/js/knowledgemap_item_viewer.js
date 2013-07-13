@@ -1,14 +1,16 @@
-
-
-
+/*
+ * An item viewer is a dialog that shows a KM item.
+ */
 
 function KmItemViewer( itemData ) {
   this.itemData = itemData;
   var htmlElData = this.makeDialogHtml();
   this.itemData.dialogDomId = htmlElData.dialogDomId;
   jQuery("body").append(htmlElData.html);
-  //Add the action buttons to the footer.
-  this.addActionLlinks( htmlElData.dialogDomId, this.itemData.nid );
+  if ( evilGlobalController.mode == "edit" ) {
+    //Add the action buttons to the footer.
+    this.addActionLlinks( htmlElData.dialogDomId, this.itemData.nid );
+  }
   var dialogOptions = {
     autoOpen : false
   };
@@ -45,7 +47,6 @@ KmItemViewer.prototype.open = function() {
 
 KmItemViewer.prototype.updateDialogDisplayFields = function() {
   //Update the data the dialog is showing.
-  
   var dialogDomId = this.itemData.dialogDomId;
   jQuery("#" + dialogDomId).dialog({ title: this.itemData.title });
 //  jQuery("#" + dialogDomId).attr('title', this.itemData.title);
@@ -77,6 +78,11 @@ KmItemViewer.prototype.makeDialogHtml = function() {
 
 
 KmItemViewer.prototype.addActionLlinks = function( dialogDomId, kmItemNid ) {
+  if ( evilGlobalController.mode != "edit" ) {
+    //Should never happen.
+    console.log("Error: addActionLlinks: not in edit mode.");
+    return;
+  }
   //Create edit link.
   //Does some magic to simulate the logic of CTools modal links.
   var editLink = this.addEditLink( kmItemNid );
@@ -133,6 +139,11 @@ KmItemViewer.prototype.addActionLlinks = function( dialogDomId, kmItemNid ) {
 }
 
 KmItemViewer.prototype.addEditLink = function( kmItemNid ) {
+  if ( evilGlobalController.mode != "edit" ) {
+    //Should never happen.
+    console.log("Error: addEditLink: not in edit mode.");
+    return;
+  }
   var originalLink = jQuery(".km-item-edit-link-original");
   var newLink = originalLink.clone();
   var $newLink = jQuery(newLink);
@@ -159,6 +170,11 @@ KmItemViewer.prototype.addEditLink = function( kmItemNid ) {
 }
 
 KmItemViewer.prototype.addDeleteLink = function( kmItemNid ) {
+  if ( evilGlobalController.mode != "edit" ) {
+    //Should never happen.
+    console.log("Error: addDeleteLink: not in edit mode.");
+    return;
+  }
   var link = 
         "<a id='km-item-delete-link-" + kmItemNid + "' "
       +     "data-nid='" + kmItemNid + "' "
@@ -171,6 +187,11 @@ KmItemViewer.prototype.addDeleteLink = function( kmItemNid ) {
 }
 
 jQuery.fn.returnFromEditSave = function(nid) {
+  if ( evilGlobalController.mode != "edit" ) {
+    //Should never happen.
+    console.log("Error: returnFromEditSave: not in edit mode.");
+    return;
+  }
   //Get new data passed by the server edit code.
   var newItemData = Drupal.settings.knowledgemap.new_item_data;
   var oldItemType = evilGlobalController.km_rep.km_items[nid].item_type;

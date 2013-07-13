@@ -42,9 +42,9 @@ function knowledgemap_compute_drawing_id( $id ) {
  * @param string $drawing_dom_id DOM id. 
  * @return string HTML.
  */
-function knowledgemap_edit_template( $drawing_dom_id ) {
+function knowledgemap_template( $drawing_dom_id ) {
   $output = '<div id="' . $drawing_dom_id . '" 
-    class="km-drawing resizable">
+    class="km-drawing resizable grippie">
        </div>';
   return $output;
 }

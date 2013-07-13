@@ -1,9 +1,10 @@
 .km-drawing {
-  border: 1px #444 solid;
+  border: 1px #ccc solid;
   display: inline-block;
   min-height: 200px;
   width: 100%;
   position: relative;
+  box-sizing: border-box;
   /* User cannot select content for copy/paste. */
   -webkit-user-select: none; /* webkit (safari, chrome) browsers */
   -moz-user-select: none; /* mozilla browsers */
@@ -26,21 +27,23 @@
 }
 
 .km-item header {
-  padding: 5px;
+  padding: 3px;
 }
 .km-item header h1 {
   font-size: 120%;
   font-weight: normal;
   padding: 0em;
   margin: 0;
+  line-height: 1;
 }
 
 .km-item section {
-  padding: 5px;
+  padding: 2px;
   float: left;
 }
 
 .km-item .km-item-type {
+  padding-left: 3px;
   color: #888;
   font-size: 90%
 }
@@ -121,12 +124,12 @@
 }
 
 #edit-field-km .ui-resizable-s {
-  height: 10px;
-  background-color: #EEEEEE;
-  background-repeat: no-repeat;
-  background-image: url('gripper.png');
-  background-position: center center;
-  border-top: 1px solid #CCC;
+  background: #eee url(grippie.png) no-repeat center 2px;
+  border: 1px solid #ddd;
+  border-top-width: 0;
+  cursor: s-resize;
+  height: 9px;
+  overflow: hidden;  
 }
 
 /* Shows the resize handle on dialogs. */
@@ -135,3 +138,86 @@
     bottom:0 !important;
     background-position: -64px -224px !important;
 }
+
+.ui-dialog .ui-dialog-content {
+  padding: 0.5em;
+}
+
+
+/* Editing stuff */
+
+.km-toolbar {
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+.km-toolbar a {
+  margin-right: 1em;
+}
+
+.adding-state {
+  cursor: crosshair;
+}
+
+.km-notify {
+  border: 2px #CCCCCC solid;
+  position: absolute;
+  bottom: 0;
+}
+
+.km-item-edit-link-original {
+  /*display: none;*/
+}
+
+.km-item-edit-link {
+  border: 1px #888 solid;
+  background-color: #CCCCCC;
+}
+
+.km-item footer {
+  position: absolute;
+  right: 0;
+  font-size: 2em;
+  line-height: 1em;
+  margin: 0;
+  padding: 0;
+}
+
+.connection-control:hover {
+  color: red;
+}
+
+/* Links on the item view for edit and delete. */
+.km-item-action-link {
+  float: right;
+  margin: 5px;
+  border: 1px solid #CCCCCC;
+  padding: 5px;
+  background-color: #EEEEEE;
+  corner-radius: 4px;
+  font-size: 70%;
+  cursor: pointer;  
+}
+
+.km-help-content {
+  margin-left: 2em;
+  padding: 5px;
+  border: 1px solid #999;
+  border-radius: 6px;
+  background-color: #F8F8F8;
+  
+}
+
+/* For the create new item form. */
+.km-input-field-container{
+  margin-top: 2em;
+  margin-bottom: 2em;
+  
+}
+
+.km-input-field-hint {
+  font-size: 80%;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
