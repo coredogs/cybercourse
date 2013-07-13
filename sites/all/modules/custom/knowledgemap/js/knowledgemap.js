@@ -116,7 +116,7 @@ var evilGlobalController;
         var itemData = controller.km_rep.km_items[itemNid];
         //Get a viewer for it.
         var viewer = controller.getKmItemViewer(itemData);
-        viewer.open();
+        viewer.open( evnt );
       });
       if ( controller.mode == "edit" ) {
         //Set up the connection toolbar.
@@ -415,15 +415,31 @@ var evilGlobalController;
         "left": parseInt(itemData.coord_x),
         "top": parseInt(itemData.coord_y)
       });
+      //Show its importance.
+      var importance = itemData.importance;
+      if ( importance == 'empty' ) {
+        $item.addClass('importance-empty');
+      }
+      else {
+        $item.css({
+          "border-width" : parseFloat(importance)/10 + "em"
+        });
+      }
       //Set up select item click.
       $item.click( function(evnt) {
         controller.itemClicked ( evnt );
       });
       $item.dblclick(function(evnt) {
         //Double-clicked on an item. 
+        var domId = $(evnt.currentTarget).attr('id');
+        var nid = domId.replace("km-item-", "");
+        var itemData = controller.km_rep.km_items[nid];
         //Get a viewer for it.
         var viewer = controller.getKmItemViewer(itemData);
-        viewer.open();
+        viewer.open( evnt );
+        evnt.stopImmediatePropagation();
+        evnt.stopPropagation();
+        evnt.preventDefault();
       });
       if ( controller.mode == "edit" ) {
         jsPlumb.makeSource(

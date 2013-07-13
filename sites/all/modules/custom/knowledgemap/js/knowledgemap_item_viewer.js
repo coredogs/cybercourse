@@ -40,16 +40,32 @@ function KmItemViewer( itemData ) {
   return this;
 }
 
-KmItemViewer.prototype.open = function() {
-  this.updateDialogDisplayFields();
-  this.dialog.dialog("open");
+KmItemViewer.prototype.open = function( evnt ) {
+  if ( ! evnt ) {
+    throw new Exception("Open viewer: no event.");
+  }
+  if ( this.dialog.dialog("isOpen") ) {
+    this.dialog.dialogExtend('restore');
+    this.getUserAttention();
+  }
+  else {
+    var domId = jQuery(evnt.currentTarget).attr('id');
+    this.updateDialogDisplayFields();
+    this.dialog.dialog("open");
+    //Position dialog at right of opened item.
+    this.dialog.dialog("widget").position({
+      my: 'left', at: 'right',of: "#" + domId});
+  }// @todo broken, check user intent stuff
+  //Hide item/connection toolbars.
+  evilGlobalController.$itemToolbar.hide();
+  evilGlobalController.$connectionToolbar.hide();
 }
 
 KmItemViewer.prototype.updateDialogDisplayFields = function() {
   //Update the data the dialog is showing.
   var dialogDomId = this.itemData.dialogDomId;
+  var itemData = this.itemData;
   jQuery("#" + dialogDomId).dialog({ title: this.itemData.title });
-//  jQuery("#" + dialogDomId).attr('title', this.itemData.title);
   jQuery("#" + dialogDomId + " .km-item-type")
       .html(capitaliseFirstLetter(this.itemData.item_type));
   jQuery("#" + dialogDomId + " .km-item-body")
@@ -184,6 +200,10 @@ KmItemViewer.prototype.addDeleteLink = function( kmItemNid ) {
       +   "Delete"
       + "</a>";
   return jQuery(link);
+}
+
+KmItemViewer.prototype.getUserAttention = function() {
+//  alert(9)
 }
 
 jQuery.fn.returnFromEditSave = function(nid) {

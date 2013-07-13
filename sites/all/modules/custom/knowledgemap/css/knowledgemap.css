@@ -88,6 +88,10 @@
   border-radius: 6px;
 }
 
+.km-item.importance-empty {
+  border: 0.2em dashed #CCC;
+}
+
 .no-close .ui-dialog-titlebar-close {
   display: none;
 }

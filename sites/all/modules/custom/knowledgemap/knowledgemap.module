@@ -239,21 +239,24 @@ function knowledgemap_make_km_rep($km_nid) {
   foreach( $view_results as $record ) {
     $nid = $record->nid;
     $title = $record->node_title;
+    $item_type = isset( $record->field_field_item_type[0]['raw']['value'] ) 
+        ? $record->field_field_item_type[0]['raw']['value'] : '';
+    $importance = isset( $record->field_field_importance[0]['raw']['value'] ) 
+        ? $record->field_field_importance[0]['raw']['value'] : 'empty';
     $body = isset( $record->field_body[0]['raw']['value'] ) 
         ? $record->field_body[0]['raw']['value'] : '';
     $coord_x = isset( $record->field_field_coord_x[0]['raw']['value'] ) 
         ? $record->field_field_coord_x[0]['raw']['value'] : '';
     $coord_y = isset( $record->field_field_coord_y[0]['raw']['value'] ) 
         ? $record->field_field_coord_y[0]['raw']['value'] : '';
-    $item_type = isset( $record->field_field_item_type[0]['raw']['value'] ) 
-        ? $record->field_field_item_type[0]['raw']['value'] : '';
     $km_items[$nid] = array(
       'nid' => $nid,
       'title' => $title,
+      'item_type' => $item_type,
+      'importance' => $importance,
       'body' => $body,
       'coord_x' => $coord_x,
       'coord_y' => $coord_y,
-      'item_type' => $item_type,
     );
   }
   //Get KM item connection data.
