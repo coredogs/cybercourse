@@ -67,9 +67,11 @@ KmItemViewer.prototype.updateDialogDisplayFields = function() {
   var itemData = this.itemData;
   jQuery("#" + dialogDomId).dialog({ title: this.itemData.title });
   jQuery("#" + dialogDomId + " .km-item-type")
-      .html(capitaliseFirstLetter(this.itemData.item_type));
+      .html( capitaliseFirstLetter( this.itemData.item_type ) );
   jQuery("#" + dialogDomId + " .km-item-body")
-      .html(capitaliseFirstLetter(this.itemData.body));
+      .html( this.itemData.body );
+  jQuery("#" + dialogDomId + " .km-item-importance span")
+      .html( this.itemData.importance );      
 }
 
 KmItemViewer.prototype.makeDialogHtml = function() {
@@ -83,7 +85,9 @@ KmItemViewer.prototype.makeDialogHtml = function() {
       + "  <div class='km-item-body'>"
       +      this.itemData.body
       + "  </div>"
-      + "  <footer>"
+      + "  <div class='km-item-importance'>"
+      +      "Importance: <span>" + this.itemData.importance + "</span>"
+      + "  </div>"      + "  <footer>"
       + "  </footer>"
       + "</div>";
    return { 
@@ -219,6 +223,7 @@ jQuery.fn.returnFromEditSave = function(nid) {
   evilGlobalController.km_rep.km_items[nid].title = newItemData.title;
   evilGlobalController.km_rep.km_items[nid].item_type = newItemData.item_type;
   evilGlobalController.km_rep.km_items[nid].body = newItemData.body;
+  evilGlobalController.km_rep.km_items[nid].importance = newItemData.importance;
   //Update the viewer.
   var itemViewer = evilGlobalController.kmItemViewers[ nid ];
   if ( ! itemViewer ) {
@@ -226,12 +231,13 @@ jQuery.fn.returnFromEditSave = function(nid) {
   }
   //Update 
   itemViewer.updateDialogDisplayFields();
-  evilGlobalController.updateItemFields( nid );
+  evilGlobalController.updateItemDisplay( jQuery("#km-item-" + nid) );
+//  evilGlobalController.updateItemFields( nid );
   //Did the item type change?
-  if ( newItemData.item_type != oldItemType ) {
-    evilGlobalController.editChangedItemType( 
-        nid, oldItemType, newItemData.item_type
-    ); 
-  }
+//  if ( newItemData.item_type != oldItemType ) {
+//    evilGlobalController.editChangedItemType( 
+//        nid, oldItemType, newItemData.item_type
+//    ); 
+//  }
   evilGlobalController.redrawItem( nid );
 }

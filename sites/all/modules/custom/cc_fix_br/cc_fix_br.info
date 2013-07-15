@@ -1,0 +1,5 @@
+name = Fix line breaks
+description = Input filter to replace [br] with HTML line breaks.
+package = Custom
+core = 7.x
+scripts[] = cc_fix_br.js

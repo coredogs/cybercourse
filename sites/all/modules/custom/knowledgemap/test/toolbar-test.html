@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+    <script src="../libs/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.min.js"></script>
+    <link rel="stylesheet"  type="text/css"
+          href="../libs/jquery-ui-1.10.3.custom/css/smoothness/jquery-ui-1.10.3.custom.min.css">
+    <style>
+      label {
+        width: 6em;
+        display: inline-block;
+        text-align: right;
+        vertical-align: top;
+      }
+      .km-input-field-inner-container {
+        display: inline-block;
+        vertical-align: top;
+      }
+/*      .km-input-field-hint {
+        margin-left: 6em;
+      }*/
+    </style>
+    <script>
+      $(document).ready(function(){
+        $( "button, input" ).button();
+        $('#b1').click(function() {
+          $('#b2').button({ disabled: true })
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="toolbar">
+      <input type="checkbox" id="check" />
+      <label for="check">Toggle</label>      
+      <button id="b1">Butt</button>
+      <button id="b2">Label</button>
+      <button id="b3">Button label</button>
+    </div>
+  </body>
+</html>

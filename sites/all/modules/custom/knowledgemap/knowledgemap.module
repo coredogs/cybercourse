@@ -164,11 +164,15 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
   //Send the map data to the JS.
   //Set some other settings at the same time.
   $knowledgemap_rep = knowledgemap_make_km_rep($node->nid);
+  //Get allowed item types.
+  $all_fields = field_info_fields();
+  $allowed_item_types = list_allowed_values($all_fields['field_item_type']);
   $settings = array(
     'drawing_dom_id' => $drawing_dom_id,
     'km_nid' => $nid, //The nid of the KM being shown.
     'knowledgemap_rep' => $knowledgemap_rep,
     'mode' => 'edit', //Editing mode.
+    'all_item_types' => $allowed_item_types,
   );
   drupal_add_js(
       array('knowledgemap' => $settings),
@@ -489,7 +493,14 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
           'new_item_data' => array(
             'item_type' => $node->field_item_type[LANGUAGE_NONE][0]['value'],
             'title' => $node->title,
-            'body' => $node->body[LANGUAGE_NONE][0]['value'],
+            'body' => 
+                isset( $node->body[LANGUAGE_NONE][0]['value'] )
+                  ? $node->body[LANGUAGE_NONE][0]['value']
+                  : '',
+            'importance' => 
+                isset( $node->field_importance[LANGUAGE_NONE][0]['value'] )
+                  ? $node->field_importance[LANGUAGE_NONE][0]['value']
+                  : 'empty',
           ),
         ),
       );

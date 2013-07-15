@@ -1,0 +1,160 @@
+<?php
+
+/**
+ * Implements hook_help().
+ */
+function characters_help($path, $arg) {
+  switch ($path) {
+      // Help for another path in the block module
+    case 'admin/help#characters':
+      return '<p>' . t('Helpy help help, <a href="@jquery">jQuery</a>.', 
+          array(
+            '@jquery' => 'http://jquery.com',
+          )) . '</p>';
+  }
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function characters_menu() {
+//  $items['admin/content/characters'] = array(
+//    'title' => 'Characters',
+//    'description' => 'Create, edit, and delete characters and poses.',
+//    'page callback' => 'characters_admin',
+//    'access arguments' => array('administer characters'),
+//    'type' => MENU_NORMAL_ITEM,
+//    'file' => 'characters.admin.inc',
+//  );
+  $items['characters/sheets'] = array(
+    'title' => 'Character sheets',
+    'description' => 'See a list of characters.',
+    'page callback' => 'characters_show_character_sheet_list',
+    'access callback' => 'characters_check_access_sheets',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['characters/sheets/%'] = array(
+    'title callback' => 'characters_sheet_title',
+    'title arguments' => array(2),
+    'description' => 'See poses for a character.',
+    'page callback' => 'characters_show_character_sheet',
+    'page arguments' => array(2),
+    'access callback' => 'characters_check_access_sheets',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+
+function characters_sheet_title( $nid ) {
+  $node = node_load($nid);
+  $title = t( 'Character sheet for @name', array('@name' => $node->title) );
+  return $title;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function characters_permission() {
+  return array(
+    'administer characters' => array(
+      'title' => t('Administer characters'),
+      'description' => t('Create, delete, and update characters.')
+    ),
+    'view character sheets' => array(
+      'title' => t('View character sheets'),
+      'description' => t('See characters and poses.')
+    ),
+  );
+}
+
+/**
+* Implements hook_entity_info_alter().
+*/
+function characters_entity_info_alter(&$entity_info) {
+  $entity_info['node']['view modes']['character_sheet'] = array(
+    'label' => t('Character sheet'),
+    'custom settings' => TRUE,
+  );
+}
+
+
+function characters_check_access_sheets() {
+  return 
+         user_access('administer characters') 
+      || user_access('view character sheets');
+}
+
+/**
+ * Show a list of links to character sheets.
+ */
+function characters_show_character_sheet_list() {
+  //Fetch character data.
+  $query = new EntityFieldQuery;
+  $query
+    ->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'character')
+    ->propertyCondition('status', 1)
+    ->propertyOrderBy('title');
+  $query_result = $query->execute();
+  //Fetch the character names.
+  $characters = array();
+  foreach ( $query_result['node'] as $nid => $value ) {
+    $node = node_load($nid);
+    $characters[$nid] = $node->title;
+  }
+  //Show the characters.
+  $output = array();
+  if ( sizeof( $characters ) == 0 ) {
+    //There are no characters to show.
+    $output['no characters'] = array(
+      '#type' => 'markup',
+      '#markup' => '<p>' . t('No characters have been created yet.') . '</p>',
+    );
+    return $output;
+  }
+  else {
+    //There are characters to show.
+    $output['intro'] = array(
+      '#type' => 'markup',
+      '#markup' => 
+             '<p>' 
+           .   ( sizeof( $characters ) == 1 )
+                  ? t('Here is the character that has been created.') 
+                  : t('Here are the characters that have been created.') 
+           . '</p>',
+    );
+    global $base_url;
+    foreach ( $characters as $nid => $title ) {
+      $output[$nid] = array(
+        '#type' => 'markup',
+        '#markup' => 
+              '<p class="character-link">'
+              . l( check_plain( $title ),  
+                   $base_url . '/characters/sheets/' . $nid 
+                 )
+            . '</p>'
+      );
+    } 
+  } //End there are characters to show.
+  return $output;
+}
+
+/**
+ * Show a character sheet.
+ * @param integer $char_nid The nid of the character to show.
+ */
+function characters_show_character_sheet( $char_nid ) {
+  //Load the node.
+  $node = node_load( $char_nid );
+  //Show it, using a special view mode.
+  $output = node_view($node, 'character_sheet');
+  if ( isset( $output['#contextual_links'] ) ) {
+    unset( $output['#contextual_links'] );
+  }
+  if ( isset( $output['links'] ) ) {
+    unset( $output['links'] );
+  }
+  return $output;
+}

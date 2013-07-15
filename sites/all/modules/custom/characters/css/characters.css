@@ -1,0 +1,14 @@
+/*
+Styles for the characters module.
+*/
+
+/* For the admin table. */
+.admin-char table {
+  width: 0;
+}
+
+.admin-char-desc {
+  padding-right: 4em;
+}
+
+

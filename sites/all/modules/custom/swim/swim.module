@@ -1,0 +1,42 @@
+<?php
+/**
+ * @todo Create SWIM text format at install.
+ */
+
+function swim_form_alter(&$form, &$form_state, $form_id) {
+//  $form['thing'] = array(
+//    '#markup' => '<p><button id="thing" type="button">Thing</button></p>',
+//  );
+//  
+  if ( strpos( $form_id, 'node' ) !== false ) {
+    if (module_invoke('ajax_markup', 'on')) {
+      drupal_add_js(drupal_get_path('module', 'swim') .'/js/swim.js');
+    }
+  }
+}
+
+/**
+* Implements hook_filter_info().
+*/
+function swim_filter_info() {
+  $filters['filter_swim'] = array(
+    'title' => t('SWIM'),
+    'description' => t('Show What I Mean'),
+//    'prepare callback' => '_dgd7_tip_prepare',
+    'process callback' => 'swim_process',
+//    'tips callback' => 'swim_tips',
+  );
+  return $filters;
+}
+
+//function swim_process($text, $filter, $format) {
+function swim_process($text, $filter, $format = 'SWIM', $langcode = 'und') {
+  $text = str_replace('[br]', '<br>', $text);
+  $text = str_replace('cat', 'dog', $text);
+  return $text;
+  
+}
+
+function swim_tips($filter, $format, $long = FALSE) {
+  return t('Failure is not an option. It comes standard.');
+}

@@ -1,0 +1,1 @@
+Splitter was in a dir in GetSimpe, maybe packaged as part of CK plugin.

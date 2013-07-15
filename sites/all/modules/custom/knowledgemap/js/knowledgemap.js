@@ -12,7 +12,15 @@ var evilGlobalController;
       //Set some convenience vars.
       //Mode - edit or view.
       this.mode = settings.knowledgemap.mode;
+      //Data about items and connecitons.
       this.km_rep = settings.knowledgemap.knowledgemap_rep;
+      //Valid item types.
+      this.validItemTypes = settings.knowledgemap.all_item_types;
+      //Make a string with class names derived from item types.
+      this.itemTypeClassNames = "";
+      for ( var typeName in this.validItemTypes ) {
+        this.itemTypeClassNames += typeName + " ";
+      }
       var drawing_id = settings.knowledgemap.drawing_dom_id;
       this.$drawing_area = $('#' + drawing_id);
       this.$drawing_area.resizable({ handles: "s" });
@@ -410,21 +418,20 @@ var evilGlobalController;
           + "</div>";
       //Make a DOM element.
       var $item = $(html);
-      //Set position.
-      $item.css({
-        "left": parseInt(itemData.coord_x),
-        "top": parseInt(itemData.coord_y)
-      });
-      //Show its importance.
-      var importance = itemData.importance;
-      if ( importance == 'empty' ) {
-        $item.addClass('importance-empty');
+      //Store ref to it in km map rep.
+      controller.km_rep.km_items[itemData.nid].display = $item;
+      //Set display elements.
+      controller.updateItemDisplay( $item );
+      //Add events to display for item.
+      controller.addEventsToItem( $item );
+      //Append to the drawing.
+      this.$drawing_area.append( $item );
+      //Check whether it pushed the drawing bottom down.
+      if ( ! skipAdjustDrawingHeight ) {
+        controller.adjustDrawingHeight();
       }
-      else {
-        $item.css({
-          "border-width" : parseFloat(importance)/10 + "em"
-        });
-      }
+    },
+    addEventsToItem : function( $item ){
       //Set up select item click.
       $item.click( function(evnt) {
         controller.itemClicked ( evnt );
@@ -468,15 +475,39 @@ var evilGlobalController;
             controller.adjustDrawingHeight();
           }
         }
+      );      
+    },
+    updateItemDisplay: function ( $itemDisplay ) {
+      //Update the displayed item.
+      //$itemDisplay is a div showing an item.
+      var domId = $itemDisplay.attr('id');
+      var nid = domId.replace("km-item-", "");
+      var itemData = controller.km_rep.km_items[nid];
+      //Update the fields showing on an item display.
+      $("#km-item-" + nid + " header h1").html( trimLR(itemData.title) ); 
+      $("#km-item-" + nid + " section.km-item-type").html( 
+        capitaliseFirstLetter( itemData.item_type )
       );
-      //Append to the drawing.
-      this.$drawing_area.append($item);
-      //Store ref to it in km map rep.
-      controller.km_rep.km_items[itemData.nid].display = $item;
-      //Check whether it pushed the drawing bottom down.
-      if ( ! skipAdjustDrawingHeight ) {
-        controller.adjustDrawingHeight();
+      //Show importance.
+      var importance = itemData.importance;
+      if ( itemData.importance == 'empty' ) {
+        $itemDisplay.addClass('importance-empty');
       }
+      else {
+        $itemDisplay.css({
+          "border-width" : parseFloat(importance)/10 + "em"
+        });
+      }
+      //Show the right class for the item type.
+      //Remove existing class name and add a new one.
+      $itemDisplay
+          .removeClass( controller.itemTypeClassNames )
+          .addClass(itemData.item_type);
+      //Set position.
+      $itemDisplay.css({
+        "left": parseInt(itemData.coord_x),
+        "top": parseInt(itemData.coord_y)
+      });
     },
     itemClicked : function ( evnt ) {
       //Clicked on an item. 
@@ -524,13 +555,13 @@ var evilGlobalController;
         controller.km_rep.km_items[ connectionData.to_nid ].title
       );
     },
-    updateItemFields : function ( nid ) {
-      //Update the fields showing on an item display.
-      $("#km-item-" + nid + " header h1").html(this.km_rep.km_items[nid].title); 
-      $("#km-item-" + nid + " section.km-item-type").html(
-         capitaliseFirstLetter( this.km_rep.km_items[nid].item_type )
-      ); 
-    },
+//    updateItemFields : function ( nid ) {
+//      //Update the fields showing on an item display.
+//      $("#km-item-" + nid + " header h1").html(this.km_rep.km_items[nid].title); 
+//      $("#km-item-" + nid + " section.km-item-type").html(
+//         capitaliseFirstLetter( this.km_rep.km_items[nid].item_type )
+//      ); 
+//    },
     positionItemToolbar : function( $item ) {
       var toolbarHeight = controller.$itemToolbar.outerHeight();
       var toolbarWidth = controller.$itemToolbar.outerWidth();
@@ -1010,36 +1041,36 @@ var evilGlobalController;
       //Redraw an item. Called after returning from editing, 
       //since the size of the item might have changed.
       jsPlumb.repaint( controller.km_rep.km_items[nid].display );
-    },
-    editChangedItemType : function ( nid, oldItemType, newItemType ) {
-      if ( controller.mode != "edit" ) {
-        //Should never happen.
-        console.log("Error: editChangedItemType: not in edit mode.");
-        return;
-      }
-      //User changed the item type when editing the item.
-      //Change the classes on the item.
-      var display = controller.km_rep.km_items[ nid ].display;
-      display
-          .removeClass( oldItemType )
-          .addClass( newItemType );
-      //Any connections on this item?
-      var sourceConnections = jsPlumb.getConnections( 
-        { source: "km-item-" + nid }
-      );
-      var targetConnections = jsPlumb.getConnections( 
-        { target: "km-item-" + nid }
-      );
-      var connectionCount 
-          = sourceConnections.length + targetConnections.length;
-      if ( connectionCount > 0 ) {
-        alert( 
-              "You have changed the item type. Please check the "
-            + "connections to this item, to ensure that they "
-            + "still make sense."
-        );
-      }
     }
+//    editChangedItemType : function ( nid, oldItemType, newItemType ) {
+//      if ( controller.mode != "edit" ) {
+//        //Should never happen.
+//        console.log("Error: editChangedItemType: not in edit mode.");
+//        return;
+//      }
+//      //User changed the item type when editing the item.
+//      //Change the classes on the item.
+//      var display = controller.km_rep.km_items[ nid ].display;
+//      display
+//          .removeClass( oldItemType )
+//          .addClass( newItemType );
+//      //Any connections on this item?
+//      var sourceConnections = jsPlumb.getConnections( 
+//        { source: "km-item-" + nid }
+//      );
+//      var targetConnections = jsPlumb.getConnections( 
+//        { target: "km-item-" + nid }
+//      );
+//      var connectionCount 
+//          = sourceConnections.length + targetConnections.length;
+//      if ( connectionCount > 0 ) {
+//        alert( 
+//              "You have changed the item type. Please check the "
+//            + "connections to this item, to ensure that they "
+//            + "still make sense."
+//        );
+//      }
+//    }
   };
   evilGlobalController = controller;
 })(jQuery);
