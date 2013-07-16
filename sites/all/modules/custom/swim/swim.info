@@ -2,5 +2,4 @@ name = SWIM
 description = Show what I mean editing interface.
 package = CyberCourse
 core = 7.x
-files[] = swim.module
-stylesheets[all][] = css/swim.css
+dependencies[] = ckeditor

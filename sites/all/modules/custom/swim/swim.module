@@ -10,7 +10,34 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
 //  
   if ( strpos( $form_id, 'node' ) !== false ) {
     if (module_invoke('ajax_markup', 'on')) {
-      drupal_add_js(drupal_get_path('module', 'swim') .'/js/swim.js');
+      //Load JS for doing previews. Load it early, to set stuff up afore
+      //CK does its thing.
+      drupal_add_js(
+          drupal_get_path('module', 'swim') .'/js/swim.js',
+          array(
+            'group' => JS_DEFAULT,
+            'weight' => -20,
+          )
+      );
+      drupal_add_css(drupal_get_path('module', 'swim') . '/css/swim.css' );
+      //Load JS to hide things.
+      //Load late, so the link to hide has been built.
+      drupal_add_js(
+          drupal_get_path('module', 'swim') .'/js/swim_hide_things.js',
+        array(
+          'group' => JS_THEME,
+          'weight' => 20,
+        )
+      );
+      //Send some settings to JS.
+      global $base_url;
+      $settings = array(
+        'base_url' => $base_url,
+      );
+      drupal_add_js(
+          array('swim' => $settings),
+          'setting'
+      );
     }
   }
 }

@@ -6,7 +6,59 @@
         Style the SWIM editor.
 */
 
-root { 
-  display: block;
+/* Move field after the form down a bit. */
+#edit-field-keywords {
+  clear: left;
+  padding-top: 1em;
 }
 
+#swim-editor-container {
+  display: table-cell;
+  width: 100%;
+}
+
+#swim-preview-container {
+  display: none;
+  border: 1px solid #b6b6b6;
+  padding: 0.5em;
+  vertical-align: top;  
+}
+
+/*.vsplitbar {
+	width: 5px;
+	background: #aaa;
+}*/
+
+.splitter {
+	height: 100%;
+	margin: 1em 3em;
+	border: 4px solid #bdb;
+	background: #f8fff8;
+}
+
+.ui-state-default { background-color: #aca }
+.ui-state-hover { background-color: #bdb }
+.ui-state-highlight { background-color: #add }
+.ui-state-error { background-color: #eaa }
+
+.splitter-pane {
+	overflow: auto;
+}
+.splitter-bar-vertical {
+	width: 6px;
+	background-image: url(../libs/jquery-splitter/img/vgrabber.gif);
+	background-repeat: no-repeat;
+	background-position: center;
+}
+.splitter-bar-vertical-docked {
+	width: 10px;
+	background-image: url(../libs/jquery-splitter/img/vdockbar-trans.gif);
+	background-repeat: no-repeat;
+	background-position: center;
+}
+.splitter-bar.ui-state-highlight {
+	opacity: 0.7;
+}
+.splitter-iframe-hide {
+	visibility: hidden;
+}

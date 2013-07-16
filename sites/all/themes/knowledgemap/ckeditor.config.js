@@ -1,3 +1,8 @@
+//  CKEDITOR.on('instanceCreated', function(e) {
+//    alert(999);
+//  });
+
+
 CKEDITOR.editorConfig = function(config) {
   config.disableNativeSpellChecker = false;
   config.allowedContent = true;
