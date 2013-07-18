@@ -9,6 +9,7 @@ CKEDITOR.plugins.add( 'preview', {
           exec: function( editor ) {
             //this is the command object.
             if ( this.state == CKEDITOR.TRISTATE_ON ) {
+              //Preview is showing. Turn it off.
 //              jQuery("#swim-editor-container")
 //                .css("width", "100%");
               jQuery("#swim-preview-container")
@@ -16,12 +17,14 @@ CKEDITOR.plugins.add( 'preview', {
               this.setState( CKEDITOR.TRISTATE_OFF );
             }
             else {
-              jQuery("#swim-editor-container")
-                .css("width", "50%");
+              //Preview is not showing. Turn it on.
+//              jQuery("#swim-editor-container")
+//                .css("width", "50%");
               jQuery("#swim-preview-container")
                 .css("display", "table-cell")
 //                .css("width", "auto");
               this.setState( CKEDITOR.TRISTATE_ON );
+              Drupal.behaviors.swim.previewWindowOpened();
             }
           }
       });

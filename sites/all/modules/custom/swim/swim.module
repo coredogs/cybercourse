@@ -31,8 +31,10 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
       );
       //Send some settings to JS.
       global $base_url;
+      $body_format_name = $form['body'][LANGUAGE_NONE][0]['#format'];
       $settings = array(
         'base_url' => $base_url,
+        'format_name' => $body_format_name,
       );
       drupal_add_js(
           array('swim' => $settings),
