@@ -3,12 +3,56 @@
  * @todo Create SWIM text format at install.
  */
 
+/**
+ * Nid of the empty node preview logic uses to insert markup.
+ */
+define('SWIM_PREVIEW_NODE_ID', 114);
+
+/**
+ * Implements hook_help().
+ */
+function swim_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#swim':
+      return '<p>' . t('Helpy help help, <a href="@jquery">jQuery</a>.', 
+          array(
+            '@jquery' => 'http://jquery.com',
+          )) . '</p>';
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function swim_permission() {
+  return array(
+    'preview content' => array(
+      'title' => t('Preview content'),
+      'description' => t('See what content will look like on a device.')
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function swim_menu() {
+  $items = array();
+  $items['swim-mt-preview'] = array(
+    'page callback' => 'swim_mt_preview',
+    'access callback' => 'user_access',
+    'access arguments' => array('preview content'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
 function swim_form_alter(&$form, &$form_state, $form_id) {
-//  $form['thing'] = array(
-//    '#markup' => '<p><button id="thing" type="button">Thing</button></p>',
-//  );
-//  
-  if ( strpos( $form_id, 'node' ) !== false ) {
+  // @todo Instead of checking form_is, check for a field
+  //having the SWIM format? Cache the results of the check 
+  //so don't run check again on this page call.
+  //Not sure if this is the right approach.
+  if ( $form_id == 'book_node_form' ) {
     if (module_invoke('ajax_markup', 'on')) {
       //Load JS for doing previews. Load it early, to set stuff up afore
       //CK does its thing.
@@ -45,27 +89,49 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
-* Implements hook_filter_info().
-*/
-function swim_filter_info() {
-  $filters['filter_swim'] = array(
-    'title' => t('SWIM'),
-    'description' => t('Show What I Mean'),
-//    'prepare callback' => '_dgd7_tip_prepare',
-    'process callback' => 'swim_process',
-//    'tips callback' => 'swim_tips',
-  );
-  return $filters;
-}
-
-//function swim_process($text, $filter, $format) {
-function swim_process($text, $filter, $format = 'SWIM', $langcode = 'und') {
-  $text = str_replace('[br]', '<br>', $text);
-  $text = str_replace('cat', 'dog', $text);
-  return $text;
+ * Return a page with the right media queries and such, and a place to 
+ * put markup.
+ * @return array Output - renderable array.
+ */
+function swim_mt_preview() {
+  $node = node_load(SWIM_PREVIEW_NODE_ID);
+  $renderable = node_view($node);
+//  $renderable_body = $renderable['body'];
+//  $markup = $renderable_body[0]['#markup'];
+  return $renderable;
   
+  $content = array();
+  //Create an MT place for the preview markeup to be placed by the client.
+  $content['markup_container'] = array(
+    '#type' => '#markup',
+    '#markup' => '<div id="swim-device-markup" />',
+  );
+  return $content;
 }
 
-function swim_tips($filter, $format, $long = FALSE) {
-  return t('Failure is not an option. It comes standard.');
-}
+//
+///**
+//* Implements hook_filter_info().
+//*/
+//function swim_filter_info() {
+//  $filters['filter_swim'] = array(
+//    'title' => t('SWIM'),
+//    'description' => t('Show What I Mean'),
+////    'prepare callback' => '_dgd7_tip_prepare',
+//    'process callback' => 'swim_process',
+////    'tips callback' => 'swim_tips',
+//  );
+//  return $filters;
+//}
+//
+////function swim_process($text, $filter, $format) {
+//function swim_process($text, $filter, $format = 'SWIM', $langcode = 'und') {
+//  $text = str_replace('[br]', '<br>', $text);
+//  $text = str_replace('cat', 'dog', $text);
+//  return $text;
+//  
+//}
+//
+//function swim_tips($filter, $format, $long = FALSE) {
+//  return t('Failure is not an option. It comes standard.');
+//}

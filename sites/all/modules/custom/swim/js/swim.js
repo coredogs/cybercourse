@@ -21,11 +21,28 @@
       +        "src='" + iconPath + "phone.png' title='Phone'>"
       +     "</a>"
       +   "</span>"
+      +   "<span class='cke_toolgroup' role='presentation'>"
+      +     "<a id='swim-preview-refresh' "
+      +        "class='cke_button swim-button'><img "
+      +        "src='" + iconPath + "refresh.png' title='Refresh'>"
+      +     "</a>"
+      +   "</span>"
       + "</div>"
                  );
       previewToolbar.css("height", $('#cke_2_top').outerHeight());
+      //Set up the URL for the iframe that simulates the device.
+      //The target page has media queries, but no content.
+      //It does hae an container with an id for placing content later.
+      var iframeSrc =  Drupal.settings.swim.base_url + "/swim-mt-preview";
       //Area for the actual preview.
-      var previewArea = $("<div id='swim-preview-area'>");
+      var previewArea = $(
+         "<div id='swim-preview-area'>"
+      +    "<div id='swim-device'>"
+             //The device screen.
+      +      "<iframe id='swim-device-screen' src='" + iframeSrc + "'></iframe>"
+      +    "</div>"
+      +  "</div>"
+      );
       //The entire preview container.
       var previewContainer 
           = $( $("<div id='swim-preview-container'>") )
@@ -52,45 +69,29 @@
         .append( previewContainer );
 
       //Now the preview processing code.
+      var swimBehavior = this; //Convenience for closures.
       //Init display.
       this.selectedPreview = "desktop";
       this.showSelectedButton();
       //Set up events on the preview buttons.
       $("#swim-preview-desktop").click( function() {
-        this.selectedPreview = "desktop";
-        this.showPreview();
+        swimBehavior.previewButtonClicked("desktop");
       } );
       $("#swim-preview-tablet").click( function() {
-        this.selectedPreview = "tablet";
-        this.showPreview();
+        swimBehavior.previewButtonClicked("tablet");
       } );
       $("#swim-preview-phone").click( function() {
-        this.selectedPreview = "phone";
-        this.showPreview();
+        swimBehavior.previewButtonClicked("phone");
       } );
-
-      //Now - dance!
-      return;
-
-//      //Hide plain text link.
-//      $("#switch_edit-body-und-0-value").html();
-      
-      
-      //Add preview elements.
-      var preview_button = '<p><button id="markdown-preview" type="button">Preview</button></p>';
-      var preview_container = '<div id="swim_preview"></div>';
-      $('#edit-body').append(preview_button).append(preview_container);
-      
-      $('#markdown-preview').click(function(){
-        var editor = CKEDITOR.instances["edit-body-und-0-value"];
-        var markup = editor.getData();
-        var format = $.ajaxMarkup.getFormat('#edit-body textarea.text-full');
-        $.ajaxMarkup(markup, format, function(result, success, request) {
-          if ( success ) {
-            $('#swim_preview').html(result);
-          }
-        });
-      });
+      //Set up the refresh button.
+      $("#swim-preview-refresh").click( function() {
+        swimBehavior.showPreview();
+      } );
+    }, //End attach.
+    previewButtonClicked : function( buttonClicked ) {
+      this.selectedPreview = buttonClicked;
+      this.showSelectedButton();
+      this.showPreview();
     },
     /**
      * Adjust toolbar to show whichever button is pressed.
@@ -112,19 +113,104 @@
      * Grab rendered text from the server and show it.
      */
     showPreview : function() {
+      var iframe = $( "#swim-device-screen" );
+      //Get ref to the markup in the iframe.
+      var iframeContentContainer 
+          = iframe
+              .contents()
+              .find("#content .node-content");
+      //Make sure that the preview container is loaded.
+      if ( iframeContentContainer.length == 0 ) {
+        alert( "Still preparing preview. Please try again in a few seconds." );
+        return;
+      }
+      //Prepare the iframe content.
+      this.prepareIframeContent();
+      //Set up the preview to mimic the device.
+      //The container of the iframe - want black edge for a phone, etc.
+      var deviceContainer = $('#swim-device');
+      deviceContainer
+        .removeClass("swim-desktop-device-container")
+        .removeClass("swim-tablet-device-container")
+        .removeClass("swim-phone-device-container")
+        .addClass("swim-" + this.selectedPreview + "-device-container");
+      //Size the iframe.
+      var w, h;
+      if ( this.selectedPreview == 'desktop') {
+        //Make it grab all space.
+        $(deviceContainer).css("display", "block");
+        w = $(deviceContainer).innerWidth();
+        h = $(deviceContainer).innerHeight();
+      }
+      else if ( this.selectedPreview == 'tablet') {
+        //Make it fit content.
+        $(deviceContainer).css("display", "inline-block");
+        w = "768";
+        h = "1024";
+      }
+      else {
+        //Make it fit content.
+        $(deviceContainer).css("display", "inline-block");
+        w = "480";
+        h = "320";
+      }
+      $(iframe).css("width", w);
+      $(iframe).css("height", h);
+      $("#swim-preview-area").removeClass(
+          "swim-preview-area-desktop swim-preview-area-tablet swim-preview-area-phone"
+      );
+      $("#swim-preview-area")
+          .addClass("swim-preview-area-" + this.selectedPreview);
+//      $("#swim-preview-area").css("text-align", textAlign);
+//      //The screen itself.
+//      var iframeContentScreen = iframeContentContainer.find(".field-name-body");
+//      if ( iframeContentScreen.length == 0 ) {
+//        throw "showPreview: could not find device screen.";
+//      }
+//      iframeContentScreen
+//        .removeClass("swim-desktop-screen")
+//        .removeClass("swim-tablet-screen")
+//        .removeClass("swim-phone-screen")
+//        .addClass("swim-" + this.selectedPreview + '-screen');
+      //Get content from server.
       var editor = CKEDITOR.instances["edit-body-und-0-value"];
       var markup = editor.getData();
       var format = Drupal.settings.swim.format_name;
-alert('format: ' + format)      ;
       $.ajaxMarkup(markup, format, function(result, success, request) {
         if ( success ) {
-          $('#swim-preview-area').html(result);
+          //Show the content.
+          iframeContentContainer.html(result);
         }
         else {
           throw "showPreview: Ajax call failed.";
+        } // end not success.
+      });
+    }, // end showPreview.
+    prepareIframeContent : function() {
+      var iframeContent = $("#swim-device-screen").contents();
+      //Check if already prepared it.
+      var header = iframeContent.find("#header");
+      if ( header.length != 1 ) {
+        //Already done it.
+        return;
+      }
+      //Kill the header.
+      $(header).remove();
+      //Kill the menu.
+      $(iframeContent).find("#menu-bar").remove();
+      //Kill the sidbars and stuff.
+      var innerCols = $(iframeContent).find("#columns .columns-inner");
+      //Kill the node header (contains node title)
+      $(innerCols).find(".node-header").remove();
+      //Keep the content column, kill others.
+      $(innerCols).children().each(function(index, element) {
+        //Keep the content column, kill others.
+        if ( $(element).attr("id") != "content-column" ) {
+          $(element).html('');
         }
       });
-    }
-    
+      //Kill the footer.
+      $(iframeContent).find("footer").remove();
+    } //end prepareIframeContent
   };
 }(jQuery));

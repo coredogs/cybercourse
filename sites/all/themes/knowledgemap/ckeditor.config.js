@@ -4,6 +4,7 @@
 
 
 CKEDITOR.editorConfig = function(config) {
+  config.height = "35em";
   config.disableNativeSpellChecker = false;
   config.allowedContent = true;
   // Protect PHP code tags (<?...?>) so CKEditor will not break them when

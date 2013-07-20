@@ -25,9 +25,46 @@
 }
 
 #swim-preview-area {
-  padding: 0.5em;
+  text-align: center;
+  /*overflow: scroll;*/
 }
 
 .swim-button {
   border-color: rgb(47, 65, 111)
+}
+
+.swim-preview-area-desktop {
+  padding: 0;
+}
+
+.swim-preview-area-tablet, .swim-preview-area-phone {
+  padding: 0.5em;
+}
+
+#swim-device {
+
+}
+
+/* Styles for the visual frame around the screen. */
+.swim-desktop-device-container {
+  background-color: inherit;
+  padding: 0;
+  border-radius: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.swim-tablet-device-container, .swim-phone-device-container {
+  background-color: black;
+  padding: 1em;
+  border-radius: 0.5em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* Styles for the screen itself. */
+#swim-device-screen {
+  border: none;
+  /*overflow: scroll;*/
 }

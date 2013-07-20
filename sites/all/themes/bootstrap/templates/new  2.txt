@@ -1,0 +1,17 @@
+Setting preview area heights
+
+min- max- height
+
+
+
+
+
+thumb
+
+finding CSS image files
+
+Interface
+- user selects from theme settings.
+- theme code includes the right CSS file
+EASY PEASY
+
