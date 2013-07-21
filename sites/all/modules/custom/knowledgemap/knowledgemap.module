@@ -15,8 +15,11 @@ module_load_include('inc', 'knowledgemap', 'knowledgemap.utils');
 function knowledgemap_init() {
   ctools_include('ajax');
   ctools_include('modal');
-  ctools_modal_add_js();
   drupal_add_js('misc/ajax.js');
+    ctools_modal_add_js('ajax-responder');
+  ctools_modal_add_js('modal');
+    ctools_include('node.pages', 'node', '');
+
 }
 
 /**
@@ -178,31 +181,22 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
       array('knowledgemap' => $settings),
       'setting'
   );
+  knowledgemap_add_client_code();
+  return $element;
+}
+
+
+function knowledgemap_add_client_code() {
   //Add libraries.
-  ctools_include('ajax');
-  drupal_add_js('misc/ajax.js');  
-  ctools_include('modal');
-  ctools_modal_add_js('ajax-responder');
-  ctools_modal_add_js('modal');
+//  ctools_include('ajax');
+//  drupal_add_js('misc/ajax.js');  
+//  ctools_include('modal');
+//  ctools_modal_add_js('ajax-responder');
+//  ctools_modal_add_js('modal');
   drupal_add_library('system', 'ui.dialog');
   drupal_add_js(
       drupal_get_path('module', 'knowledgemap') 
           . '/libs/jsPlumb/jquery.jsPlumb-1.4.1-all-min.js', 
-      'file'
-  );
-  drupal_add_js(
-      drupal_get_path('module', 'knowledgemap') 
-          . '/libs/jquery-dialogextend/build/jquery.dialogextend.min.js', 
-      'file'
-  );
-  drupal_add_js(
-      drupal_get_path('module', 'knowledgemap') 
-          . '/libs/jquery-collapse/src/jquery.collapse.js', 
-      'file'
-  );
-  drupal_add_css(
-      drupal_get_path('module', 'knowledgemap') 
-          . '/css/jquery-collapse.css', 
       'file'
   );
   //Add the KM drawing code.
@@ -231,7 +225,27 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
           . '/css/knowledgemap.css', 
       'file'
   );
-  return $element;
+//  drupal_add_js(
+//      drupal_get_path('module', 'knowledgemap') 
+//          . '/libs/jquery-dialogextend/build/jquery.dialogextend.min.js', 
+//      'file'
+//  );
+//  drupal_add_js(
+//      drupal_get_path('module', 'knowledgemap') 
+//          . '/libs/jquery-collapse/src/jquery.collapse.js', 
+//      'file'
+//  );
+//  drupal_add_css(
+//      drupal_get_path('module', 'knowledgemap') 
+//          . '/css/jquery-collapse.css', 
+//      'file'
+//  );
+//  $x = drupal_add_js(
+//      drupal_get_path('module', 'knowledgemap') 
+//          . '/libs/jquery-getscrollbarsize/getscrollbarsize.js', 
+//      'file'
+//  );
+  
 }
 
 
@@ -352,7 +366,7 @@ function knowledgemap_form_alter(&$form, &$form_state, $form_id) {
       }
     }
     if ( ! $new_node ) {
-      ctools_include('modal');
+//      ctools_include('modal');
       global $base_url;
       $km_item_edit_link = ctools_modal_text_button(
           t('Edit'),
@@ -372,8 +386,34 @@ function knowledgemap_form_alter(&$form, &$form_state, $form_id) {
     //Erase Drupal's status messages.
     drupal_get_messages('status');
     //Remove the preview button.
-    
+    unset( $form['actions']['preview'] );
+    //Remove the delete button.
+    unset( $form['actions']['delete'] );
+    //Add a cancel button.
+    $form['actions']['cancel'] = array(
+      '#type' => 'submit',
+      '#value' => 'Cancel',
+      '#submit' => array('knowledgemap_cancel_edit'),
+      '#weight' => 15,
+    );
   }
+}
+
+/**
+ * Execute edit cancel callback from modal.
+ */
+function knowledgemap_cancel_edit($form, &$form_state) {
+  $nid = $form['#node']->nid;
+  $commands = array();
+  ctools_add_js('ajax-responder');
+      $commands[] = ajax_command_invoke(
+          'body', 
+          'returnFromEditCancel', 
+          array( $nid )
+      );  
+  $commands[] = ctools_modal_command_dismiss();
+  print ajax_render($commands);
+  exit;
 }
 
 
@@ -453,11 +493,11 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
 //  if ( FALSE ) {
     return drupal_access_denied();
   }
-  drupal_add_js('misc/ajax.js');
-  ctools_include('ajax');
-  ctools_include('modal');
-  ctools_modal_add_js('ajax-responder');
-  ctools_modal_add_js('modal');
+//  drupal_add_js('misc/ajax.js');
+//  ctools_include('ajax');
+//  ctools_include('modal');
+//  ctools_modal_add_js('ajax-responder');
+//  ctools_modal_add_js('modal');
   
   $type_name = node_type_get_name($node);
   $title = t('<em>Edit @type</em> @title', 
@@ -466,9 +506,7 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
 
   $commands = array();
 
-  ctools_include('node.pages', 'node', '');
-  ctools_include('modal');
-  ctools_include('ajax');
+//  ctools_include('node.pages', 'node', '');
 
   $form_state = array(
     'title' => $title,
@@ -477,7 +515,6 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
       'args'  => array($node),
     ),
   );
-
   $commands = ctools_modal_form_wrapper($node->type . '_node_form', $form_state);
 
   if (!empty($form_state['executed']) && empty($form_state['rebuild'])) {
@@ -915,53 +952,48 @@ function knowledgemap_field_formatter_view($entity_type, $entity, $field,
             'setting'
         );
       } // End for each.
-  
+      knowledgemap_add_client_code();
       //Add libraries.
     //  ctools_include('modal');
     //  ctools_modal_add_js('ajax-responder');
     //  ctools_modal_add_js('modal');
-      drupal_add_library('system', 'ui.dialog');
-      drupal_add_js(
-          drupal_get_path('module', 'knowledgemap') 
-              . '/libs/jsPlumb/jquery.jsPlumb-1.4.1-all-min.js', 
-          'file'
-      );
-      drupal_add_js(
-          drupal_get_path('module', 'knowledgemap') 
-              . '/libs/jquery-dialogextend/build/jquery.dialogextend.min.js', 
-          'file'
-      );
-  ////  drupal_add_js(
-  ////      drupal_get_path('module', 'knowledgemap') 
-  ////          . '/libs/jquery-collapse/src/jquery.collapse.js', 
-  ////      'file'
-  ////  );
-  //  drupal_add_css(
-  //      drupal_get_path('module', 'knowledgemap') 
-  //          . '/css/jquery-collapse.css', 
-  //      'file'
-  //  );
+//      drupal_add_library('system', 'ui.dialog');
+//      $x = drupal_add_css(
+//          drupal_get_path('module', 'knowledgemap') 
+//              . '/libs/jquery-ui-1.10.3.custom/css/smoothness/jquery-ui-1.10.3.custom.min', 
+//          'file'
+//      );      
+//      drupal_add_js(
+//          drupal_get_path('module', 'knowledgemap') 
+//              . '/libs/jsPlumb/jquery.jsPlumb-1.4.1-all-min.js', 
+//          'file'
+//      );
+//      drupal_add_js(
+//          drupal_get_path('module', 'knowledgemap') 
+//              . '/libs/jquery-dialogextend/build/jquery.dialogextend.min.js', 
+//          'file'
+//      );
     //Add the KM drawing code.
-      drupal_add_js(
-          drupal_get_path('module', 'knowledgemap') 
-              . '/js/knowledgemap_utils.js', 
-          'file'
-      );  
-      drupal_add_js(
-          drupal_get_path('module', 'knowledgemap') 
-              . '/js/knowledgemap_item_viewer.js', 
-          'file'
-      );
-      drupal_add_js(
-          drupal_get_path('module', 'knowledgemap') 
-              . '/js/knowledgemap.js', 
-          'file'
-      );
-      drupal_add_css(
-          drupal_get_path('module', 'knowledgemap') 
-              . '/css/knowledgemap.css', 
-          'file'
-      );      
+//      drupal_add_js(
+//          drupal_get_path('module', 'knowledgemap') 
+//              . '/js/knowledgemap_utils.js', 
+//          'file'
+//      );  
+//      drupal_add_js(
+//          drupal_get_path('module', 'knowledgemap') 
+//              . '/js/knowledgemap_item_viewer.js', 
+//          'file'
+//      );
+//      drupal_add_js(
+//          drupal_get_path('module', 'knowledgemap') 
+//              . '/js/knowledgemap.js', 
+//          'file'
+//      );
+//      drupal_add_css(
+//          drupal_get_path('module', 'knowledgemap') 
+//              . '/css/knowledgemap.css', 
+//          'file'
+//      );      
       break;
   } // End switch.
   return $element;

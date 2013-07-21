@@ -8,6 +8,10 @@ var evilGlobalController;
       if (done_once) {
         return;
       }
+      //Unload CKEditor when 
+      $(document).bind('CToolsDetachBehaviors', function(event, context) {
+        Drupal.behaviors.ckeditor.detach(context, {}, 'unload');
+      });  
       // @todo Show swirly thing.
       //Set some convenience vars.
       //Mode - edit or view.
@@ -41,6 +45,9 @@ var evilGlobalController;
         this.createTopToolbar();
       } // End mode == edit
       this.add_methods_to_drawing_area();
+//      //Compute scrollbar height.
+//      var scrollbarSize = $.getScrollBarSize();
+//      this.scrollbarHeight = scrollbarSize[1];
       jsPlumb.ready(function() {
         controller.setJsPlumbDefaults();
         controller.drawAllItems();
@@ -113,7 +120,7 @@ var evilGlobalController;
       var itemToolbar = $(
           "<div id='km-item-toolbar' class='knowledgemap-toolbar'>"
         +   "<div id='km-item-show-details' "
-        +        "class='knowledgemap-toolbar-link'>Details</div>"
+        +        "class='btn'>Details</div>"
         + "</div>"
       );
       controller.$drawing_area.append(itemToolbar);
@@ -137,11 +144,11 @@ var evilGlobalController;
           +     "To: <span id='km-connection-to'/>"
           +   "</div>"
           +   "<div id='km-connection-reinforcing' "
-          +        "class='knowledgemap-toolbar-link'>Switch to reinforcing</div>"
+          +        "class='btn'>Switch to reinforcing</div>"
           +   "<div id='km-connection-required' "
-          +        "class='knowledgemap-toolbar-link'>Switch to required</div>"
+          +        "class='btn'>Switch to required</div>"
           +   "<div id='km-connection-delete' "
-          +        "class='knowledgemap-toolbar-link'>Delete</div>"
+          +        "class='btn'>Delete</div>"
           + "</div>"
         );
         controller.$drawing_area.append(connectionToolbar);
@@ -311,8 +318,12 @@ var evilGlobalController;
       controller.computeMaxY();
       var currentSizerHeight = controller.$drawing_area.outerHeight();
       if ( controller.maxY > currentSizerHeight ) {
-        controller.$drawing_area.resizable({ minHeight: controller.maxY + 10 });
-        controller.$drawing_area.height( controller.maxY + 10 );
+        controller.$drawing_area.resizable({ 
+            minHeight: controller.maxY + 10
+        });
+        controller.$drawing_area.height( 
+            controller.maxY + 10
+        );
       }
     },
     computeMaxY : function() {
@@ -358,9 +369,11 @@ var evilGlobalController;
       jsPlumb.importDefaults({
         Anchor: "AutoDefault",
         Endpoint: "Blank",
+        Connector: "Straight",
         Detachable: false,
         ReattachConnections : false,
-        ConnectionOverlays : [ "PlainArrow" ]
+        ConnectionOverlays : [ "PlainArrow" ],
+        
       });
       //Paint styles for connections.
       //They need to be merged to get the right effects.
@@ -436,18 +449,19 @@ var evilGlobalController;
       $item.click( function(evnt) {
         controller.itemClicked ( evnt );
       });
-      $item.dblclick(function(evnt) {
-        //Double-clicked on an item. 
-        var domId = $(evnt.currentTarget).attr('id');
-        var nid = domId.replace("km-item-", "");
-        var itemData = controller.km_rep.km_items[nid];
-        //Get a viewer for it.
-        var viewer = controller.getKmItemViewer(itemData);
-        viewer.open( evnt );
-        evnt.stopImmediatePropagation();
-        evnt.stopPropagation();
-        evnt.preventDefault();
-      });
+//Removed because caused an issue with floating toolbar staying open.
+//      $item.dblclick(function(evnt) {
+//        //Double-clicked on an item. 
+//        var domId = $(evnt.currentTarget).attr('id');
+//        var nid = domId.replace("km-item-", "");
+//        var itemData = controller.km_rep.km_items[nid];
+//        //Get a viewer for it.
+//        var viewer = controller.getKmItemViewer(itemData);
+//        viewer.open( evnt );
+//        evnt.stopImmediatePropagation();
+//        evnt.stopPropagation();
+//        evnt.preventDefault();
+//      });
       if ( controller.mode == "edit" ) {
         jsPlumb.makeSource(
           $item, 
@@ -529,9 +543,43 @@ var evilGlobalController;
         //Highlight the item.
         $("#" + newDomId).addClass("selected");
       }
-      //Show the toolbar.
-      controller.positionItemToolbar( $newItemClicked );
-      controller.$itemToolbar.show('fast');
+      //Is there are viewer for the item already?
+      if ( controller.kmItemViewers[ newNid ] ) {
+        var itemViewer = controller.kmItemViewers[ newNid ];
+        //Could have been opened and then closed by user. If so, 
+        //will still exist in memory. Just need to show it again.
+        if ( itemViewer.dialog.dialog("widget").css("display") == "none" ) {
+          itemViewer.dialog.dialog("widget").show();
+          itemViewer.dialog.dialog("moveToTop");
+          return;
+        }
+        //Bring it to the top.
+        itemViewer.dialog.dialog("moveToTop");
+        //Get user's attention.
+        var $dialog = $(itemViewer.dialog.dialog("widget").children(".ui-dialog-content"));
+        var originalColor = $dialog.css("color");
+        var originalBackgroundColor = $dialog.css("background-color");
+        var state1 = {
+          "background-color": "#FF9933",
+          "color" : "white"
+        };
+        var state2 = {
+          "background-color": originalBackgroundColor,
+          "color" : originalColor
+        };
+        var speed = "fast";
+        $dialog
+          .animate(state1, speed)
+          .animate(state2, speed)
+          .animate(state1, speed)
+          .animate(state2, speed)
+        ;
+      }
+      else {
+        //Show the toolbar.
+        controller.positionItemToolbar( $newItemClicked );
+        controller.$itemToolbar.show('fast');
+      }
       evnt.stopPropagation();
     },
     prepareConnectionToolbar : function ( connectionData ) {
@@ -887,6 +935,7 @@ var evilGlobalController;
                 + "If you can think of a good reason why you would want to, "
                 + "please let Kieran know.";
         alert( message );
+        jsPlumb.detach( connInfo.connection );
         return false;
       }
       
@@ -1073,5 +1122,6 @@ var evilGlobalController;
 //    }
   };
   evilGlobalController = controller;
+    
 })(jQuery);
 

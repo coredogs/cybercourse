@@ -8,35 +8,53 @@ function KmItemViewer( itemData ) {
   this.itemData.dialogDomId = htmlElData.dialogDomId;
   jQuery("body").append(htmlElData.html);
   if ( evilGlobalController.mode == "edit" ) {
-    //Add the action buttons to the footer.
-    this.addActionLlinks( htmlElData.dialogDomId, this.itemData.nid );
+    //Add the action buttons.
+    this.addActionLinks( htmlElData.dialogDomId, this.itemData.nid );
   }
   var dialogOptions = {
-    autoOpen : false
-  };
-  var extendedDialogOptions = {
-    modal : false,
-    draggable : true,
-    resizable : true,
-    "closable" : true,
-    "maximizable" : true,
-    "minimizable" : true,
-    "collapsable" : false,
-    "dblclick" : "minimize",
-    "minimizeLocation" : "left",
-    "icons" : {
-      "close" : "ui-icon-circle-close",
-      "maximize" : "ui-icon-circle-plus",
-      "minimize" : "ui-icon-circle-minus",
-//	          "collapse" : "ui-icon-triangle-1-s",
-      "restore" : "ui-icon-bullet"
+    autoOpen : false,
+    close: function() {
+      var domId = jQuery(this).attr("id");
+      var nid = domId.split("-").pop();
+      var viewer = evilGlobalController.kmItemViewers[nid];
+      viewer.dialog.dialog("close");
+      viewer.dialog.dialog("destroy");
+      jQuery("#" + domId).remove();
+      evilGlobalController.kmItemViewers[nid] = false;
+//      jQuery(this).hide();
     }
   };
   this.dialog = jQuery("#" + this.itemData.dialogDomId)
-    .dialog( dialogOptions )
-    .dialogExtend( extendedDialogOptions );
-  //Size the dialog.
-  
+    .dialog( dialogOptions );
+//  var extendedDialogOptions = {
+//    modal : false,
+//    draggable : true,
+//    resizable : true,
+//    "closable" : true,
+//    "maximizable" : true,
+//    "minimizable" : true,
+//    "collapsable" : false,
+//    "dblclick" : "minimize",
+//    "minimizeLocation" : "left",
+//    "icons" : {
+//      "close" : "ui-icon-circle-close",
+//      "maximize" : "ui-icon-circle-plus",
+//      "minimize" : "ui-icon-circle-minus",
+////	          "collapse" : "ui-icon-triangle-1-s",
+//      "restore" : "ui-icon-bullet"
+//    },
+//    "beforeMaximize" : function(evt, dlg){
+//      var topNav = jQuery("#navbar");
+//      if ( topNav.length > 0 ) {
+//        var topNavHeight = topNav.height();
+//        jQuery(evt.target).parent().css("margin-top", topNavHeight);
+//      }
+//    }
+//  };
+//  this.dialog = jQuery("#" + this.itemData.dialogDomId)
+//    .dialog( dialogOptions )
+//    .dialogExtend( extendedDialogOptions );
+//Trouble with maximized state overlapping toolbar.
   return this;
 }
 
@@ -57,8 +75,12 @@ KmItemViewer.prototype.open = function( evnt ) {
       my: 'left', at: 'right',of: "#" + domId});
   }// @todo broken, check user intent stuff
   //Hide item/connection toolbars.
-  evilGlobalController.$itemToolbar.hide();
-  evilGlobalController.$connectionToolbar.hide();
+  if ( evilGlobalController.$itemToolbar ) {
+    evilGlobalController.$itemToolbar.hide();
+  }
+  if ( evilGlobalController.$connectionToolbar ) {
+    evilGlobalController.$connectionToolbar.hide();
+  }
 }
 
 KmItemViewer.prototype.updateDialogDisplayFields = function() {
@@ -79,15 +101,16 @@ KmItemViewer.prototype.makeDialogHtml = function() {
   var html = 
         "<div id='" + domId + "' title='" + this.itemData.title + "' "
       + "   class='km-item-dialog'>"
-      + "  <div class='km-item-type'>"
+      + "  <p class='km-item-type'>"
       +      capitaliseFirstLetter(this.itemData.item_type)
-      + "  </div>"
+      + "  </p>"
+      + "  <p class='km-item-importance'>"
+      +      "Importance: <span>" + this.itemData.importance + "</span>"
+      + "  </p>"
       + "  <div class='km-item-body'>"
       +      this.itemData.body
       + "  </div>"
-      + "  <div class='km-item-importance'>"
-      +      "Importance: <span>" + this.itemData.importance + "</span>"
-      + "  </div>"      + "  <footer>"
+      + "  <footer>"
       + "  </footer>"
       + "</div>";
    return { 
@@ -97,7 +120,7 @@ KmItemViewer.prototype.makeDialogHtml = function() {
 }
 
 
-KmItemViewer.prototype.addActionLlinks = function( dialogDomId, kmItemNid ) {
+KmItemViewer.prototype.addActionLinks = function( dialogDomId, kmItemNid ) {
   if ( evilGlobalController.mode != "edit" ) {
     //Should never happen.
     console.log("Error: addActionLlinks: not in edit mode.");
@@ -105,11 +128,16 @@ KmItemViewer.prototype.addActionLlinks = function( dialogDomId, kmItemNid ) {
   }
   //Create edit link.
   //Does some magic to simulate the logic of CTools modal links.
-  var editLink = this.addEditLink( kmItemNid );
-  //Add the button to the footer.
-  jQuery('#' + dialogDomId + " footer").append( editLink );
+  var $editLink = this.makeEditLink( kmItemNid );
   //Same for delete button, but it's simpler to create.
-  var $deleteLink = this.addDeleteLink( kmItemNid );
+  var $deleteLink = this.makeDeleteLink( kmItemNid );
+  //Create the toolbar.
+  var $toolbar = jQuery("<div class='btn-group'>");
+  $toolbar.append($editLink).append($deleteLink);
+  $editLink.show();
+  $deleteLink.show();
+  //Add the toolbar to the dialog.
+  jQuery('#' + dialogDomId).prepend( $toolbar );
   $deleteLink.click(function(evnt) {
     if ( ! confirm("Are you sure you want to delete this item?") ) {
       return;
@@ -155,10 +183,10 @@ KmItemViewer.prototype.addActionLlinks = function( dialogDomId, kmItemNid ) {
     
     evnt.stopPropagation();
   });
-  jQuery('#' + dialogDomId + " footer").append( $deleteLink );
+  //jQuery('#' + dialogDomId + " footer").append( $deleteLink );
 }
 
-KmItemViewer.prototype.addEditLink = function( kmItemNid ) {
+KmItemViewer.prototype.makeEditLink = function( kmItemNid ) {
   if ( evilGlobalController.mode != "edit" ) {
     //Should never happen.
     console.log("Error: addEditLink: not in edit mode.");
@@ -173,8 +201,18 @@ KmItemViewer.prototype.addEditLink = function( kmItemNid ) {
   $newLink
       .attr("href", href)
       .removeClass('km-item-edit-link-original')
-      .addClass('km-item-edit-link km-item-action-link')
-      .show();
+      .addClass('km-item-edit-link km-item-action-link btn');
+  var $this = jQuery(this);
+//  $newLink.click(function(){
+//    //Hide the viewer. Bring it back after edit.
+//    //Get a ref to it.
+//    var viewerId = jQuery(this).parent().parent().attr("id");
+//    var nid = viewerId.split("-").pop();
+//    var kmViewer = evilGlobalController.kmItemViewers[nid];
+//    kmViewer.dialog.dialog("widget").hide();
+////    jQuery("#" + viewerId).hide();
+////    this.dialog.dialog("hide");
+//  });
   //Copied from ctools modal.js. Registers the new link with the modal logic.
   $newLink.click(Drupal.CTools.Modal.clickAjaxLink);
   // Create a drupal ajax object
@@ -189,7 +227,7 @@ KmItemViewer.prototype.addEditLink = function( kmItemNid ) {
   return $newLink;
 }
 
-KmItemViewer.prototype.addDeleteLink = function( kmItemNid ) {
+KmItemViewer.prototype.makeDeleteLink = function( kmItemNid ) {
   if ( evilGlobalController.mode != "edit" ) {
     //Should never happen.
     console.log("Error: addDeleteLink: not in edit mode.");
@@ -199,7 +237,7 @@ KmItemViewer.prototype.addDeleteLink = function( kmItemNid ) {
         "<a id='km-item-delete-link-" + kmItemNid + "' "
       +     "data-nid='" + kmItemNid + "' "
       +     "href='#'" //Click code does the server call.
-      +     "class='km-item-action-link' "
+      +     "class='km-item-action-link btn' "
       +     "title='Premanently delete this item.'>"
       +   "Delete"
       + "</a>";
@@ -227,11 +265,12 @@ jQuery.fn.returnFromEditSave = function(nid) {
   //Update the viewer.
   var itemViewer = evilGlobalController.kmItemViewers[ nid ];
   if ( ! itemViewer ) {
-    throw "Error: viewer not found for nid " + nid;
+    throw "Error: returnFromEditSave: viewer not found for nid " + nid;
   }
   //Update 
   itemViewer.updateDialogDisplayFields();
   evilGlobalController.updateItemDisplay( jQuery("#km-item-" + nid) );
+  itemViewer.dialog.dialog("widget").show();
 //  evilGlobalController.updateItemFields( nid );
   //Did the item type change?
 //  if ( newItemData.item_type != oldItemType ) {
@@ -240,4 +279,18 @@ jQuery.fn.returnFromEditSave = function(nid) {
 //    ); 
 //  }
   evilGlobalController.redrawItem( nid );
+}
+
+jQuery.fn.returnFromEditCancel = function(nid) {
+//  //Show the viewer again.
+//  if ( evilGlobalController.mode != "edit" ) {
+//    //Should never happen.
+//    console.log("Error: returnFromEditCancel: not in edit mode.");
+//    return;
+//  }
+//  var itemViewer = evilGlobalController.kmItemViewers[ nid ];
+//  if ( ! itemViewer ) {
+//    throw "Error: returnFromEditCancel: viewer not found for nid " + nid;
+//  }
+//  itemViewer.dialog.dialog("widget").show();
 }

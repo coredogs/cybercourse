@@ -109,6 +109,10 @@
       Drupal.CTools.Modal.unmodalContent(Drupal.CTools.Modal.modal);
     }
   };
+  
+//$(document).bind('CToolsDetachBehaviors', function(event, context) {
+//  Drupal.behaviors.ckeditor.detach(context, {}, 'unload');
+//});  
 
   /**
    * Provide the HTML to create the modal dialog.
