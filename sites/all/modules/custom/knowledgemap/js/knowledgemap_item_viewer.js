@@ -110,8 +110,6 @@ KmItemViewer.prototype.makeDialogHtml = function() {
       + "  <div class='km-item-body'>"
       +      this.itemData.body
       + "  </div>"
-      + "  <footer>"
-      + "  </footer>"
       + "</div>";
    return { 
      'dialogDomId' : domId,
@@ -133,7 +131,8 @@ KmItemViewer.prototype.addActionLinks = function( dialogDomId, kmItemNid ) {
   var $deleteLink = this.makeDeleteLink( kmItemNid );
   //Create the toolbar.
   var $toolbar = jQuery("<div class='btn-group'>");
-  $toolbar.append($editLink).append($deleteLink);
+  $toolbar.append($editLink);
+  $toolbar.append($deleteLink);
   $editLink.show();
   $deleteLink.show();
   //Add the toolbar to the dialog.
@@ -203,16 +202,6 @@ KmItemViewer.prototype.makeEditLink = function( kmItemNid ) {
       .removeClass('km-item-edit-link-original')
       .addClass('km-item-edit-link km-item-action-link btn');
   var $this = jQuery(this);
-//  $newLink.click(function(){
-//    //Hide the viewer. Bring it back after edit.
-//    //Get a ref to it.
-//    var viewerId = jQuery(this).parent().parent().attr("id");
-//    var nid = viewerId.split("-").pop();
-//    var kmViewer = evilGlobalController.kmItemViewers[nid];
-//    kmViewer.dialog.dialog("widget").hide();
-////    jQuery("#" + viewerId).hide();
-////    this.dialog.dialog("hide");
-//  });
   //Copied from ctools modal.js. Registers the new link with the modal logic.
   $newLink.click(Drupal.CTools.Modal.clickAjaxLink);
   // Create a drupal ajax object
@@ -224,7 +213,7 @@ KmItemViewer.prototype.makeEditLink = function( kmItemNid ) {
   }
   var base = $newLink.attr('href');
   Drupal.ajax[base] = new Drupal.ajax(base, newLink, element_settings);
-  return $newLink;
+  return jQuery($newLink);
 }
 
 KmItemViewer.prototype.makeDeleteLink = function( kmItemNid ) {
@@ -236,7 +225,7 @@ KmItemViewer.prototype.makeDeleteLink = function( kmItemNid ) {
   var link = 
         "<a id='km-item-delete-link-" + kmItemNid + "' "
       +     "data-nid='" + kmItemNid + "' "
-      +     "href='#'" //Click code does the server call.
+      +     "href='javascript:void(0)'" //Click code does the server call.
       +     "class='km-item-action-link btn' "
       +     "title='Premanently delete this item.'>"
       +   "Delete"

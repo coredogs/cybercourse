@@ -1,0 +1,5 @@
+name = Remove "Login to add comments" link
+description = Remove "Login to add comments" link.
+package = CyberCourse
+core = 7.x
+dependencies[] = comment

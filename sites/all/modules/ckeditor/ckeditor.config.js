@@ -8,6 +8,8 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
  If you don't do this, you may notice that browser is ignoring all your changes.
  */
 CKEDITOR.editorConfig = function(config) {
+  //Let images be inserted.
+  config.allowedContent = true;
   config.indentClasses = [ 'rteindent1', 'rteindent2', 'rteindent3', 'rteindent4' ];
 
   // [ Left, Center, Right, Justified ]

@@ -26,7 +26,7 @@
 
 #swim-preview-area {
   text-align: center;
-  /*overflow: scroll;*/
+  overflow: auto;
 }
 
 .swim-button {
@@ -35,14 +35,16 @@
 
 .swim-preview-area-desktop {
   padding: 0;
+  overflow: auto;
 }
 
 .swim-preview-area-tablet, .swim-preview-area-phone {
   padding: 0.5em;
+  overflow: auto;
 }
 
 #swim-device {
-
+  overflow: auto;
 }
 
 /* Styles for the visual frame around the screen. */
@@ -66,5 +68,5 @@
 /* Styles for the screen itself. */
 #swim-device-screen {
   border: none;
-  /*overflow: scroll;*/
+  overflow: auto;
 }

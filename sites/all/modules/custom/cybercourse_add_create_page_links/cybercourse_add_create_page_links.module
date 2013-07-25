@@ -1,0 +1,198 @@
+<?php
+
+require_once realpath( dirname(__FILE__) . 
+    '/../cybercourse_library/cybercourse_library.inc' );
+
+/**
+ * Implements hook_node_view().
+ * Add page create links for pod authors, and help authors.
+ * 
+ * Add parameters to URL to add kid and sib pages at the right place
+ * in their book levels. Kids get added to the end of the menu.
+ * Sibs get added after the page on which the clicked sib link appeared.
+ */
+function cybercourse_add_create_page_links_node_view_alter(&$build) {
+  $node = $build['#node'];
+  //Only for full view mode - not content lists.
+  if ( $build['#view_mode'] != 'full' ) {
+    return;
+  }
+  //Check that it's a content type that gets create links added.
+  $relevant_content_types = array(
+    'course',
+    'course_page',
+    'blueprint',
+    'blueprint_page',
+  );
+  if ( ! in_array( $node->type, $relevant_content_types ) ) {
+    return;
+  }
+  //Only for authors and admins.
+  if ( ! _cbb_user_is_author_admin() ) {
+    return;
+  }
+  $links = array();
+  //Course main page.
+  if ( $node->type == 'course' ) {
+    $links['course_kid'] = _cacpl_make_link(
+        'Create child page',
+        'course-page',
+        $node->book['mlid'], //Parent id for book module.
+        'addkid', //Operation
+        $node->book['menu_name'] //Name of the menu for this level in the book.
+    );
+  }
+  //Course page.
+  if ( $node->type == 'course_page' ) {
+    $links['course_page_kid'] = _cacpl_make_link(
+        'Create child page',
+        'course-page',
+        $node->book['mlid'], //Parent id for book module.
+        'addkid', //Operation
+        $node->book['menu_name'] //Name of the menu for this level in the book.
+    );
+    $links['course_page_sib'] = _cacpl_make_link(
+        'Create sibling page',
+        'course-page',
+        $node->book['plid'], //Parent id for book module.
+        'addsib', //Operation
+        $node->book['menu_name'], //Name of the menu for this level in the book.
+        $node->book['mlid'] //Menu link id for the current page in the book menu.
+    );
+  }
+  //Blueprint main page.
+  if ( $node->type == 'blueprint' ) {
+    $links['blueprint_kid'] = _cacpl_make_link(
+        'Create child page',
+        'blueprint-page',
+        $node->book['mlid'], //Parent id for book module.
+        'addkid', //Operation
+        $node->book['menu_name'] //Name of the menu for this level in the book.
+    );
+  }
+  //Blueprint content page.
+  if ( $node->type == 'blueprint_page' ) {
+    $links['blueprint_page_kid'] = _cacpl_make_link(
+        'Create child page',
+        'blueprint-page',
+        $node->book['mlid'], //Parent id for book module.
+        'addkid', //Operation
+        $node->book['menu_name'] //Name of the menu for this level in the book.
+    );
+    $links['blueprint_page_sib'] = _cacpl_make_link(
+        'Create sibling page',
+        'blueprint-page',
+        $node->book['plid'], //Parent id for book module.
+        'addsib', //Operation
+        $node->book['menu_name'], //Name of the menu for this level in the book.
+        $node->book['mlid'] //Menu link id for the current page in the book menu.
+
+    );
+  } // End blueprint content page.
+  if (sizeof($links) > 0 ) {
+    $result = '';
+    //Create each link using l().
+    foreach ( $links as $link_data ) {
+      //Make the link.
+      $options = array();
+      if ( isset($link_data['attributes']) ) {
+        $options['attributes'] = $link_data['attributes'];
+      }
+      if ( isset($link_data['query']) ) {
+        $options['query'] = $link_data['query'];
+      }
+      //Add to result.
+      $result .= l( 
+          $link_data['title'], 
+          $link_data['href'], //$href,
+          $options
+      );
+    }
+    //Add links to the page build.
+    $build['cacpl_links'] = array(
+      '#prefix' => '<div class="create-page-links">',
+      '#markup' => $result,
+      '#suffix' => '</div>',
+    );    
+//    $build['links']['cacpl_links'] = array(
+//      '#links' => $links,
+//      '#attributes' => array(
+//        'class' => array( 'inline', 'links', ),
+//      ),
+//      '#theme' => '"links__node__book',
+//    );
+  }
+  if ( isset( $build['links']['book'] ) ) {
+    unset( $build['links']['book'] );
+  }
+  if ( isset( $build['links']['book_made_simple'] ) ) {
+    unset( $build['links']['book_made_simple'] );
+  }
+}
+
+/**
+ * Create a link to add new child or sibling to a book.
+ * @param string $link_text Link text.
+ * @param string $content_type Content type.
+ * @param int $parent_mlid mlid (menu link id) of parent.
+ * @param string $op Operation (addkid or addsib)
+ * @param string $book_level_menu_name Name of the menu for the book
+ *     level where the new node will be added.
+ * @param int $left_sib_mlid mlid of the sibling to the left of the new node.
+ * @return array Data to render a link. addsib operation only.
+ */
+function _cacpl_make_link( $link_text, $content_type, $parent_mlid, $op, 
+                            $book_level_menu_name, $left_sib_mlid = NULL ) {
+  $query_params = array(
+    'parent' => $parent_mlid,
+    'op' => $op,
+    'book_level_menu' => $book_level_menu_name,
+  );
+  if ( $op == 'addkid' ) {
+    //Nothing extra to do.
+  }
+  else if ( $op == 'addsib') {
+    if ( is_null($left_sib_mlid) ) {
+      throw new Exception('_cacpl_make_link: addsib missing sib mlid');
+    }
+    $query_params['left_sib_mlid'] = $left_sib_mlid;
+  }
+  else {
+    throw new Exception('_cacpl_make_link: bad operator, naughty operator');
+  }
+  $link_data = 
+    array(
+      'query' => $query_params,
+      'title' => $link_text,
+      'href' => 'node/add/' . $content_type,
+      'attributes' => array(
+        'class' => array('active', 'cybercourse-create-page-link'),
+      ),
+    );
+  return $link_data;
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ * Change the title of the "Reorder the book" link.
+ */
+function cybercourse_add_create_page_links_menu_local_tasks_alter(&$data, $router_item, $root_path){
+  return;
+  $path_bits = explode( '/', current_path() );
+  if ( sizeof($path_bits) == 2 && $path_bits[0] == 'node' && is_numeric($path_bits[1]) ) {
+    if ( isset($data['tabs'][0]['output'][2]['#link']['title']) ) {
+      $data['tabs'][0]['output'][2]['#link']['title'] = 'Rearrange pages';
+    }
+  }
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for node_form().
+ *
+ * Changes the book weight to add new sibling after current page.
+ */
+function cybercourse_add_create_page_links_form_node_form_alter(&$form, &$form_state, $form_id) {
+  $x=drupal_get_query_parameters();
+  $form['book']['weight']['#weight'] = 6;
+  
+}

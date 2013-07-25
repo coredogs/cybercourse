@@ -1,0 +1,31 @@
+/* Styles for the table of contents module. */
+
+#cybercourse_toc {
+  border: 1px solid #DDDDDD;
+  background-color: #f4f4f4;
+  margin: 40px 0 40px 0;
+  padding: 20px;
+  border-radius: 10px; 
+  -moz-border-radius: 5px; 
+  -webkit-border-radius: 10px; 
+}
+
+#cybercourse_toc_label {
+  font-weight: bold;
+}
+
+#cybercourse_toc p {
+}
+
+#cybercourse_toc p.cybercourse_toc_h2 {
+  margin-left: 0;
+}
+
+#cybercourse_toc p.cybercourse_toc_h3 {
+  margin-left: 20px;
+}
+
+#cybercourse_toc p.cybercourse_toc_h4 {
+  margin-left: 40px;
+}
+

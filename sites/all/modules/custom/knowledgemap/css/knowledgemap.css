@@ -136,10 +136,10 @@
 
 #edit-field-km .ui-resizable-s {
   background: #eee url(grippie.png) no-repeat center 2px;
-  border: 1px solid #ddd;
+  /*border: 1px solid #ddd;*/
   border-top-width: 0;
   cursor: s-resize;
-  height: 9px;
+  height: 2%;
   overflow: hidden;  
 }
 
@@ -166,7 +166,7 @@
 }
 
 .km-toolbar a {
-  margin-right: 1em;
+  /*margin-right: 1em;*/
 }
 
 .adding-state {

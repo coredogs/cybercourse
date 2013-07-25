@@ -1,0 +1,5 @@
+name = Fix node clone link
+description = Fix on node pages for authors.
+package = CyberCourse
+core = 7.x
+dependencies[] = clone

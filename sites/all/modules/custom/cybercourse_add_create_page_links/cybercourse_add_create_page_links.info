@@ -1,0 +1,5 @@
+name = Add create page links
+description = Adds links to let authors create new pages.
+package = CyberCourse
+core = 7.x
+files[] = DacplContentTypeInfo.inc

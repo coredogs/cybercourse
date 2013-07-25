@@ -1,2 +1,28 @@
 
+@import url("book.css");
 
+.node-unpublished {
+  border-left: 1px solid #fff4f4;
+  border-right: 1px solid #fff4f4;
+  background-color: #fff4f4;
+}
+
+.create-page-links {
+  padding-bottom: 10px;
+  border-bottom: dotted 1px #585858;
+  margin-bottom: 10px;
+}
+
+.create-page-links a {
+  margin-right: 20px;
+}
+
+/* For the operations menu on the control panel. */
+li.expanded.author-menu-parent ul {
+  margin-left: 2em;
+  margin-bottom: 0.3em;
+}
+
+.field-type-taxonomy-term-reference {
+  margin-bottom: 1em;
+}

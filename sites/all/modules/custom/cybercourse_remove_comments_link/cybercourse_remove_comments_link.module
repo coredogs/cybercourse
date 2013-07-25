@@ -1,0 +1,10 @@
+<?php
+//Remove the "Login to add comments" link.
+function cybercourse_remove_comments_link_node_view_alter (&$build) {
+  if ( isset($build['links']['comment']['#links']['comment_forbidden']) ) {
+    // remove login or register to post comments
+    unset($build['links']['comment']['#links']['comment_forbidden']);
+    // remove add comments
+//    unset($build['links']['comment']['#links']['comment_add']);
+  }
+}

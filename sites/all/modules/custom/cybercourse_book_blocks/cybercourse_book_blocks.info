@@ -1,0 +1,5 @@
+name = Cybercourse: Book tree blocks
+description = Add clicky clicky blocks for book navigation.
+package = cybercourse
+core = 7.x
+dependencies[] = jquerymenu

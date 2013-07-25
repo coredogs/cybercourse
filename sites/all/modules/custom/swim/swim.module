@@ -52,7 +52,11 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
   //having the SWIM format? Cache the results of the check 
   //so don't run check again on this page call.
   //Not sure if this is the right approach.
-  if ( $form_id == 'book_node_form' ) {
+  if ( stristr($form_id, 'node_form') !== FALSE ) {
+    //Check perm.
+    if ( !user_access('preview content') ) {
+      return;
+    }
     if (module_invoke('ajax_markup', 'on')) {
       //Load JS for doing previews. Load it early, to set stuff up afore
       //CK does its thing.
@@ -94,19 +98,18 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
  * @return array Output - renderable array.
  */
 function swim_mt_preview() {
-  $node = node_load(SWIM_PREVIEW_NODE_ID);
-  $renderable = node_view($node);
-//  $renderable_body = $renderable['body'];
-//  $markup = $renderable_body[0]['#markup'];
+  //Check perm.
+  if ( !user_access('preview content') ) {
+    return MENU_ACCESS_DENIED;
+  }
+  //Grab the front page, and send it to the client.
+  $front_url = variable_get('site_frontpage', 'node');
+  $front_url = trim($front_url, '/');
+  $front = explode('/', $front_url);
+  $front_nid = $front[1];
+  $node = node_load($front_nid);
+  $renderable = node_view($node, 'full');
   return $renderable;
-  
-  $content = array();
-  //Create an MT place for the preview markeup to be placed by the client.
-  $content['markup_container'] = array(
-    '#type' => '#markup',
-    '#markup' => '<div id="swim-device-markup" />',
-  );
-  return $content;
 }
 
 //
@@ -135,3 +138,37 @@ function swim_mt_preview() {
 //function swim_tips($filter, $format, $long = FALSE) {
 //  return t('Failure is not an option. It comes standard.');
 //}
+
+
+function swim_block_view_alter(&$data, $block) {
+  if ( $block->delta == 'markdown_help' ) {
+    $data['title'] = 'Editing tips';
+    $data['content'] = 
+'<p>' . t('
+Blank lines separate paragraphs. Press Enter twice to make one.
+') . '</p>
+<p><code>' . t('# Header 1<br>
+## Header 2<br>
+### Header 3<br>
+#### Header 4<br>
+##### Header 5
+') . '</code></p>
+<p>' . t('Link:') . '<br><small><code>' . t('[CyberCourse](http://cybercour.se)') . '</small></code></p>
+<p>' . t('Inline markup like ') . '<code>_' . t('italics') . '_</code>,
+ and <code>**' . t('bold') . '**</code>.</p>
+<p><code> > ' . t('This is a quote.') . '</code></p>
+<p><code>* ' . t('Bulleted lists.') . '<br>
+        * ' . t('Put blank lines') . '<br>
+        * ' . t('around them.') . '
+</code></p>
+<p><code>1. ' . t('A numbered list') . '<br>
+1. ' . t('Is like this.') . '<br>
+1. ' . t('Another one.') . '
+</code></p>
+<p>' . t('Use the preview button to see how your content will look on '
+. 'different devices.') . '
+</p>
+<p>' . t('See the <a href="http://cybercour.se">CyberCourse wiki</a> for more.') . '
+</p>';
+  } // End if
+}

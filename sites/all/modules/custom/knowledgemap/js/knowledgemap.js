@@ -8,7 +8,7 @@ var evilGlobalController;
       if (done_once) {
         return;
       }
-      //Unload CKEditor when 
+      //Unload CKEditor when ctools modal closes.
       $(document).bind('CToolsDetachBehaviors', function(event, context) {
         Drupal.behaviors.ckeditor.detach(context, {}, 'unload');
       });  
@@ -91,11 +91,19 @@ var evilGlobalController;
     //Create a toolbar for thr drawing area.
     createTopToolbar: function() {
       this.$drawing_area.prepend(
-              '<div class="km-toolbar">' +
-              '  <input id="add-km-item" type="button" class="form-submit" value="Add item" />' +
-              '   <span id="drawing-message"></span>' +
-              '</div>'
-              );
+            "<div class='km-toolbar'>"
+          +   "<div class='btn-group'>"
+          +     "<a id='add-km-item' class='btn' data-toggle='a' href='javascript:void(0)'>Add item</a>"
+          +     "<a id='cancel-km-add' class='btn' href='javascript:void(0)'>Cancel</a>"
+          +   "</div>"
+          +   "<div class='btn-group'>"
+          +     "<a id='show-km-knowledge' class='btn' href='javascript:void(0)'>Knowledge</a>"
+          +     "<a id='show-km-experiences' class='btn' href='javascript:void(0)'>Experiences</a>"
+          +   "</div>"
+          + "</div>"
+      );
+      //Hide the cancel button.
+      $("#cancel-km-add").attr("disabled", "disabled");
       //Set up the Add button.
       $("#add-km-item").click(function(evnt) {
         controller.clearSelection();
@@ -108,13 +116,18 @@ var evilGlobalController;
         }
         //Move into adding state.
         evnt.stopPropagation();
+        $("#add-km-item").button("toggle");
+        $("#cancel-km-add").removeAttr("disabled");
         controller.$drawing_area.addClass("adding-state");
-        controller.$drawing_area.notify(
-              "Click in the drawing area to add a new item.\n"
-            + "Click Add again to cancel.");
-        controller.$drawing_area.state = 'add';
+        controller.$drawing_area.state = "add";
         return false; //No propagation. 
-      });
+      }); //End add item click.
+      //The cancel button.
+      $("#cancel-km-add").click(function(evnt){
+        if ( controller.$drawing_area.state == "add" ) {
+          controller.$drawing_area.exitAddMode();
+        }
+      }); //End cancel button click.
     },
     createFloatingToolbars: function() {
       var itemToolbar = $(
@@ -253,20 +266,13 @@ var evilGlobalController;
       });
     },
     add_methods_to_drawing_area: function() {
-      if ( controller.mode == "edit" ) {
-        this.$drawing_area.notify = function(message) {
-          $("#drawing-message")
-                  .hide()
-                  .html(message)
-                  .show('medium');
-        };
-        this.$drawing_area.clear_notification = function() {
-          $("#drawing-message")
-                  .hide('medium')
-                  .html('');
-        };
-      }
+      //Set state to normal (not adding item).
       this.$drawing_area.state = 'normal';
+      //What layers are being shown.
+      this.$drawing_area.showKnowledgeLayer = true;
+      this.$drawing_area.showExperiencesLayer = true;
+      $("#show-km-knowledge").button("toggle");
+      $("#show-km-experiences").button("toggle");
       this.$drawing_area.click(function(evnt) {
         if (controller.$drawing_area.state == "add") {
           if ( controller.mode != "edit" ) {
@@ -292,6 +298,7 @@ var evilGlobalController;
               return;
             }
             //Exit add mode.
+            evnt.stopPropagation();
             evnt.preventDefault();
             controller.$drawing_area.exitAddMode();
           }
@@ -300,15 +307,75 @@ var evilGlobalController;
             evnt.preventDefault();
           }
         }
-      });
+      }); //End keydown
       this.$drawing_area.exitAddMode = function() {
         controller.$drawing_area.state = "normal";
-        controller.$drawing_area
-                .removeClass("adding-state")
-                .clear_notification();
+        controller.$drawing_area.removeClass("adding-state");
+        $("#cancel-km-add").attr("disabled", "disabled");
+        $("#add-km-item").button("toggle");
         $(".sendback").remove();
+      };
+      //Set up the Show Knowledge Layer button.
+      $("#show-km-knowledge").click(function(evnt){
+        $("#show-km-knowledge").button("toggle");
+        controller.$drawing_area.showKnowledgeLayer
+            = ! controller.$drawing_area.showKnowledgeLayer;
+        controller.showCorrectItems();
+      }); //End click show knowledge.
+      //Set up the Show Experiences Layer button.
+      $("#show-km-experiences").click(function(evnt){
+        $("#show-km-experiences").button("toggle");
+        controller.$drawing_area.showExperiencesLayer
+            = ! controller.$drawing_area.showExperiencesLayer;
+        controller.showCorrectItems();
+      }); //End click show experiences.
+    },
+    showCorrectItems : function() {
+      var knowledgeItems = $(".km-item").filter(".skill, .concept");
+      var experienceItems = $(".km-item")
+          .filter(".explanation, .example, .exercise, .pattern");
+      var knowledgeConnections = $(".km-connection-knowledge");
+      var experienceConnections = $(".km-connection-experience");
+      if (    controller.$drawing_area.showKnowledgeLayer 
+           && controller.$drawing_area.showExperiencesLayer
+         )
+        {
+        //Show everything.
+        knowledgeItems.show();
+        experienceItems.show();
+        knowledgeConnections.show();
+        experienceConnections.show();
       }
-
+      else if (    ! controller.$drawing_area.showKnowledgeLayer 
+                && ! controller.$drawing_area.showExperiencesLayer
+         )
+        {
+        //Hide everything.
+        knowledgeItems.hide();
+        experienceItems.hide();
+        knowledgeConnections.hide();
+        experienceConnections.hide();
+      }
+      else if (      controller.$drawing_area.showKnowledgeLayer 
+                && ! controller.$drawing_area.showExperiencesLayer
+         )
+        {
+        //Hide everything.
+        knowledgeItems.show();
+        experienceItems.hide();
+        knowledgeConnections.show();
+        experienceConnections.hide();
+      }
+      else if (    ! controller.$drawing_area.showKnowledgeLayer 
+                &&   controller.$drawing_area.showExperiencesLayer
+         )
+        {
+        //Hide everything.
+        knowledgeItems.hide();
+        experienceItems.show();
+        experienceConnections.show();
+        knowledgeConnections.hide();
+      }
     },
     adjustDrawingHeight : function() {
       //Adjust resize range, since max height may have changed.
@@ -319,10 +386,10 @@ var evilGlobalController;
       var currentSizerHeight = controller.$drawing_area.outerHeight();
       if ( controller.maxY > currentSizerHeight ) {
         controller.$drawing_area.resizable({ 
-            minHeight: controller.maxY + 10
+            minHeight: controller.maxY + 60
         });
         controller.$drawing_area.height( 
-            controller.maxY + 10
+            controller.maxY + 60
         );
       }
     },
@@ -682,9 +749,12 @@ var evilGlobalController;
       //skipAdjustDrawingHeight is true if drawItem should not check whether 
       //the connection changes the max height of all elements in the drawing.
       //This is false, except when drawing the initial connections.
+      //Is this a knowledge or experience item? 
+      var connCategoryClasses = this.computeConnectionCategoryClasses( connData );
       var connection = jsPlumb.connect({
         source : "km-item-" + connData.from_nid, 
         target : "km-item-" + connData.to_nid,
+        cssClass : connCategoryClasses,
         //Add the relationship id, index into km_rep.
         'parameters' : { 'rid' : connData.rid }
       });
@@ -702,6 +772,28 @@ var evilGlobalController;
           controller.connectionClicked( conn, evnt );
         });
       }
+    },
+    //Work out whether a connection connects just knowledge items, 
+    //or involves experiences as well.
+    computeConnectionCategoryClasses : function( connData ) {
+      var fromType = controller.km_rep.km_items[connData.from_nid].item_type;
+      var toType = controller.km_rep.km_items[connData.to_nid].item_type;
+      var categoryClasses = "";
+      var knowledge = ["skill", "concept"];
+      if ( 
+              $.inArray( fromType, knowledge ) >= 0
+           || $.inArray( toType, knowledge ) >= 0
+          ) {
+        categoryClasses += "km-connection-knowledge ";
+      }
+      var experiences = ["explanation", "example", "exercise", "pattern"];
+      if ( 
+              $.inArray( fromType, experiences ) >= 0
+           || $.inArray( toType, experiences ) >= 0
+          ) {
+        categoryClasses += " km-connection-experience ";
+      }
+      return categoryClasses;
     },
     connectionClicked : function( clickedConnJsPlumbDisplayObject, evnt ) {
       if ( controller.mode != "edit" ) {

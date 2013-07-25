@@ -116,17 +116,16 @@
       var iframe = $( "#swim-device-screen" );
       //Get ref to the markup in the iframe.
       var iframeContentContainer 
-          = iframe
-              .contents()
-              .find("#content .node-content");
+          = iframe.contents().find(".field-name-body");
       //Make sure that the preview container is loaded.
       if ( iframeContentContainer.length == 0 ) {
         alert( "Still preparing preview. Please try again in a few seconds." );
         return;
       }
-      //Prepare the iframe content.
+      //Prepare the iframe content. Remove content that isn't needed.
       this.prepareIframeContent();
       //Set up the preview to mimic the device.
+      //Want a scroll bar only on the iframe itself.
       //The container of the iframe - want black edge for a phone, etc.
       var deviceContainer = $('#swim-device');
       deviceContainer
@@ -140,7 +139,9 @@
         //Make it grab all space.
         $(deviceContainer).css("display", "block");
         w = $(deviceContainer).innerWidth();
-        h = $(deviceContainer).innerHeight();
+//        h = $(deviceContainer).innerHeight();
+        h = $("#swim-preview-container").outerHeight()
+              - $('#swim-preview-top').outerHeight();
       }
       else if ( this.selectedPreview == 'tablet') {
         //Make it fit content.
@@ -189,28 +190,47 @@
     prepareIframeContent : function() {
       var iframeContent = $("#swim-device-screen").contents();
       //Check if already prepared it.
-      var header = iframeContent.find("#header");
-      if ( header.length != 1 ) {
+      var header = iframeContent.contents().find('body').find('#navbar');
+      if ( header.length == 0 ) {
         //Already done it.
         return;
       }
-      //Kill the header.
-      $(header).remove();
-      //Kill the menu.
-      $(iframeContent).find("#menu-bar").remove();
-      //Kill the sidbars and stuff.
-      var innerCols = $(iframeContent).find("#columns .columns-inner");
+      //Kill all body children except for the main content.
+      var $body = $(iframeContent.contents().find('body'));
+      $body.children().each(function(index, element) {
+        if ( ! $(element).hasClass("main-container") ) {
+          $(element).remove();
+        }
+      });
+      $body.removeClass("admin-menu").css("padding", 0).css("margin", 0);
+//      //Kill the header.
+//      $(header).remove();
+//      //Kill the menu.
+////      $(iframeContent).find("#navbar").remove();
+      //Kill the left sidebar.
+      var leftSidebar = $(iframeContent).find(".region-sidebar-first").parent();
+      leftSidebar.remove();
+      //Change the main content's span9 to a span12, since the sidebar
+      //iz morte.
+      $body
+          .find(".row-fluid")
+          .find("section.span9")
+          .removeClass("span9")
+          .addClass("span12");
+      //Get the main part of the node.
+      var nodeMain = $body.find(".node-site-page");
       //Kill the node header (contains node title)
-      $(innerCols).find(".node-header").remove();
+//      $(nodeMain).find(".node header").remove();
       //Keep the content column, kill others.
-      $(innerCols).children().each(function(index, element) {
-        //Keep the content column, kill others.
-        if ( $(element).attr("id") != "content-column" ) {
-          $(element).html('');
+      $(nodeMain).children().each(function(index, element) {
+        //Keep the body, kill others.
+        if ( ! $(element).hasClass("field-name-body") ) {
+          $(element).remove();
+//          $(element).html('');
         }
       });
       //Kill the footer.
-      $(iframeContent).find("footer").remove();
+//      $(iframeContent).find("footer").remove();
     } //end prepareIframeContent
   };
 }(jQuery));

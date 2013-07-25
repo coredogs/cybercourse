@@ -1,0 +1,4 @@
+name = ToC
+description = Table of contents
+package = CyberCourse
+core = 7.x

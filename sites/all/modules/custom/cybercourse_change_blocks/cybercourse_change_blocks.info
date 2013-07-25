@@ -1,0 +1,4 @@
+name = Change blocks
+description = Random changes, like altering the markdown tips.
+package = CyberCourse
+core = 7.x

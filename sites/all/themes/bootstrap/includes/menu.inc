@@ -66,7 +66,6 @@ function bootstrap_menu_link(array $variables) {
     if (($element['#original_link']['menu_name'] == 'management') && (module_exists('navbar'))) {
       $sub_menu = drupal_render($element['#below']);
     }
-
     else {
       // Add our own wrapper
       unset($element['#below']['#theme_wrappers']);
