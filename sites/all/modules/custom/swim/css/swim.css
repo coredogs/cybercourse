@@ -17,46 +17,56 @@
   /*width: 100%;*/
 }
 
-#swim-preview-container {
-  display: none;
-  width: 50%;
-  border: 1px solid #b6b6b6;
-  vertical-align: top;  
-}
-
-#swim-preview-area {
+#swim-preview-outer {
+  display: table;
+  margin:0;
+  padding:0;
   text-align: center;
   overflow: auto;
+}
+
+#swim-preview-container {
+  display: table-row;
+  width: 50%;
+  border: 1px solid #b6b6b6;
+  vertical-align: top;
+  padding: 0;
+  margin: 0;
 }
 
 .swim-button {
   border-color: rgb(47, 65, 111)
 }
 
-.swim-preview-area-desktop {
-  padding: 0;
-  overflow: auto;
+
+.swim-preview-wrapper-table {
+  display: table;
 }
 
-.swim-preview-area-tablet, .swim-preview-area-phone {
+.swim-preview-wrapper-row {
+  display: table-row;
+}
+
+.swim-preview-wrapper-table,
+.swim-preview-wrapper-row {
+  margin: 0;
+  padding: 0;
+}
+
+
+/* Styles for id=swim-preview-device. Black border for portables,
+MT for desktop. */
+
+#swim-preview-device {
+  display: table-cell;
+}
+
+.swim-preview-device-desktop {
   padding: 0.5em;
-  overflow: auto;
+  margin: 0;
 }
-
-#swim-device {
-  overflow: auto;
-}
-
-/* Styles for the visual frame around the screen. */
-.swim-desktop-device-container {
-  background-color: inherit;
-  padding: 0;
-  border-radius: 0;
-  margin-left: 0;
-  margin-right: 0;
-}
-
-.swim-tablet-device-container, .swim-phone-device-container {
+.swim-preview-device-tablet,
+.swim-preview-device-phone {
   background-color: black;
   padding: 1em;
   border-radius: 0.5em;
@@ -64,12 +74,30 @@
   margin-right: auto;
 }
 
+.swim-preview-device-tablet {
 
-/* Styles for the screen itself. */
-#swim-device-screen {
-  border: none;
+}
+.swim-preview-device-phone {
+
+}
+
+/* For id=swim-device-screen, the screen of the device. */
+
+.swim-device-screen-desktop {
+  /* Initial size computed at runtime. */
   overflow: auto;
 }
+.swim-device-screen-tablet {
+  width: 778px; /* Includes padding. */
+  height: 1034px;
+  padding: 5px;
+}
+.swim-device-screen-phone {
+  width: 490px;
+  height: 330px;
+  padding: 5px;
+}
+
 
 /* Dialog on top of top nav bar. */
 .dialog-to-top {

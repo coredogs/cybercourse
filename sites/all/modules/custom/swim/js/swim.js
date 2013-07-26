@@ -8,65 +8,53 @@ var swimDoneOnce = false;
       }
       swimDoneOnce = true;
       Drupal.behaviors.swim.initLoadComplete = false;
-      $(".cke_button__preview").hide();
       //Compute the URL for the iframe that simulates the device.
-      var iframeSrc =  Drupal.settings.swim.base_url + "/swim-mt-preview";      
-      //This could be called again after some work has been done, but the
-      //page load into the iframe failed. If so, don't attach the toolbar etc again.
-      if ( $("#swim-preview-container").length == 1 ) { 
-        //Toolbar etc already there. Try loading the preview iframe again.
-        $("#swim-preview-container iframe").attr( "src", iframeSrc );
-      }
-      else {
-        //Make preview toolbar.
-        var iconPath = Drupal.settings.swim.base_url 
-            + "/sites/all/modules/ckeditor/plugins/preview/icons/";
-        var previewToolbar 
-                = $(
-          "<div id='swim-preview-top' class='cke_top'>"
-        +   "<span class='cke_toolgroup' role='presentation'>"
-        +     "<a id='swim-preview-desktop' "
-        +        "class='cke_button swim-button'><img "
-        +        "src='" + iconPath + "desktop.png' title='Laptop'>"
-        +     "</a>"
-        +     "<a id='swim-preview-tablet' "
-        +        "class='cke_button swim-button'><img "
-        +        "src='" + iconPath + "tablet.png' title='Tablet'>"
-        +     "</a>"
-        +     "<a id='swim-preview-phone' "
-        +        "class='cke_button swim-button'><img "
-        +        "src='" + iconPath + "phone.png' title='Phone'>"
-        +     "</a>"
-        +   "</span>"
-        +   "<span class='cke_toolgroup' role='presentation'>"
-        +     "<a id='swim-preview-refresh' "
-        +        "class='cke_button swim-button'><img "
-        +        "src='" + iconPath + "refresh.png' title='Refresh'>"
-        +     "</a>"
-        +   "</span>"
-        + "</div>"
-                   );
-        previewToolbar.css("height", $('#cke_2_top').outerHeight());
-        //Area for the actual preview.
-        var previewArea = $(
-           "<div id='swim-preview-area'>"
-        +    "<div id='swim-device'>"
-               //The device screen.
-        +      "<iframe id='swim-device-screen'></iframe>"
-               //A cache. Load pages into the cache. Then copy to display.
-               //Gives control over timing of device screen update.
-        +      "<iframe style='display:none;' id='swim-cache' "
-        +          "src='" + iframeSrc + "'></iframe>"
-        +    "</div>"
-        +  "</div>"
-        );
-        //The entire preview container.
-        var previewContainer 
-            = $("<div id='swim-preview-container'>")
-              .append( previewToolbar )
-              .append( previewArea );
-        $("body").append( previewContainer );
-      } //End toolbar etc already attached.
+      var iframeSrc = Drupal.settings.swim.base_url + "/swim-mt-preview";      
+      //Make preview toolbar.
+      var iconPath = Drupal.settings.swim.base_url 
+          + "/sites/all/modules/ckeditor/plugins/preview/icons/";
+      var toolbarHtml
+        "<div id='swim-preview-toolbar' class='cke_top'>"
+      +   "<span class='cke_toolgroup' role='presentation'>"
+      +     "<a id='swim-preview-as-desktop' "
+      +        "class='cke_button swim-button'><img "
+      +        "src='" + iconPath + "desktop.png' title='Laptop'>"
+      +     "</a>"
+      +     "<a id='swim-preview-as-tablet' "
+      +        "class='cke_button swim-button'><img "
+      +        "src='" + iconPath + "tablet.png' title='Tablet'>"
+      +     "</a>"
+      +     "<a id='swim-preview-as-phone' "
+      +        "class='cke_button swim-button'><img "
+      +        "src='" + iconPath + "phone.png' title='Phone'>"
+      +     "</a>"
+      +   "</span>"
+      +   "<span class='cke_toolgroup' role='presentation'>"
+      +     "<a id='swim-preview-refresh' "
+      +        "class='cke_button swim-button'><img "
+      +        "src='" + iconPath + "refresh.png' title='Refresh'>"
+      +     "</a>"
+      +   "</span>"
+      + "</div>";
+      var previewHtml = 
+        "<div id='swim-preview-outer'>" //Everything in the dialog.
+      +   toolbarHtml
+      +   "<div id='swim-preview-wrapper-table'>" //Using display:table to 
+      +     "<div id='swim-preview-wrapper-row'>" //get auto vertical sizing.
+      +       "<div id='swim-preview-device'>" //Edges of device, not screen.
+             //The device screen.
+      +         "<iframe id='swim-device-screen'></iframe>"
+                //A cache. Load pages into the cache. Then copy to display.
+                //Gives control over timing of device screen update.
+      +         "<iframe style='display:none;' id='swim-cache' "
+      +             "src='" + iframeSrc + "'></iframe>"
+      +       "</div>" //End device.
+      +     "</div>" //End wrapper row.
+      +   "</div>" //End wrapper table.
+      + "</div>"; //End outer.
+      //Match toolbar height to the one creted by CKEditor.
+      $("#swim-preview-toolbar").css("height", $('#cke_2_top').outerHeight());
+      $("body").append( previewHtml );
       //Wait until the content is loaded.
       Drupal.behaviors.swim.wait = {
         counter : 0,
@@ -86,34 +74,33 @@ var swimDoneOnce = false;
 //      if ( Drupal.behaviors.swim.initLoadComplete ) {
 //        return;
 //      }
-      //Copy content of cache iframe to the display iframe.
+      //Copy content of cache iframe.
       var content = $("#swim-cache").contents().find("html").children().clone();
       //Prep the dialog.
-      $( "#swim-preview-container" )
+      $( "#swim-preview-outer" )
         .dialog({
+          title: 'Preview',
           autoOpen : false,
           dialogClass : "dialog-to-top" //Dialog on top of top nav bar.
         });
+      //Put the content into the dialog.
       $("#swim-device-screen").contents().find("html").children().remove();
       $("#swim-device-screen").contents().find("html").append(content);
-//      $("#swim-device-screen").contents().find("html").html( 
-//          $("#swim-cache").contents().find("html").html()
-//      );
       //MT the cache.
       $("#swim-cache").attr("src", "about:blank");
       //Prepare the iframe content. Remove content that isn't needed.
       this.prepareIframeContent();
-        //Should have done this earlier, but preparing the dialog reloads
-        //the iframe for some reason, so need to wait to do this.
       //Set up events on the preview buttons.
-      $("#swim-preview-desktop").click( function() {
-        swimBehavior.previewButtonClicked("desktop");
+      //Now the preview processing code.
+      var swimBehavior = this; //Convenience for closures.
+      $("#swim-preview-as-desktop").click( function() {
+        swimBehavior.deviceButtonClicked("desktop");
       } );
-      $("#swim-preview-tablet").click( function() {
-        swimBehavior.previewButtonClicked("tablet");
+      $("#swim-preview-as-tablet").click( function() {
+        swimBehavior.deviceButtonClicked("tablet");
       } );
-      $("#swim-preview-phone").click( function() {
-        swimBehavior.previewButtonClicked("phone");
+      $("#swim-preview-as-phone").click( function() {
+        swimBehavior.deviceButtonClicked("phone");
       } );
       //Set up the refresh button.
       $("#swim-preview-refresh").click( function() {
@@ -123,29 +110,22 @@ var swimDoneOnce = false;
        * Watch the plugin's preview button.
        */
       $(".cke_button__preview").click(function() {
-        //The preview button on the CKEditor toolbar was clicked.
-        if ( ! Drupal.behaviors.swim.initLoadComplete ) {
-          alert("The preview is not ready yet. Please try again in a few seconds.");
-          return;
-        }
-        if ( ! $( "#swim-preview-container" ).dialog( "isOpen" ) ) {
-          $( "#swim-preview-container" ).dialog( "open" );
+        if ( ! $( "#swim-preview-outer" ).dialog( "isOpen" ) ) {
+          $( "#swim-preview-outer" ).dialog( "open" );
         }
         //Show the current preview.
         Drupal.behaviors.swim.showPreview();
       });
       
-      //Now the preview processing code.
-      var swimBehavior = this; //Convenience for closures.
       //Init display.
       this.selectedPreview = "desktop";
       this.showSelectedButton();
       
-      //Turn on the CKEditor button.
+      //Turn on the CKEditor preview button, so show all is ready.
       CKEDITOR.instances['edit-body-und-0-value'].commands.preview.enable();
 
     }, //End attach.
-    previewButtonClicked : function( buttonClicked ) {
+    deviceButtonClicked : function( buttonClicked ) {
       this.selectedPreview = buttonClicked;
       this.showSelectedButton();
       this.showPreview();
@@ -154,10 +134,10 @@ var swimDoneOnce = false;
      * Adjust toolbar to show whichever button is pressed.
      */
     showSelectedButton : function() {
-      $("#swim-preview-desktop").removeClass("cke_button_on");
-      $("#swim-preview-tablet").removeClass("cke_button_on");
-      $("#swim-preview-phone").removeClass("cke_button_on");
-      $( "#swim-preview-" + this.selectedPreview ).addClass("cke_button_on");
+      $("#swim-preview-as-desktop").removeClass("cke_button_on");
+      $("#swim-preview-as-tablet").removeClass("cke_button_on");
+      $("#swim-preview-as-phone").removeClass("cke_button_on");
+      $( "#swim-preview-as-" + this.selectedPreview ).addClass("cke_button_on");
     },
     /**
      * Grab rendered text from the server and show it.
@@ -170,52 +150,23 @@ var swimDoneOnce = false;
       //Set up the preview to mimic the device.
       //Want a scroll bar only on the iframe itself.
       //The container of the iframe - want black edge for a phone, etc.
-      var deviceContainer = $('#swim-device');
-      deviceContainer
-        .removeClass("swim-desktop-device-container")
-        .removeClass("swim-tablet-device-container")
-        .removeClass("swim-phone-device-container")
-        .addClass("swim-" + this.selectedPreview + "-device-container");
-      //Size the iframe.
-      var w, h;
+      $('#swim-preview-device')
+        .removeClass("swim-preview-device-desktop "
+            + "swim-preview-device-tablet "
+            + "swim-preview-device-phone")
+        .addClass("swim-preview-device-" + this.selectedPreview);
+      //Size the device screen.
       if ( this.selectedPreview == 'desktop') {
-        //Make it grab all space.
-        $(deviceContainer).css("display", "block");
-        w = $(deviceContainer).innerWidth();
-//        h = $(deviceContainer).innerHeight();
-        h = $("#swim-preview-container").outerHeight()
-              - $('#swim-preview-top').outerHeight();
+        //Base size on what sizing the user has done. 
+        $( "#swim-preview-outer" )
+            .dialog( "option", "width", $(document).innerWidth()*0.75 )
+            .dialog( "option", "height", $("#cke_2_contents").innerHeight() );
       }
-      else if ( this.selectedPreview == 'tablet') {
-        //Make it fit content.
-        $(deviceContainer).css("display", "inline-block");
-        w = "768";
-        h = "1024";
-      }
-      else {
-        //Make it fit content.
-        $(deviceContainer).css("display", "inline-block");
-        w = "480";
-        h = "320";
-      }
-      $(iframe).css("width", w);
-      $(iframe).css("height", h);
-      $("#swim-preview-area").removeClass(
-          "swim-preview-area-desktop swim-preview-area-tablet swim-preview-area-phone"
-      );
-      $("#swim-preview-area")
-          .addClass("swim-preview-area-" + this.selectedPreview);
-//      $("#swim-preview-area").css("text-align", textAlign);
-//      //The screen itself.
-//      var iframeContentScreen = iframeContentContainer.find(".field-name-body");
-//      if ( iframeContentScreen.length == 0 ) {
-//        throw "showPreview: could not find device screen.";
-//      }
-//      iframeContentScreen
-//        .removeClass("swim-desktop-screen")
-//        .removeClass("swim-tablet-screen")
-//        .removeClass("swim-phone-screen")
-//        .addClass("swim-" + this.selectedPreview + '-screen');
+      $('#swim-device-screen')
+        .removeClass("swim-device-screen-desktop "
+            + "swim-device-screen-tablet "
+            + "swim-device-screen-phone")
+        .addClass("swim-device-screen-" + this.selectedPreview);
       //Get content from server.
       var editor = CKEDITOR.instances["edit-body-und-0-value"];
       var markup = editor.getData();
