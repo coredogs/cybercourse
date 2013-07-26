@@ -1,38 +1,38 @@
 /**
  * @file Plugin for previewing SWIM content.
  */
-( function() {
+//(function ($) {
+  
 CKEDITOR.plugins.add( 'preview', {
     icons: 'preview',
     init: function( editor ) {
       editor.addCommand( 'preview', {
-          exec: function( editor ) {
-            //this is the command object.
-            if ( this.state == CKEDITOR.TRISTATE_ON ) {
-              //Preview is showing. Turn it off.
-//              jQuery("#swim-editor-container")
-//                .css("width", "100%");
-              jQuery("#swim-preview-container")
-                .css("display", "none");
-              this.setState( CKEDITOR.TRISTATE_OFF );
-            }
-            else {
-              //Preview is not showing. Turn it on.
-//              jQuery("#swim-editor-container")
-//                .css("width", "50%");
-              jQuery("#swim-preview-container")
-                .css("display", "table-cell")
-//                .css("width", "auto");
-              this.setState( CKEDITOR.TRISTATE_ON );
-              Drupal.behaviors.swim.previewWindowOpened();
-            }
-          }
+        exec: function( editor ) {
+//            swimCkeditorPreviewClicked();
+        }
       });
       editor.ui.addButton( 'Preview', {
           label: 'Preview the content',
           command: 'preview',
-          toolbar: 'clipboard'
+          toolbar: 'clipboard',
+          state: CKEDITOR.TRISTATE_DISABLED
+
+      });
+      editor.on( 'configLoaded', function() {
+        CKEDITOR.instances['edit-body-und-0-value'].commands.preview.disable();
+      });
+    },
+    afterInit: function( editor ) {
+      editor.on( 'configLoaded', function() {
+        CKEDITOR.instances['edit-body-und-0-value'].commands.preview.disable();
       });
     }
 });
-} )();
+
+//}(jQuery));
+CKEDITOR.on('instanceReady', function(evt){ 
+  var t=9;
+  if ( CKEDITOR.instances['edit-body-und-0-value'] ) {
+    CKEDITOR.instances['edit-body-und-0-value'].commands.preview.disable();
+  }
+}); 

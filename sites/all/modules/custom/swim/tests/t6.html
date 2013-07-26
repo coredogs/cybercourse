@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>T6</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+  </head>
+  <body style="background-color: #FFFFCC;">
+    <div>TODO write content</div>
+    <iframe id="cache" style="width: 300px; height: 100px;"></iframe>
+    <iframe id="display" style="width: 300px; height: 100px;border: solid black 1px;"></iframe>
+    <p>More stuff.</p>
+    <button id="load" type="button">Load cache</button>
+    <button id="clearCache" type="button">Clear cache</button>
+    <button id="copy" type="button">Copy cache to display</button>
+    <button id="clearDisplay" type="button">Clear display</button>
+    <script>
+      $(document).ready(function() {
+        $("#load").click(function() {
+          $("#cache").attr("src", "t6a.html");
+          }
+        );
+        $("#clearCache").click(function() {
+          $("#cache").attr("src", "about:blank");
+        });
+        $("#clearDisplay").click(function() {
+          $("#display").attr("src", "about:blank");
+        });
+        $("#copy").click(function() {
+          var content = $("#cache").contents().find("html").children().clone();
+          $("#display").contents().find("html").children().remove();
+          $("#display").contents().find("html").append(content);
+//          var contents  = $("#cache").contents().find("html").html();
+//          $("#display").contents().find("html").html(contents);
+        });        
+      });
+    </script>
+  </body>
+</html>

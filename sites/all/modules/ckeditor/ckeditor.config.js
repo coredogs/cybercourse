@@ -8,6 +8,7 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
  If you don't do this, you may notice that browser is ignoring all your changes.
  */
 CKEDITOR.editorConfig = function(config) {
+  config.height = "30em";
   //Let images be inserted.
   config.allowedContent = true;
   config.indentClasses = [ 'rteindent1', 'rteindent2', 'rteindent3', 'rteindent4' ];
@@ -16,7 +17,7 @@ CKEDITOR.editorConfig = function(config) {
   config.justifyClasses = [ 'rteleft', 'rtecenter', 'rteright', 'rtejustify' ];
 
   // The minimum editor width, in pixels, when resizing it with the resize handle.
-  config.resize_minWidth = 450;
+  config.resize_minWidth = 400;
 
   // Protect PHP code tags (<?...?>) so CKEditor will not break them when
   // switching from Source to WYSIWYG.

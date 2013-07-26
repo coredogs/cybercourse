@@ -70,3 +70,8 @@
   border: none;
   overflow: auto;
 }
+
+/* Dialog on top of top nav bar. */
+.dialog-to-top {
+  z-index: 1100; 
+}
