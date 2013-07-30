@@ -26,3 +26,33 @@ li.expanded.author-menu-parent ul {
 .field-type-taxonomy-term-reference {
   margin-bottom: 1em;
 }
+
+h3 {
+  text-shadow: 3px 3px 6px rgba(150, 150, 150, 1);;
+}
+
+aside {
+  border: 2px #CCC solid;
+  border-radius: 8px;
+  margin: 2em;
+  padding: 1em;
+  float: right;
+  max-width: 20em;
+  background-color: #FFFFF0;
+}
+
+
+
+@media (max-width: 767px) {
+  h3 {
+    text-shadow: none;
+  }
+  
+  aside {
+    float: none;
+    margin: 1em 0 1em 0;
+    background-color: inherit;
+  }
+  
+  
+}

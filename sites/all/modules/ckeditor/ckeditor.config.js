@@ -8,6 +8,7 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
  If you don't do this, you may notice that browser is ignoring all your changes.
  */
 CKEDITOR.editorConfig = function(config) {
+  config.basicEntities = false; //Keep <, >.
   config.height = "30em";
   //Let images be inserted.
   config.allowedContent = true;
@@ -27,6 +28,7 @@ CKEDITOR.editorConfig = function(config) {
   // (as does Drupal), so just leave this line as is.
   config.protectedSource.push(/<\?[\s\S]*?\?>/g); // PHP Code
   config.protectedSource.push(/<code>[\s\S]*?<\/code>/gi); // Code tags
+  config.protectedSource.push(/<aside>[\s\S]*?<\/aside>/gi); // Aside tags
   config.extraPlugins = '';
 
   /*

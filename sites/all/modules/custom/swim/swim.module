@@ -111,44 +111,62 @@ function swim_mt_preview() {
 }
 
 
- function swim_filter_info_alter(&$info) {
-   $info['filter_markdown']['process callback'] = 'swim_preprocess_markdown';
-   $r=5;
- }
+// function swim_filter_info_alter(&$info) {
+//   $info['filter_markdown']['process callback'] = 'swim_preprocess_markdown';
+//   $r=5;
+// }
+//
+//function swim_preprocess_markdown($text, $filter, $format) {
+//  //Replace with regex.
+//  $text = str_ireplace('<br/>', "", $text);
+//  $text = str_ireplace('<br />', "", $text);
+//  $text = str_ireplace('<br>', "", $text);
+//  $text = str_ireplace('{aside}', '<aside>', $text);
+//  $text = str_ireplace('{/aside}', '</aside>', $text);
+//  return _filter_markdown($text, $format);
+//}
 
-function swim_preprocess_markdown($text, $filter, $format) {
-  //Replace with regex.
+/**
+* Implements hook_filter_info().
+*/
+function swim_filter_info() {
+  $filters['filter_swim'] = array(
+    'title' => t('SWIM'),
+    'description' => t('Show What I Mean'),
+//    'prepare callback' => '_dgd7_tip_prepare',
+    'process callback' => 'swim_process_filter',
+//    'tips callback' => 'swim_tips',
+  );
+  return $filters;
+}
+
+require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/Markdown.php';
+require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/MarkdownExtra.php';
+//use \Michelf\Markdown;
+
+# Install PSR-0-compatible class autoloader
+//spl_autoload_register(function($class){
+//	require preg_replace('{\\\\|_(?!.*\\\\)}', DIRECTORY_SEPARATOR, ltrim($class, '\\')).'.php';
+//});
+
+//function swim_process($text, $filter, $format) {
+function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und') {
+//  return $text;
   $text = str_ireplace('<br/>', "", $text);
   $text = str_ireplace('<br />', "", $text);
   $text = str_ireplace('<br>', "", $text);
-  return _filter_markdown($text, $format);
+  $text = str_ireplace('{aside}', '<aside markdown="1">', $text);
+  $text = str_ireplace('{/aside}', '</aside>', $text);
+
+  $html = \Michelf\MarkdownExtra::defaultTransform($text);  
+  
+  return $html;
+  
 }
-//
-///**
-//* Implements hook_filter_info().
-//*/
-//function swim_filter_info() {
-//  $filters['filter_swim'] = array(
-//    'title' => t('SWIM'),
-//    'description' => t('Show What I Mean'),
-////    'prepare callback' => '_dgd7_tip_prepare',
-//    'process callback' => 'swim_process',
-////    'tips callback' => 'swim_tips',
-//  );
-//  return $filters;
-//}
-//
-////function swim_process($text, $filter, $format) {
-//function swim_process($text, $filter, $format = 'SWIM', $langcode = 'und') {
-//  $text = str_replace('[br]', '<br>', $text);
-//  $text = str_replace('cat', 'dog', $text);
-//  return $text;
-//  
-//}
-//
-//function swim_tips($filter, $format, $long = FALSE) {
-//  return t('Failure is not an option. It comes standard.');
-//}
+
+function swim_tips($filter, $format, $long = FALSE) {
+  return t('Failure is not an option. It comes standard.');
+}
 
 
 function swim_block_view_alter(&$data, $block) {
