@@ -157,27 +157,10 @@ var swimDoneOnce = false;
         .addClass("swim-preview-device-" + this.selectedPreview);
       //Size the device screen.
       if ( this.selectedPreview == 'desktop') {
-        //Base size of dialog on what sizing the user has done. 
+        //Base size on what sizing the user has done. 
         $( "#swim-preview-outer" )
             .dialog( "option", "width", $(document).innerWidth()*0.75 )
             .dialog( "option", "height", $("#cke_2_contents").innerHeight() );
-      }
-      else if ( this.selectedPreview == 'tablet') {
-      }
-      else if ( this.selectedPreview == 'phone') {
-        //Base size of dialog on device size. 
-        $( "#swim-preview-outer" )
-            .dialog( "option", "width", 540 + 10)
-            .dialog( "option", "height", 
-              360 + (   $(".ui-dialog").outerHeight() 
-                      - $("#swim-preview-outer").outerHeight()
-                    )
-//                + $("#swim-preview-toolbar").outerHeight()
-//                  + $(".ui-dialog-titlebar").outerHeight()
-            );
-      }
-      else {
-        throw "showPreview: bad selectedPreview: *" + this.selectedPreview + "*";
       }
       $('#swim-device-screen')
         .removeClass("swim-device-screen-desktop "

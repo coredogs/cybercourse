@@ -18,7 +18,7 @@
 }
 
 #swim-preview-outer {
-  display: table;
+  /*display: table;*/
   margin:0;
   padding:0;
   text-align: center;
@@ -39,19 +39,24 @@
 }
 
 
-.swim-preview-wrapper-table {
+#swim-preview-wrapper-table {
   display: table;
+  /*overflow: auto;*/
 }
 
-.swim-preview-wrapper-row {
+#swim-preview-wrapper-row {
   display: table-row;
 }
 
-.swim-preview-wrapper-table,
-.swim-preview-wrapper-row {
+#swim-preview-wrapper-table,
+#swim-preview-wrapper-row {
+  width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
 }
+
+
 
 
 /* Styles for id=swim-preview-device. Black border for portables,
@@ -59,17 +64,19 @@ MT for desktop. */
 
 #swim-preview-device {
   display: table-cell;
+  width: 100%;
+  height: 100%;
 }
 
 .swim-preview-device-desktop {
-  padding: 0.5em;
+  padding: 0;
   margin: 0;
 }
 .swim-preview-device-tablet,
 .swim-preview-device-phone {
-  background-color: black;
+/*  background-color: black;
   padding: 1em;
-  border-radius: 0.5em;
+  border-radius: 0.5em;*/
   margin-left: auto;
   margin-right: auto;
 }
@@ -83,9 +90,15 @@ MT for desktop. */
 
 /* For id=swim-device-screen, the screen of the device. */
 
+#swim-device-screen {
+  background-color: white;
+}
+
 .swim-device-screen-desktop {
   /* Initial size computed at runtime. */
-  overflow: auto;
+  padding: 0.5em;
+  width: 100%;
+  /*overflow: auto;*/
 }
 .swim-device-screen-tablet {
   width: 778px; /* Includes padding. */
@@ -96,6 +109,10 @@ MT for desktop. */
   width: 490px;
   height: 330px;
   padding: 5px;
+}
+.swim-device-screen-tablet, .swim-device-screen-phone {
+  border: solid black 10px;
+  border-radius: 5px;
 }
 
 

@@ -16,9 +16,9 @@ UI dialog
 
       swim-preview-wrapper-row
 
-        swim-preview-device - black edges of device.
+        //swim-preview-device - black edges of device.
 
-          iframe#swim-device-screen
+          iframe#swim-device-screen display:table-cell
       
 
 Desktop: Everything resizes automatically. overflow: visible?
