@@ -158,3 +158,130 @@ function characters_show_character_sheet( $char_nid ) {
   }
   return $output;
 }
+
+
+/**
+* Implements hook_filter_info().
+*/
+function characters_filter_info() {
+  $filters['filter_characters'] = array(
+    'title' => t('Characters'),
+    'description' => t('Replace character tokens'),
+//    'prepare callback' => '_dgd7_tip_prepare',
+    'process callback' => 'characters_process_filter',
+//    'tips callback' => 'swim_tips',
+  );
+  return $filters;
+}
+
+
+function characters_process_filter($text, $filter, $format = 'characters', $langcode = 'und') {
+//  $valid_content_types = array(
+//    'blueprint', 'blueprint_page',
+//    'course', 'course_page',
+//    'knowledge_map_item',
+//    'site_page'
+//  );
+//  //In a content type where character refs are allowed?
+//  if ( in_array( $node->type, $valid_content_types ) ) {
+//    $content = $node->body[LANGUAGE_NONE][0]['value'];
+    //Find all the characters on the page that are referred to.
+    $regex_matches = array();
+    $regex_match_count = preg_match_all("/\{\s*character\s*\:\s*(.*?)\s*\}/i", 
+        $text, $regex_matches);
+    if ( $regex_match_count > 0 ) {
+      //Look up data for those characters.
+      $token_list = '';
+      foreach( $regex_matches[1] as $key => $match ) {
+        if ( $key > 0 ) {
+          $token_list .= ', ';
+        }
+        $token_list .= '\'' . check_plain($match) . '\'';
+      }
+      $sql = '
+          select field_token_value, field_caption_value, 
+            field_image_alt, field_image_width, field_image_height,
+            field_image_fid, file_managed.uri as uri
+          from field_data_field_token 
+            left join field_data_field_caption on 
+              field_data_field_token.entity_id 
+              = field_data_field_caption.entity_id
+            left join field_data_field_image on 
+              field_data_field_token.entity_id
+              = field_data_field_image.entity_id
+            inner join file_managed on file_managed.fid = field_image_fid
+          where 
+            field_data_field_token.bundle = \'character_pose\'
+            and field_token_value in ( ' . $token_list . ' )
+      ';
+      $query_result = db_query($sql); //, array( ':token_list' => $token_list ));
+      if ( $query_result->rowCount() > 0 ) {
+        //Make an array of substitutions.
+        //Each entry has two parts:
+        //1. Token spec found in content.
+        //2. Complete HTML for it.
+        $substitutions = array();
+        foreach ( $regex_matches[1] as $regex_key => $regex_match ) {
+          //Find the token in the query result array.
+          $html = '';
+          foreach ( $query_result as $row ) {
+            //Must have a URI.
+            if ( $row->uri ) {
+              if ( $regex_match == $row->field_token_value ) {
+                //Compute the HTML.
+                $html = _characters_compute_char_html( $row );
+                //Add to substitutions array.
+                $substitutions[] = array(
+                  'matched' => $regex_matches[0][$regex_key],
+                    //Note: this is the entire matched text, not the token.
+                  'replacement' => $html,
+                );
+                break;
+              } //End if match
+            } //End there is a URI.
+          } //Loop across query results.
+        } //Loop across matches.
+        //Apply the substitutions.
+        foreach ( $substitutions as $substitution ) {
+          $text = str_replace(
+              $substitution['matched'], 
+              $substitution['replacement'], 
+              $text
+          );
+        }
+        //Count the closing tags.
+        $pattern = '/\{\s*\/\s*character\s*\}/i';
+          //{, white space, /, white space, 'character', white space, }
+        $closing_matches = array();
+        $closing_tag_count = preg_match_all($pattern, $text, $closing_matches);
+        if ( $closing_tag_count != $regex_match_count ) {
+          drupal_set_message(
+              'Please check for a missing or incorrect character closing tag.', 
+              'warning'
+          );
+        }
+        //Replace the close tags.
+        $text = preg_replace($pattern, '</div>', $text);
+        //Store result in node object.
+      } //End there were query results.
+    } //End there were regex matches.
+  return $text;
+//  } //End this is a content type that allows characters.
+}
+
+/*
+ * Create HTML for a character.
+ */
+function _characters_compute_char_html( $query_result ) {
+  $html = '
+<div class="cyco_character" markdown="1">
+  <figure>
+    <img src="' . file_create_url( $query_result->uri ) . '" 
+      alt="' . t( $query_result->field_image_alt ) . '" 
+      height="' . check_plain( $query_result->field_image_height ) . '"
+      width="' . check_plain( $query_result->field_image_width ) . '"
+    >
+  </figure>
+  <figcaption>' . t($query_result->field_caption_value) . '</figcaption>';
+  return $html;
+}

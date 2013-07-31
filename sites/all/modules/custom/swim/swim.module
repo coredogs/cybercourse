@@ -155,7 +155,7 @@ function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und'
   $text = str_ireplace('<br/>', "", $text);
   $text = str_ireplace('<br />', "", $text);
   $text = str_ireplace('<br>', "", $text);
-  $text = str_ireplace('{aside}', '<aside markdown="1">', $text);
+  $text = str_ireplace('{aside}', '<aside class="swim" markdown="1">', $text);
   $text = str_ireplace('{/aside}', '</aside>', $text);
 
   $html = \Michelf\MarkdownExtra::defaultTransform($text);  

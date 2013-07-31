@@ -31,7 +31,7 @@ h3 {
   text-shadow: 3px 3px 6px rgba(150, 150, 150, 1);;
 }
 
-aside {
+aside.swim {
   border: 2px #CCC solid;
   border-radius: 8px;
   margin: 2em;
@@ -48,7 +48,7 @@ aside {
     text-shadow: none;
   }
   
-  aside {
+  aside.swim {
     float: none;
     margin: 1em 0 1em 0;
     background-color: inherit;
