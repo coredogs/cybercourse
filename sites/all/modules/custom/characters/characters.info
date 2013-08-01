@@ -4,5 +4,5 @@ package = CyberCourse
 core = 7.x
 files[] = characters.module
 stylesheets[all][] = css/characters.css
-;dependencies[] = token
+;dependencies[] = user_variable
 dependencies[] = inline_entity_form

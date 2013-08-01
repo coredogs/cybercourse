@@ -1,0 +1,88 @@
+<?php
+
+define( 'BLUEPRINT_TO_COPY_TITLE', 'Blueprint template' );
+
+/**
+ * Implements hook_menu().
+ */
+function cybercourse_create_blueprint_menu() {
+  $items['create-blueprint'] = array(
+    'title' => 'Create blueprint',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cybercourse_create_blueprint_confirm'),
+    'access callback' => '_cybercourse_create_blueprint_check_perm',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+
+function _cybercourse_create_blueprint_check_perm() {
+  return node_access('create', 'blueprint');
+}
+
+/**
+ * Menu callback.  Ask for blueprint title.
+ */
+function cybercourse_create_blueprint_confirm($form, &$form_state) {
+  $form['new_title'] = array(
+    '#type' => 'textfield',
+    '#default_value' => 'My blueprint',
+    '#description' => t('The title for the blueprint.'),
+    '#title' => t('Blueprint title'),
+  );
+  return confirm_form(
+    $form,
+    t('Create a new blueprint'), 
+    'control-panel',
+    '',
+    t('Create'),
+    t('Cancel')
+  );
+}
+
+/**
+ * User confirmed.
+ * Submit handler to start a batch process.
+ */
+function cybercourse_create_blueprint_confirm_submit($form, &$form_state) {
+  if ($form_state['values']['confirm']) {
+//    $path = arg(0) . '/' . arg(1) . '/' . arg(2);
+    //Find the nid of the blueprint template root.
+    $template_nid = cccblueprint_find_template_nid();
+    if ( ! $template_nid ) {
+      drupal_set_message('Could not find the template.', 'warning');
+      drupal_goto('control-panel');
+      return;
+    }
+    book_copy_process_copy(
+        $template_nid, 
+        BLUEPRINT_TO_COPY_TITLE, 
+        $form_state['values']['new_title'], 
+        TRUE, 
+        '<front>'
+    );
+  }
+}
+
+/**
+ * 
+ * @return nid, or FALSE if not found.
+ */
+function cccblueprint_find_template_nid() {
+  //Find the nid of the blueprint template root.
+  $query = new EntityFieldQuery;
+  $query
+    ->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'blueprint')
+//    ->propertyCondition('status', 1)
+    ->propertyCondition('title', BLUEPRINT_TO_COPY_TITLE);
+  $query_result = $query->execute();
+  if ( sizeof($query_result['node']) != 1 ) {
+    return FALSE;
+  }
+  foreach( $query_result['node'] as $key=>$value ) {
+    $template_nid = $key;
+  }
+  return $template_nid;
+}

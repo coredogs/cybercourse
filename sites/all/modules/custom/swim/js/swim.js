@@ -7,6 +7,7 @@ var swimDoneOnce = false;
         return;
       }
       swimDoneOnce = true;
+      
 //      Drupal.behaviors.swim.initLoadComplete = false;
       //Compute the URL for the iframe that simulates the device.
       var iframeSrc = Drupal.settings.swim.base_url + "/swim-mt-preview";      

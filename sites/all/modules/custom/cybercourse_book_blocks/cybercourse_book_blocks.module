@@ -96,6 +96,7 @@ function _cbb_get_nids_of_type( $bundle_name ) {
 
 /**
  * Create content for the blueprints block.
+ * Exclude the blueprint template.
  * @global stdClass $user You know what it is.
  * @return string Content representing the block.
  */
@@ -105,6 +106,15 @@ function _cbb_blueprints() {
   }
   $output = '';
   $nids = _cbb_get_nids_of_type('blueprint');
+  //Get the blueprint template nid.
+  $template_nid = cccblueprint_find_template_nid();
+  if ( $template_nid ) {
+    //Remove it from the nid array.
+    $index = array_search( $template_nid, $nids );
+    if ( $index !== FALSE ) {
+      unset( $nids[$index] );
+    }
+  }
   if ( sizeof( $nids ) == 0 ) {
     //Tell the user that there are no blueprints.
     return _cbb_make_empty_message('blueprints', TRUE);

@@ -41,7 +41,23 @@ aside.swim {
   background-color: #FFFFF0;
 }
 
+/* Show workflow tags inline on node display. */
+.field-name-field-workflow-tags .field-item {
+  display: inline-block;
+  margin-left: 2em;
+}
 
+/* Show workflow tags inline on node edit form. */
+.field-name-field-workflow-tags .form-item {
+  display: inline-block;
+  margin-right: 2em;  
+}
+
+/* Book nav page up - shrink a little so it fits. */
+.book-navigation .page-up {
+margin: 0 4%;
+width: 3%;
+}
 
 @media (max-width: 767px) {
   h3 {

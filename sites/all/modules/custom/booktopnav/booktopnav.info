@@ -1,0 +1,5 @@
+name = Book top navigation
+description = Adds nav bar to top of book pages.
+package = CyberCourse
+dependencies[] = book
+core = 7.x

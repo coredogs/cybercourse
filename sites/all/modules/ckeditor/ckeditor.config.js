@@ -8,8 +8,11 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
  If you don't do this, you may notice that browser is ignoring all your changes.
  */
 CKEDITOR.editorConfig = function(config) {
+  config.contentsCss = '/sites/all/modules/custom/characters/css/characters.css';
   config.basicEntities = false; //Keep <, >.
   config.height = "30em";
+  //Size the summary editor.
+  CKEDITOR.instances['edit-body-und-0-summary'].config.height = "8em";
   //Let images be inserted.
   config.allowedContent = true;
   config.indentClasses = [ 'rteindent1', 'rteindent2', 'rteindent3', 'rteindent4' ];

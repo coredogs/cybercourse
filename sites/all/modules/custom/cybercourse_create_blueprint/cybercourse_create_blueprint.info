@@ -1,0 +1,5 @@
+name = Create blueprint
+description =Create a new blueprint, copying a template.
+package = CyberCourse
+core = 7.x
+dependencies[] = book_copy

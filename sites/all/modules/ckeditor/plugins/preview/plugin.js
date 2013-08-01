@@ -31,7 +31,6 @@ CKEDITOR.plugins.add( 'preview', {
 
 //}(jQuery));
 CKEDITOR.on('instanceReady', function(evt){ 
-  var t=9;
   if ( CKEDITOR.instances['edit-body-und-0-value'] ) {
     CKEDITOR.instances['edit-body-und-0-value'].commands.preview.disable();
   }
