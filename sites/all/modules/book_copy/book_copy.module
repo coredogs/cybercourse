@@ -303,6 +303,8 @@ function book_copy_copy($initial_nid, $new_title, &$context) {
  * Book delete batch 'finished' callback.
  */
 function _book_copy_copy_finished($success, $results, $operations) {
+  drupal_set_message('result: <pre>'.print_r($results, TRUE).'</pre>');
+  drupal_set_message('operations: <pre>'.print_r($operations, TRUE).'</pre>');
   if ($success) {
     drupal_set_message(t('The outline has been copied successfully!'));
   }
