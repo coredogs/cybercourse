@@ -12,7 +12,9 @@ CKEDITOR.editorConfig = function(config) {
   config.basicEntities = false; //Keep <, >.
   config.height = "30em";
   //Size the summary editor.
-  CKEDITOR.instances['edit-body-und-0-summary'].config.height = "8em";
+  if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
+    CKEDITOR.instances['edit-body-und-0-summary'].config.height = "8em";
+  }
   //Let images be inserted.
   config.allowedContent = true;
   config.indentClasses = [ 'rteindent1', 'rteindent2', 'rteindent3', 'rteindent4' ];

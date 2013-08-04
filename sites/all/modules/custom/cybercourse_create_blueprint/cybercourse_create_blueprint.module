@@ -1,6 +1,11 @@
 <?php
 
+/**
+ * Creates blueprints and courses by copying existing books.
+ */
+
 define( 'BLUEPRINT_TO_COPY_TITLE', 'Blueprint template' );
+define( 'COURSE_TO_COPY_TITLE', 'Course template' );
 
 /**
  * Implements hook_menu().
@@ -9,11 +14,17 @@ function cybercourse_create_blueprint_menu() {
   $items['create-blueprint'] = array(
     'title' => 'Create blueprint',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('cybercourse_create_blueprint_confirm'),
+    'page arguments' => array('cybercourse_create_confirm', 'blueprint'),
     'access callback' => '_cybercourse_create_blueprint_check_perm',
     'type' => MENU_NORMAL_ITEM,
   );
-  return $items;
+  $items['create-course'] = array(
+    'title' => 'Create course',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cybercourse_create_confirm', 'course'),
+    'access callback' => '_cybercourse_create_course_check_perm',
+    'type' => MENU_NORMAL_ITEM,
+  );  return $items;
 }
 
 
@@ -21,19 +32,24 @@ function _cybercourse_create_blueprint_check_perm() {
   return node_access('create', 'blueprint');
 }
 
+
+function _cybercourse_create_course_check_perm() {
+  return node_access('create', 'course');
+}
+
 /**
- * Menu callback.  Ask for blueprint title.
+ * Menu callback.  Ask for book title.
  */
-function cybercourse_create_blueprint_confirm($form, &$form_state) {
+function cybercourse_create_confirm($form, &$form_state, $book_type) {
   $form['new_title'] = array(
     '#type' => 'textfield',
-    '#default_value' => 'My blueprint',
-    '#description' => t('The title for the blueprint.'),
-    '#title' => t('Blueprint title'),
+    '#default_value' => t('My @type', array( '@type' => $book_type )),
+    '#description' => t('The title for the @type.', array( '@type' => $book_type )),
+    '#title' => t('Title'),
   );
   return confirm_form(
     $form,
-    t('Create a new blueprint'), 
+    t('Create a new @type', array( '@type' => $book_type )), 
     'control-panel',
     '',
     t('Create'),
@@ -45,11 +61,10 @@ function cybercourse_create_blueprint_confirm($form, &$form_state) {
  * User confirmed.
  * Submit handler to start a batch process.
  */
-function cybercourse_create_blueprint_confirm_submit($form, &$form_state) {
+function cybercourse_create_confirm_submit($form, &$form_state, $book_type) {
   if ($form_state['values']['confirm']) {
-//    $path = arg(0) . '/' . arg(1) . '/' . arg(2);
-    //Find the nid of the blueprint template root.
-    $template_nid = cccblueprint_find_template_nid();
+    //Find the nid of the template root.
+    $template_nid = cccblueprint_find_template_nid( $book_type );
     if ( ! $template_nid ) {
       drupal_set_message('Could not find the template.', 'warning');
       drupal_goto('control-panel');
@@ -57,7 +72,7 @@ function cybercourse_create_blueprint_confirm_submit($form, &$form_state) {
     }
     book_copy_process_copy(
         $template_nid, 
-        BLUEPRINT_TO_COPY_TITLE, 
+        $book_type == 'blueprint' ? BLUEPRINT_TO_COPY_TITLE : COURSE_TO_COPY_TITLE, 
         $form_state['values']['new_title'], 
         TRUE, 
         '<front>'
@@ -69,14 +84,16 @@ function cybercourse_create_blueprint_confirm_submit($form, &$form_state) {
  * 
  * @return nid, or FALSE if not found.
  */
-function cccblueprint_find_template_nid() {
+function cccblueprint_find_template_nid( $book_type ) {
   //Find the nid of the blueprint template root.
   $query = new EntityFieldQuery;
   $query
     ->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'blueprint')
+    ->entityCondition('bundle', $book_type)
 //    ->propertyCondition('status', 1)
-    ->propertyCondition('title', BLUEPRINT_TO_COPY_TITLE);
+    ->propertyCondition('title', 
+        $book_type == 'blueprint' ? BLUEPRINT_TO_COPY_TITLE : COURSE_TO_COPY_TITLE
+      );
   $query_result = $query->execute();
   if ( sizeof($query_result['node']) != 1 ) {
     return FALSE;
@@ -85,4 +102,33 @@ function cccblueprint_find_template_nid() {
     $template_nid = $key;
   }
   return $template_nid;
+}
+
+/**
+ * Implements hook_book_copy_progress_title_alter().
+ */
+function cybercourse_create_blueprint_book_copy_progress_title_alter( &$title ) {
+  $title = 'Preparing your new goodness';
+}
+
+function cybercourse_create_blueprint_book_copy_clone( $original_nid, $clone_nid ) {
+//  drupal_set_message('Clone. Original nid:' . $original_nid 
+//      . ' clone: ' . $clone_nid);
+  $clone_node = node_load( $clone_nid );
+  $clone_node->hidden = 0;
+  node_save( $clone_node );
+//    drupal_set_message('unhiding ' . $clone_nid );
+}
+
+
+function cybercourse_create_blueprint_book_copy_finished( $success, $results, $operations ) {
+//  drupal_set_message('Blueprint creation done!');
+//  drupal_set_message( 'Results: <pre>' . print_r($results, TRUE) . '</pre>');
+}
+
+/**
+ * Implements book_copy_success_message_alter.
+ */
+function cybercourse_create_blueprint_book_copy_success_message_alter( &$message ) {
+  $message = t( 'Success! Huzzah!' );
 }

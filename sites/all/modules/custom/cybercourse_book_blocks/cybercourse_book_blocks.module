@@ -57,6 +57,15 @@ function cybercourse_book_blocks_block_view($delta = '') {
 function _cbb_courses() {
   $output = '';
   $nids = _cbb_get_nids_of_type('course');
+  //Get the blueprint template nid.
+  $template_nid = cccblueprint_find_template_nid('course');
+  if ( $template_nid ) {
+    //Remove it from the nid array.
+    $index = array_search( $template_nid, $nids );
+    if ( $index !== FALSE ) {
+      unset( $nids[$index] );
+    }
+  }
   if ( sizeof( $nids ) == 0 ) {
     //Tell the user that there are no courses.
     $is_author = _cbb_user_is_author_admin(); 
@@ -107,7 +116,7 @@ function _cbb_blueprints() {
   $output = '';
   $nids = _cbb_get_nids_of_type('blueprint');
   //Get the blueprint template nid.
-  $template_nid = cccblueprint_find_template_nid();
+  $template_nid = cccblueprint_find_template_nid('blueprint');
   if ( $template_nid ) {
     //Remove it from the nid array.
     $index = array_search( $template_nid, $nids );
@@ -141,7 +150,9 @@ function _cbb_make_empty_message( $book_type_label_plural, $is_author ) {
   if ( $is_author ) {
     $make_message = 
         '<p>' .
-        t('You should create one in the ') . 
+        t('Administrators can create @type in the ', 
+            array('@type' => $book_type_label_plural)
+        ) . 
         l( t('control panel'), 'control-panel' ) . '.' .
         '</p>';
   }

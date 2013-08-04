@@ -20,12 +20,11 @@ function cybercourse_change_things_field_widget_form_alter(
  * Kill the book section of node edit forms for non-admins.
  */
 function cybercourse_change_things_form_alter( &$form, &$form_state, $form_id ) {
-  $r = 5;
   if ( stristr( $form_id, 'node_form' ) !== FALSE ) {
-    if ( $form['book'] ) {
+    if ( isset( $form['book'] ) ) {
       global $user;
       if ( ! in_array('administrator', $user->roles) ) {
-        unset( $form->book );
+        unset( $form['book']);
       }
     }
   }

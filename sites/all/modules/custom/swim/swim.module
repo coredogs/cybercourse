@@ -22,12 +22,13 @@ function swim_help($path, $arg) {
  * Implementation of hook_perm().
  */
 function swim_permission() {
-  return array(
-    'preview content' => array(
-      'title' => t('Preview content'),
-      'description' => t('See what content will look like on a device.')
-    ),
-  );
+  return 
+    array(
+      'preview content' => array(
+        'title' => t('Preview content'),
+        'description' => t('See what content will look like on a device.')
+      ),
+    );
 }
 
 /**
@@ -45,54 +46,97 @@ function swim_menu() {
 }
 
 function swim_form_alter(&$form, &$form_state, $form_id) {
+  return;
   // @todo Instead of checking form_is, check for a field
   //having the SWIM format? Cache the results of the check 
   //so don't run check again on this page call.
   //Not sure if this is the right approach.
   if ( stristr($form_id, 'node_form') !== FALSE ) {
-    //Check perm.
-    if ( !user_access('preview content') ) {
-      return;
-    }
-    if (module_invoke('ajax_markup', 'on')) {
-      drupal_add_library('system', 'ui.dialog');
-      //Load JS for doing previews. Load it early, to set stuff up afore
-      //CK does its thing.
-      drupal_add_js(
-          drupal_get_path('module', 'swim') .'/js/swim.js',
+    //Is the SWIM format being used?
+    $swimInUse = TRUE; //_swim_check_swim_used( $form['#node'] );
+    if (    $swimInUse 
+         && user_access('preview content') 
+         && user_access('use characters in content')
+        ) {
+      // todo: improve, separate access checks.
+      if (module_invoke('ajax_markup', 'on')) {
+        drupal_add_library('system', 'ui.dialog');
+        //Load JS for doing previews. Load it early, to set stuff up afore
+        //CK does its thing.
+        drupal_add_js(
+            drupal_get_path('module', 'swim') .'/js/swim.js',
+            array(
+              'group' => JS_DEFAULT,
+              'weight' => -20,
+            )
+        );
+        drupal_add_css(drupal_get_path('module', 'swim') . '/css/swim.css' );
+        drupal_add_css(drupal_get_path('module', 'characters') . '/css/characters.css' );
+        //Load JS to hide things.
+        //Load late, so the link to hide has been built.
+        drupal_add_js(
+            drupal_get_path('module', 'swim') .'/js/swim_hide_things.js',
           array(
-            'group' => JS_DEFAULT,
-            'weight' => -20,
+            'group' => JS_THEME,
+            'weight' => 20,
           )
-      );
-      drupal_add_css(drupal_get_path('module', 'swim') . '/css/swim.css' );
-      drupal_add_css(drupal_get_path('module', 'characters') . '/css/characters.css' );
-      //Load JS to hide things.
-      //Load late, so the link to hide has been built.
-      drupal_add_js(
-          drupal_get_path('module', 'swim') .'/js/swim_hide_things.js',
-        array(
-          'group' => JS_THEME,
-          'weight' => 20,
-        )
-      );
-      //Send some settings to JS.
-      global $base_url;
-      $body_format_name = $form['body'][LANGUAGE_NONE][0]['#format'];
-      $settings = array(
-        'base_url' => $base_url,
-        'format_name' => $body_format_name,
-        //Pose preview data.
-        'pose_previews' => characters_get_editor_previews(),
-        'pose_stylesheet' => drupal_get_path('module', 'characters') 
-                              . '/css/characters.css',
-      );
-      drupal_add_js(
-          array('swim' => $settings),
-          'setting'
-      );
-    }
+        );
+        //Send some settings to JS.
+        global $base_url;
+        $body_format_name = $form['body'][LANGUAGE_NONE][0]['#format'];
+        $settings = array(
+          'base_url' => $base_url,
+          'format_name' => $body_format_name,
+          //Pose preview data.
+          'pose_previews' => characters_get_editor_previews(),
+          'pose_stylesheet' => drupal_get_path('module', 'characters') 
+                                . '/css/characters.css',
+        );
+        drupal_add_js(
+            array('swim' => $settings),
+            'setting'
+        );
+      } //Can use Ajax markup module.
+    } //Using SWIM text format.
+  } //This is a node form.
+}
+
+/**
+ * Check whether a node is using the SWIM text format.
+ * @param stdClass $node Node
+ * @return boolean TRUE if it is, else FALSE.
+ */
+function _swim_check_swim_used( $node ) {
+//  $formats = filter_formats();
+  $format = filter_format_load('swim');
+  if (!filter_access($format)) {
+    return FALSE;
   }
+  $fields = field_info_instances('node', $node->type);
+  foreach( $fields as $field_name => $field_info ) {
+    
+  }
+  
+    $instance = field_info_instance('node', $field_name, 'release');
+  if (empty($instance['settings']['text_processing'])) {
+    return FALSE;
+  }
+  return TRUE;
+  
+  //Iterate over properties.
+  foreach ($node as $property => $value) {
+    if ( is_array($value) && isset( $value[LANGUAGE_NONE][0] ) ) {
+      foreach ( $value[LANGUAGE_NONE] as $field_value_info ) {
+        if ( isset( $field_value_info['format'] ) ) {
+          if ( $field_value_info['format'] == 'swim' ) {
+            return TRUE;
+          }
+        }
+        
+      } //End iterate over values of field.
+    }
+  } //End iterate over properties.
+  return FALSE;
 }
 
 /**

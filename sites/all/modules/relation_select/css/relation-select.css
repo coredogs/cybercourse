@@ -10,12 +10,17 @@
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 1000;
+  z-index: 1;
   background: #fff;
+  border: 1px solid #ccc;
   -moz-box-shadow: 10px 10px 5px #888;
   -webkit-box-shadow: 10px 10px 5px #888;
   box-shadow: 10px 10px 5px #888;
   min-width: 300px;
+}
+
+.relation-select-views-output div.view * {
+  border: none;
 }
 
 .relation-select-views-output div.view .view-empty{
@@ -25,8 +30,8 @@
 
 .relation-select-views-output img.relation-select-close{
   position:absolute;
-  right: -11px;
-  top: -11px;
+  right: -12px;
+  top: -12px;
   cursor: pointer;
 }
 
@@ -109,7 +114,6 @@
 
 .views-view-relation-select{
   border: 1px solid #ccc;
-  width: 450px;
   margin-bottom: 1px;
 }
 
@@ -124,7 +128,6 @@
 
 .views-view-relation-select table{
   margin: 0;
-  width: 330px;
 }
 
 .views-view-relation-select table,

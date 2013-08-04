@@ -26,40 +26,32 @@ function characters_help($path, $arg) {
 /**
  * Implements hook_menu().
  */
-function characters_menu() {
-//  $items['admin/content/characters'] = array(
-//    'title' => 'Characters',
-//    'description' => 'Create, edit, and delete characters and poses.',
-//    'page callback' => 'characters_admin',
-//    'access arguments' => array('administer characters'),
+//function characters_menu() {
+//  $items['characters/sheets'] = array(
+//    'title' => 'Character sheets',
+//    'description' => 'See a list of characters.',
+//    'page callback' => 'characters_show_character_sheet_list',
+//    'access callback' => 'characters_check_access_sheets',
 //    'type' => MENU_NORMAL_ITEM,
-//    'file' => 'characters.admin.inc',
 //  );
-  $items['characters/sheets'] = array(
-    'title' => 'Character sheets',
-    'description' => 'See a list of characters.',
-    'page callback' => 'characters_show_character_sheet_list',
-    'access callback' => 'characters_check_access_sheets',
-    'type' => MENU_NORMAL_ITEM,
-  );
-  $items['characters/sheets/%'] = array(
-    'title callback' => 'characters_sheet_title',
-    'title arguments' => array(2),
-    'description' => 'See poses for a character.',
-    'page callback' => 'characters_show_character_sheet',
-    'page arguments' => array(2),
-    'access callback' => 'characters_check_access_sheets',
-    'type' => MENU_NORMAL_ITEM,
-  );
-  return $items;
-}
+//  $items['characters/sheets/%'] = array(
+//    'title callback' => 'characters_sheet_title',
+//    'title arguments' => array(2),
+//    'description' => 'See poses for a character.',
+//    'page callback' => 'characters_show_character_sheet',
+//    'page arguments' => array(2),
+//    'access callback' => 'characters_check_access_sheets',
+//    'type' => MENU_NORMAL_ITEM,
+//  );
+//  return $items;
+//}
 
 
-function characters_sheet_title( $nid ) {
-  $node = node_load($nid);
-  $title = t( 'Character sheet for @name', array('@name' => $node->title) );
-  return $title;
-}
+//function characters_sheet_title( $nid ) {
+//  $node = node_load($nid);
+//  $title = t( 'Character sheet for @name', array('@name' => $node->title) );
+//  return $title;
+//}
 
 /**
  * Implementation of hook_perm().
@@ -74,98 +66,102 @@ function characters_permission() {
       'title' => t('View character sheets'),
       'description' => t('See characters and poses.')
     ),
+    'use characters in content' => array(
+      'title' => t('Use characters in content'),
+      'description' => t('Insert character token in content.')
+    ),
   );
 }
 
 /**
 * Implements hook_entity_info_alter().
 */
-function characters_entity_info_alter(&$entity_info) {
-  $entity_info['node']['view modes']['character_sheet'] = array(
-    'label' => t('Character sheet'),
-    'custom settings' => TRUE,
-  );
-}
-
-
-function characters_check_access_sheets() {
-  return 
-         user_access('administer characters') 
-      || user_access('view character sheets');
-}
+//function characters_entity_info_alter(&$entity_info) {
+//  $entity_info['node']['view modes']['character_sheet'] = array(
+//    'label' => t('Character sheet'),
+//    'custom settings' => TRUE,
+//  );
+//}
+//
+//
+//function characters_check_access_sheets() {
+//  return 
+//         user_access('administer characters') 
+//      || user_access('view character sheets');
+//}
 
 /**
  * Show a list of links to character sheets.
  */
-function characters_show_character_sheet_list() {
-  //Fetch character data.
-  $query = new EntityFieldQuery;
-  $query
-    ->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'character')
-    ->propertyCondition('status', 1)
-    ->propertyOrderBy('title');
-  $query_result = $query->execute();
-  //Fetch the character names.
-  $characters = array();
-  foreach ( $query_result['node'] as $nid => $value ) {
-    $node = node_load($nid);
-    $characters[$nid] = $node->title;
-  }
-  //Show the characters.
-  $output = array();
-  if ( sizeof( $characters ) == 0 ) {
-    //There are no characters to show.
-    $output['no characters'] = array(
-      '#type' => 'markup',
-      '#markup' => '<p>' . t('No characters have been created yet.') . '</p>',
-    );
-    return $output;
-  }
-  else {
-    //There are characters to show.
-    $output['intro'] = array(
-      '#type' => 'markup',
-      '#markup' => 
-             '<p>' 
-           .   ( sizeof( $characters ) == 1 )
-                  ? t('Here is the character that has been created.') 
-                  : t('Here are the characters that have been created.') 
-           . '</p>',
-    );
-    global $base_url;
-    foreach ( $characters as $nid => $title ) {
-      $output[$nid] = array(
-        '#type' => 'markup',
-        '#markup' => 
-              '<p class="character-link">'
-              . l( check_plain( $title ),  
-                   $base_url . '/characters/sheets/' . $nid 
-                 )
-            . '</p>'
-      );
-    } 
-  } //End there are characters to show.
-  return $output;
-}
+//function characters_show_character_sheet_list() {
+//  //Fetch character data.
+//  $query = new EntityFieldQuery;
+//  $query
+//    ->entityCondition('entity_type', 'node')
+//    ->entityCondition('bundle', 'character')
+//    ->propertyCondition('status', 1)
+//    ->propertyOrderBy('title');
+//  $query_result = $query->execute();
+//  //Fetch the character names.
+//  $characters = array();
+//  foreach ( $query_result['node'] as $nid => $value ) {
+//    $node = node_load($nid);
+//    $characters[$nid] = $node->title;
+//  }
+//  //Show the characters.
+//  $output = array();
+//  if ( sizeof( $characters ) == 0 ) {
+//    //There are no characters to show.
+//    $output['no characters'] = array(
+//      '#type' => 'markup',
+//      '#markup' => '<p>' . t('No characters have been created yet.') . '</p>',
+//    );
+//    return $output;
+//  }
+//  else {
+//    //There are characters to show.
+//    $output['intro'] = array(
+//      '#type' => 'markup',
+//      '#markup' => 
+//             '<p>' 
+//           .   ( sizeof( $characters ) == 1 )
+//                  ? t('Here is the character that has been created.') 
+//                  : t('Here are the characters that have been created.') 
+//           . '</p>',
+//    );
+//    global $base_url;
+//    foreach ( $characters as $nid => $title ) {
+//      $output[$nid] = array(
+//        '#type' => 'markup',
+//        '#markup' => 
+//              '<p class="character-link">'
+//              . l( check_plain( $title ),  
+//                   $base_url . '/characters/sheets/' . $nid 
+//                 )
+//            . '</p>'
+//      );
+//    } 
+//  } //End there are characters to show.
+//  return $output;
+//}
 
 /**
  * Show a character sheet.
  * @param integer $char_nid The nid of the character to show.
  */
-function characters_show_character_sheet( $char_nid ) {
-  //Load the node.
-  $node = node_load( $char_nid );
-  //Show it, using a special view mode.
-  $output = node_view($node, 'character_sheet');
-  if ( isset( $output['#contextual_links'] ) ) {
-    unset( $output['#contextual_links'] );
-  }
-  if ( isset( $output['links'] ) ) {
-    unset( $output['links'] );
-  }
-  return $output;
-}
+//function characters_show_character_sheet( $char_nid ) {
+//  //Load the node.
+//  $node = node_load( $char_nid );
+//  //Show it, using a special view mode.
+//  $output = node_view($node, 'character_sheet');
+//  if ( isset( $output['#contextual_links'] ) ) {
+//    unset( $output['#contextual_links'] );
+//  }
+//  if ( isset( $output['links'] ) ) {
+//    unset( $output['links'] );
+//  }
+//  return $output;
+//}
 
 
 /**
@@ -388,4 +384,56 @@ function _characters_set_dirty_flag( $node ) {
     variable_set(POSES_PREVIW_DIRTY_FLAG_VAR, TRUE);
   }  
 }
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function characters_form_character_pose_node_form_alter( &$form, &$form_state ) {
+  $form['#validate'][] = '_character_validate_pose_form';
+}
+
+/**
+ * Validate the pose data.
+ */
+function _character_validate_pose_form( &$form, &$form_state ) {
+  $token 
+      = $form_state['values']['field_token'][LANGUAGE_NONE][0]['value'];
+  // Verify that the token contains no disallowed characters.
+  if ( preg_match('/[^a-z0-9_]/', $token) ) {
+    form_set_error(
+        'field_token', 
+        t(  'Sorry, the token can contain only lowercase letters, numbers, '
+          . 'and underscores (_). E.g., "alia_hi".'
+        )
+    );
+    return;
+  }
+  //Check that the token in unique.
+  //Find nodes using that token.
+  $query = new EntityFieldQuery();
+  $query
+    ->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'character_pose')
+    ->fieldCondition('field_token', 'value', $token);
+  $result = $query->execute();
+  if ( isset( $result['node'] ) ) {
+    //There is at least one node using the token.
+    if ( sizeof($result['node']) > 1 ) {
+      throw new Exception('Characters module: duplicate tokens!');
+    }
+    list($nid) = array_keys($result['node']);
+    //Error if it is some other node.
+    if ( $form['#node']->nid != $nid ) {
+      form_set_error(
+          'field_token', 
+          t(   'Sorry, the value "' . $token . '" is already in use. Tokens must ' 
+             .  'be unique, e.g., "' . $token . '2".'
+           )
+      );
+      return;
+    }
+  } // End token in use.
+}
+
 

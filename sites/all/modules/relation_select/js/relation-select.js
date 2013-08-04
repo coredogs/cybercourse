@@ -17,6 +17,8 @@
         // Close the pop up when document is clicked
         $(document).click(handleCloseClick);
 
+        $('.views-exposed-form input[type="submit"]').click(open);
+
         addFilterEventHandlers(context);
 
         // Build object containing relation select input
@@ -176,10 +178,18 @@
       }
 
       /**
+       * Open the drop down
+       */
+      function open(){
+        // Allow some loading time
+        setTimeout(function() {$('.relation-select-views-ouput div').show();}, 200);
+      }
+
+      /**
        * Close the drop down
        */
       function close(){
-        $('.relation-select-views-output div').empty();
+        $('.relation-select-views-output div').empty().hide();
       }
 
       /**

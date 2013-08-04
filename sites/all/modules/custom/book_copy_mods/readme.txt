@@ -1,0 +1,1 @@
+This is a version of book_copy with some new hooks.

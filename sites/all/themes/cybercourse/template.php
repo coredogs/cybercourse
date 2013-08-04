@@ -138,25 +138,3 @@ function cybercourse_menu_link(array $variables) {
   $output = l($element['#title'], $element['#href'], $element['#localized_options']);
   return '<li' . drupal_attributes($element['#attributes']) . '>' . $output . $sub_menu . "</li>\n";
 }
-
-/**
-* Returns HTML for a text format-enabled form element.
-*
-* @param $variables
-*   An associative array containing:
-*   - element: A render element containing #children and #description.
-*
-* @ingroup themeable
-*/
-//function cybercourse_text_format_wrapper($variables) {
-//  $element = $variables['element'];
-//  
-//  $output = '<div class="text-format-wrapper">';
-//  $output .= $element['#children'];
-//  if (!empty($element['#description'])) {
-//    $output .= '<div class="description">' . $element['#description'] . '</div>';
-//  }
-//  $output .= "</div>\n";
-//
-//  return $output;
-//}
