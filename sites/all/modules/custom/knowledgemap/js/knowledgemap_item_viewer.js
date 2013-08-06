@@ -100,7 +100,7 @@ KmItemViewer.prototype.makeDialogHtml = function() {
   var domId = "km-item-dialog-" + this.itemData.nid;
   var html = 
         "<div id='" + domId + "' title='" + this.itemData.title + "' "
-      + "   class='km-item-dialog'>"
+      + "   class='km-item-dialog km-item " + this.itemData.item_type + "'>"
       + "  <p class='km-item-type'>"
       +      capitaliseFirstLetter(this.itemData.item_type)
       + "  </p>"

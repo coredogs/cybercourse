@@ -1,48 +1,5 @@
 <?php
 
-//require_once realpath( dirname(__FILE__) . 
-//    '/../dolfinity_library/dolfinity_library.inc' );
-
-/**
- * Alter the access to the ability to clone a given node.
- *
- * @param bool $access
- *   Reference to the boolean determining if cloning should be allowed on a
- *   given node.
- * @param $node
- *   The fully loaded node object being considered for cloning.
- *
- * @see clone_access_cloning()
- * @see drupal_alter()
- */
-//function dolfinity_node_clone_clone_access_alter(&$access, $node) {
-//  global $user;
-//  //User 1 and admins always.
-//  if ( $user->uid == 1 || in_array('administrator', $user->roles) ) {
-//    $access = TRUE;
-//  }
-//  else {
-//    switch ( $node->type ) {
-//      case 'dolfin_content_page':
-//        $access = _dlib_user_is_author();
-//        break;
-//      case 'blueprint_content_page':
-//        $access = _dlib_user_is_pod_member();
-//        break;
-//      case 'help_content_page':
-//        //Only help writers can clone help pabes.
-//        $access = _dlib_user_is_help_writer();
-//        break;
-//      case 'project_structure_page':
-//        //Only builders can clone project structure pages.
-//        $access = _dlib_user_is_builder();
-//        break;
-//      default:
-//        $access = FALSE;
-//    }
-//  }
-//}
-
 /**
  * Implements hook_menu_alter().
  * Add "Duplicate page" link.

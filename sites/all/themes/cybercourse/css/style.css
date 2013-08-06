@@ -68,6 +68,30 @@ aside.swim {
   vertical-align: top;
 }
 
+.btn-default.button-spacing,
+.btn-primary.button-spacing,
+.btn-danger.button-spacing {
+  margin-left: 1em;
+  margin-top: 1em;  
+}
+
+.btn-primary.button-spacing a,
+.btn-danger.button-spacing a {
+  color: white;
+}
+
+.btn-default.button-spacing a {
+  color: black;
+}
+
+/* Panels random stuff. */
+
+.panel-pane .more-link {
+  text-align: right;
+}
+
+
+
 @media (max-width: 767px) {
   h3 {
     text-shadow: none;

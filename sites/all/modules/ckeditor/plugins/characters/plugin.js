@@ -19,18 +19,19 @@ CKEDITOR.plugins.add( 'characters', {
           },
           init: function() {
             //Check that there are poses available.
-            if ( 
-                 ! Drupal.settings.swim.pose_previews
-              || Drupal.settings.swim.pose_previews == 'none'
-              || Drupal.settings.swim.pose_previews.length == 0
+            if (
+                 ! Drupal.settings.characters   
+              || ! Drupal.settings.characters.pose_previews
+              || Drupal.settings.characters.pose_previews == 'none'
+              || Drupal.settings.characters.pose_previews.length == 0
             ) {
                 this.add( '', 'No poses available', 
                   'See the wiki to learn how to create character poses' );
             }
             else {
               var i, pose;
-              for ( i in Drupal.settings.swim.pose_previews ) {
-                pose = Drupal.settings.swim.pose_previews[i];
+              for ( i in Drupal.settings.characters.pose_previews ) {
+                pose = Drupal.settings.characters.pose_previews[i];
                 this.add( pose.token, pose.html, 'Insert this pose' );
               }
             }
@@ -46,14 +47,16 @@ CKEDITOR.plugins.add( 'characters', {
 //          },
           loadedCss : false,
           onOpen: function() {
+            //Inject the CSS needed to show character previews into the 
+            //document in the iframe.
 //            alert(jQuery("iframe.cke_panel_frame").length)
             if ( ! this.loadedCss ) {
               var iframe = jQuery(".cke_combopanel .cke_panel_frame");
               if ( iframe ) {
                 var cssLink = document.createElement("link") 
-                cssLink.href = Drupal.settings.swim.base_url
+                cssLink.href = Drupal.settings.characters.base_url
                     + Drupal.settings.basePath 
-                    + Drupal.settings.swim.pose_stylesheet; 
+                    + Drupal.settings.characters.pose_stylesheet; 
                 cssLink.rel = "stylesheet"; 
                 cssLink.type = "text/css";
                 iframe.contents().find('body').append(cssLink);    

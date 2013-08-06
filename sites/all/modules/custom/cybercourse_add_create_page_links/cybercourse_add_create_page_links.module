@@ -1,7 +1,7 @@
 <?php
 
-require_once realpath( dirname(__FILE__) . 
-    '/../cybercourse_library/cybercourse_library.inc' );
+//require_once realpath( dirname(__FILE__) . 
+//    '/../cybercourse_library/cybercourse_library.inc' );
 
 /**
  * Implements hook_node_view().
@@ -29,7 +29,7 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
     return;
   }
   //Only for authors and admins.
-  if ( ! _cbb_user_is_author_admin() ) {
+  if ( ! _cacpl_user_is_author_admin() ) {
     return;
   }
   $links = array();
@@ -183,6 +183,19 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
   if ( isset( $build['links']['book_made_simple'] ) ) {
     unset( $build['links']['book_made_simple'] );
   }
+}
+
+/**
+ * Is the logged in user an author?
+ * @global stdClass $user The thing, you know.
+ * @return boolean True if the user is an author.
+ */
+function _cacpl_user_is_author_admin() {
+  global $user;
+  return 
+         in_array( 'author', $user->roles )
+      || in_array( 'administrator', $user->roles )
+      || ( isset( $user->id ) && $user->id == 1 );
 }
 
 /**

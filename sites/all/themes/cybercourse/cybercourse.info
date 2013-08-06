@@ -16,6 +16,14 @@ regions[footer]         = 'Footer'
 ; Stylesheets
 stylesheets[all][] = css/style.css
 
+;scripts[] = js/init.js
+
+; For help tips.
+;stylesheets[all][] = libs/smallipop/css/jquery.smallipop.min.css
+;scripts[] = libs/smallipop/lib/jquery.smallipop.min.js
+;scripts[] = libs/smallipop/lib/contrib/modernizr.js
+
+
 ;**********************************
 ; METHOD 1: Bootstrap Source Files
 ;**********************************

@@ -46,8 +46,7 @@ function swim_menu() {
 }
 
 function swim_form_alter(&$form, &$form_state, $form_id) {
-  return;
-  // @todo Instead of checking form_is, check for a field
+  // @todo Instead of checking form_id, check for a field
   //having the SWIM format? Cache the results of the check 
   //so don't run check again on this page call.
   //Not sure if this is the right approach.
@@ -56,7 +55,7 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
     $swimInUse = TRUE; //_swim_check_swim_used( $form['#node'] );
     if (    $swimInUse 
          && user_access('preview content') 
-         && user_access('use characters in content')
+         //&& user_access('use characters in content')
         ) {
       // todo: improve, separate access checks.
       if (module_invoke('ajax_markup', 'on')) {
@@ -71,7 +70,9 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
             )
         );
         drupal_add_css(drupal_get_path('module', 'swim') . '/css/swim.css' );
-        drupal_add_css(drupal_get_path('module', 'characters') . '/css/characters.css' );
+//        if ( module_exists( 'characters' ) ) {
+//          drupal_add_css(drupal_get_path('module', 'characters') . '/css/characters.css' );
+//        }
         //Load JS to hide things.
         //Load late, so the link to hide has been built.
         drupal_add_js(
@@ -87,11 +88,13 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
         $settings = array(
           'base_url' => $base_url,
           'format_name' => $body_format_name,
-          //Pose preview data.
-          'pose_previews' => characters_get_editor_previews(),
-          'pose_stylesheet' => drupal_get_path('module', 'characters') 
-                                . '/css/characters.css',
         );
+//        if ( module_exists( 'characters' ) ) {
+//          //Pose preview data.
+//          $settings['pose_previews'] = characters_get_editor_previews();
+//          $settings['pose_stylesheet'] = 
+//              drupal_get_path('module', 'characters') . '/css/characters.css';
+//        }
         drupal_add_js(
             array('swim' => $settings),
             'setting'
@@ -102,6 +105,7 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * BROKEH
  * Check whether a node is using the SWIM text format.
  * @param stdClass $node Node
  * @return boolean TRUE if it is, else FALSE.
@@ -159,22 +163,6 @@ function swim_mt_preview() {
   return $renderable;
 }
 
-
-// function swim_filter_info_alter(&$info) {
-//   $info['filter_markdown']['process callback'] = 'swim_preprocess_markdown';
-//   $r=5;
-// }
-//
-//function swim_preprocess_markdown($text, $filter, $format) {
-//  //Replace with regex.
-//  $text = str_ireplace('<br/>', "", $text);
-//  $text = str_ireplace('<br />', "", $text);
-//  $text = str_ireplace('<br>', "", $text);
-//  $text = str_ireplace('{aside}', '<aside>', $text);
-//  $text = str_ireplace('{/aside}', '</aside>', $text);
-//  return _filter_markdown($text, $format);
-//}
-
 /**
 * Implements hook_filter_info().
 */
@@ -182,32 +170,19 @@ function swim_filter_info() {
   $filters['filter_swim'] = array(
     'title' => t('SWIM'),
     'description' => t('Show What I Mean'),
-//    'prepare callback' => '_dgd7_tip_prepare',
     'process callback' => 'swim_process_filter',
-//    'tips callback' => 'swim_tips',
   );
   return $filters;
 }
 
 require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/Markdown.php';
 require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/MarkdownExtra.php';
-//use \Michelf\Markdown;
 
-# Install PSR-0-compatible class autoloader
-//spl_autoload_register(function($class){
-//	require preg_replace('{\\\\|_(?!.*\\\\)}', DIRECTORY_SEPARATOR, ltrim($class, '\\')).'.php';
-//});
-
-//function swim_process($text, $filter, $format) {
 function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und') {
-//  return $text;
   //Remove <br>s. Helps with markdown conversion.
   $pattern = '/\<\s*br\s*\/??\s*\>/i';
     // <, white space, br, white space, optional /, white space, >
   $text = preg_replace($pattern, '', $text);
-//  $text = str_ireplace('<br/>', "", $text);
-//  $text = str_ireplace('<br />', "", $text);
-//  $text = str_ireplace('<br>', "", $text);
   //Do the asides.
   $pattern = '/\{\s*aside\s*\}/i';
     // {, white space, aside, white space, }

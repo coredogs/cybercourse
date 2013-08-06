@@ -171,9 +171,7 @@ function characters_filter_info() {
   $filters['filter_characters'] = array(
     'title' => t('Characters'),
     'description' => t('Replace character tokens'),
-//    'prepare callback' => '_dgd7_tip_prepare',
     'process callback' => 'characters_process_filter',
-//    'tips callback' => 'swim_tips',
   );
   return $filters;
 }
@@ -385,6 +383,34 @@ function _characters_set_dirty_flag( $node ) {
   }  
 }
 
+
+function characters_form_alter(&$form, &$form_state, $form_id) {
+  // @todo Instead of checking form_id, check for a field
+  //having the SWIM format? Cache the results of the check 
+  //so don't run check again on this page call.
+  //Not sure if this is the right approach.
+  if ( stristr($form_id, 'node_form') !== FALSE ) {
+    _characters_load_client_side_stuff();
+  }
+}
+
+/**
+ * Add client-side stuff the character code needs.
+ */
+function _characters_load_client_side_stuff() {
+  drupal_add_css(drupal_get_path('module', 'characters') . '/css/characters.css' );
+  global $base_url;
+  $settings = array(
+    'base_url' => $base_url,
+    'pose_previews' => characters_get_editor_previews(),
+    'pose_stylesheet' => 
+        drupal_get_path('module', 'characters') . '/css/characters.css',
+  );
+  drupal_add_js(
+      array('characters' => $settings),
+      'setting'
+  );
+}
 
 /**
  * Implements hook_form_alter().

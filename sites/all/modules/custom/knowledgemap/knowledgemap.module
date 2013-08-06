@@ -29,14 +29,14 @@ function knowledgemap_menu() {
   //Return HTML for the add form.
   $items['get-add-form-content-ajax'] = array(
     'page callback' => 'knowledgemap_get_add_form_content',
-    'access callback' => TRUE,
+    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   //Add a new item. Passing in the coords of the mouse click, and the 
   //nid of the KM that will own the new item.
   $items['add-km-item-ajax'] = array(
     'page callback' => 'knowledgemap_add_item_ajax',
-    'access callback' => TRUE,
+    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   $items['edit-km-item/%node/%ctools_js'] = array(
@@ -50,35 +50,45 @@ function knowledgemap_menu() {
   );
   $items['update-km-item-pos'] = array(
     'page callback' => 'knowledgemap_save_item_position',
-    'access callback' => TRUE,
+    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   $items['delete-item-ajax'] = array(
     'page callback' => 'knowledgemap_delete_item',
-    'access callback' => TRUE,
+    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   //User made a new connection. Save it.
   $items['save-new-connection'] = array(
     'page callback' => 'knowledgemap_save_new_connection',
-    'access callback' => TRUE,
+    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   //Save connection required field for a connection. AJAX call.
   $items['set-connection-required-ajax'] = array(
     'page callback' => 'knowledgemap_set_connection_required',
-    'access callback' => TRUE,
+    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   //User wants to delete a connection.
   $items['delete-connection-ajax'] = array(
     'page callback' => 'knowledgemap_delete_connection',
-    'access callback' => TRUE,
+    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   return $items;
 }
 
+/**
+ * Menu access callback.
+ * @return boolean True if user has right role.
+ */
+function knowledgemap_menu_access() {
+  global $user;
+  $access = in_array('administrator', $user->roles)
+      || in_array('author', $user->roles);
+  return $access;
+}
 /**
  * Implements hook_field_info(). 
  * Creates one formatter and one input widget.
@@ -143,7 +153,9 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
   if ( $new_node ) {
     $element[$delta] = array(
       '#type' => 'markup',
-      '#markup' => '<p>' . t('(Add knowledge map items after knowledge map has been created.)') . '</p>',
+      '#markup' => '<p class="lead">' 
+          . t('(You can add knowledge map items only after the knowledge map '
+          . 'has been created.)') . '</p>',
     ) + $base;
     return $element;
   }
@@ -356,7 +368,7 @@ function knowledgemap_add_item_ajax() {
  * to the link. The link has to be on the form.
  */
 function knowledgemap_form_alter(&$form, &$form_state, $form_id) {
-  if ( $form_id == 'knowledge_map_node_node_form' ) {
+  if ( $form_id == 'learning_map_node_form' ) {
     //The KM form, NOT the KM item form.
     //Only add a modal edit link for edits, not adds.
     $new_node = TRUE;
@@ -460,30 +472,6 @@ function knowledgemap_cancel_edit($form, &$form_state) {
 //}
 
 
-//function knowledgemap_edit_item( $ajax, $km_item_nid ) {
-//  if ($ajax) {
-//    drupal_add_js('misc/ajax.js');
-//    drupal_add_library('system', 'drupal.ajax');
-//    dialog_display(TRUE);
-//    $title = 'Edit Item';
-//    module_load_include('inc', 'node', 'node.pages');
-//    $node = node_load($km_item_nid);
-//    $content = drupal_get_form('page_node_form', $node);
-//        $options = array(
-//      'height' => rand(25, 75) . '%',
-//      'width' => rand(25, 75) . '%',
-//      'position' => 'center',
-//      'title' => t('Dialog example'),
-//    );
-//
-//    $commands = array();
-//    $commands[] = dialog_command_display($content, $options);
-//    ajax_deliver(array('#type' => 'ajax', '#commands' => $commands));
-//  }
-//}
-
-
-
 /**
  * Page Callback - Modal: Edit Node.
  */
@@ -493,12 +481,7 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
 //  if ( FALSE ) {
     return drupal_access_denied();
   }
-//  drupal_add_js('misc/ajax.js');
-//  ctools_include('ajax');
-//  ctools_include('modal');
-//  ctools_modal_add_js('ajax-responder');
-//  ctools_modal_add_js('modal');
-  
+ 
   $type_name = node_type_get_name($node);
   $title = t('<em>Edit @type</em> @title', 
       array('@type' => $type_name, '@title' => $node->title)
@@ -940,11 +923,15 @@ function knowledgemap_field_formatter_view($entity_type, $entity, $field,
         //Send the map data to the JS.
         //Set some other settings at the same time.
         $knowledgemap_rep = knowledgemap_make_km_rep($entity->nid);
+        //Get allowed item types.
+        $all_fields = field_info_fields();
+        $allowed_item_types = list_allowed_values($all_fields['field_item_type']);
         $settings = array(
           'drawing_dom_id' => $drawing_dom_id,
           'km_nid' => $nid, //The nid of the KM being shown.
           'knowledgemap_rep' => $knowledgemap_rep,
           'mode' => 'view', //Viewing mode.
+          'all_item_types' => $allowed_item_types,
         );
 
         drupal_add_js(
@@ -1003,7 +990,7 @@ function knowledgemap_field_formatter_view($entity_type, $entity, $field,
  * Implements hook_node_save.
  */
 function knowledgemap_node_presave( $node ) {
-  if ( $node->type == 'knowledge_map_node' ) {
+  if ( $node->type == 'learning_map' ) {
     //Make sure there is something in the field.
     $node->field_km[LANGUAGE_NONE][0]['value'] = 'place holder';
   }

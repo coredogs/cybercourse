@@ -1180,7 +1180,8 @@ var evilGlobalController;
     },
     redrawItem : function( nid ) {
       //Redraw an item. Called after returning from editing, 
-      //since the size of the item might have changed.
+      //since the size of the item might have changed, importance changed, etc.
+      controller.drawItem( controller.km_rep.km_items[nid], false );
       jsPlumb.repaint( controller.km_rep.km_items[nid].display );
     }
 //    editChangedItemType : function ( nid, oldItemType, newItemType ) {

@@ -7,8 +7,6 @@ var swimDoneOnce = false;
         return;
       }
       swimDoneOnce = true;
-      
-//      Drupal.behaviors.swim.initLoadComplete = false;
       //Compute the URL for the iframe that simulates the device.
       var iframeSrc = Drupal.settings.swim.base_url + "/swim-mt-preview";      
       //Make preview toolbar.
@@ -144,6 +142,10 @@ var swimDoneOnce = false;
      * Grab rendered text from the server and show it.
      */
     showPreview : function() {
+      var iframe = $( "#swim-preview-device" );
+      var iframeContentContainer 
+          = iframe.contents().find(".field-name-body");
+      iframeContentContainer.html('<p>Working...</p>');
       //Set up the preview to mimic the device.
       $( "#swim-preview-device" ).css("width", "").css("height", "");
       $( "#swim-preview-device" )

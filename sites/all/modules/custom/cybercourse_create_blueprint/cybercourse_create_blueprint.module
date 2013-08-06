@@ -47,6 +47,10 @@ function cybercourse_create_confirm($form, &$form_state, $book_type) {
     '#description' => t('The title for the @type.', array( '@type' => $book_type )),
     '#title' => t('Title'),
   );
+  $form['book_type'] = array(
+    '#type' => 'hidden',
+    '#value' => $book_type,
+  );
   return confirm_form(
     $form,
     t('Create a new @type', array( '@type' => $book_type )), 
@@ -61,8 +65,9 @@ function cybercourse_create_confirm($form, &$form_state, $book_type) {
  * User confirmed.
  * Submit handler to start a batch process.
  */
-function cybercourse_create_confirm_submit($form, &$form_state, $book_type) {
+function cybercourse_create_confirm_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
+    $book_type = $form_state['values']['book_type'];
     //Find the nid of the template root.
     $template_nid = cccblueprint_find_template_nid( $book_type );
     if ( ! $template_nid ) {

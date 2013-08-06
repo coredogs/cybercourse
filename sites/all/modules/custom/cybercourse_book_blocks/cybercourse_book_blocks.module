@@ -1,8 +1,5 @@
 <?php
 
-require_once realpath( dirname(__FILE__) . 
-    '/../cybercourse_library/cybercourse_library.inc' );
-
 /**
  * Max number characters link text can be.
  */
@@ -68,7 +65,7 @@ function _cbb_courses() {
   }
   if ( sizeof( $nids ) == 0 ) {
     //Tell the user that there are no courses.
-    $is_author = _cbb_user_is_author_admin(); 
+    $is_author = _cacpl_user_is_author_admin(); 
         //Is the user an author?
     return _cbb_make_empty_message('courses', $is_author);
   }
@@ -110,7 +107,7 @@ function _cbb_get_nids_of_type( $bundle_name ) {
  * @return string Content representing the block.
  */
 function _cbb_blueprints() {
-  if ( ! _cbb_user_is_author_admin() ) {
+  if ( ! _cacpl_user_is_author_admin() ) {
     return NULL;
   }
   $output = '';
@@ -223,7 +220,7 @@ function cybercourse_book_blocks_theme() {
 function _cybercourse_book_blocks_make_tree( $mlid, $nid, $title, $published,
   $current_recusion_level ) {
   $this_level = array(); 
-  $user_is_author = _cbb_user_is_author_admin();
+  $user_is_author = _cacpl_user_is_author_admin();
   //Does this user see unpublished nodes?
   if ( $published == 1 || $user_is_author  ) {
     $sql= "SELECT DISTINCT n.nid as nid, m.plid as plid, m.mlid as mlid,  
@@ -290,7 +287,7 @@ function cbb_recursive_link_creator($items = array(), $trail, $parentid = '') {
     $menucount ++;
     $parentid = $menucount;
   }
-  $user_is_author = _cbb_user_is_author_admin();
+  $user_is_author = _cacpl_user_is_author_admin();
   $url_array = $trail;
 
   $i = 0;

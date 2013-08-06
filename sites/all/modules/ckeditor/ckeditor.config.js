@@ -10,17 +10,17 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 CKEDITOR.editorConfig = function(config) {
   config.contentsCss = '/sites/all/modules/custom/characters/css/characters.css';
   config.basicEntities = false; //Keep <, >.
-  config.height = "30em";
+//  config.height = "30em";
   //Size the summary editor.
   if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
     CKEDITOR.instances['edit-body-und-0-summary'].config.height = "8em";
   }
   //Let images be inserted.
   config.allowedContent = true;
-  config.indentClasses = [ 'rteindent1', 'rteindent2', 'rteindent3', 'rteindent4' ];
+//  config.indentClasses = [ 'rteindent1', 'rteindent2', 'rteindent3', 'rteindent4' ];
 
   // [ Left, Center, Right, Justified ]
-  config.justifyClasses = [ 'rteleft', 'rtecenter', 'rteright', 'rtejustify' ];
+//  config.justifyClasses = [ 'rteleft', 'rtecenter', 'rteright', 'rtejustify' ];
 
   // The minimum editor width, in pixels, when resizing it with the resize handle.
   config.resize_minWidth = 400;
