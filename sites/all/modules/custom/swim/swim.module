@@ -202,10 +202,34 @@ function swim_tips($filter, $format, $long = FALSE) {
 }
 
 
-function swim_block_view_alter(&$data, $block) {
-  if ( $block->delta == 'markdown_help' ) {
-    $data['title'] = 'Editing tips';
-    $data['content'] = 
+
+/**
+ * Implements hook_block_info().
+ */
+function swim_block_info() {
+  $blocks = array();
+  $blocks['swim_markup'] = array(
+    'info' => 'SWIM Markup',
+  );
+  return $blocks;  
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function swim_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case 'swim_markup' :
+      $block['subject'] = 'Editing tips';
+      $block['content'] = _swim_markup_help();
+      return $block;
+      break;
+  }
+}
+
+function _swim_markup_help() {
+  $help = 
 '<p>' . t('
 Blank lines separate paragraphs. Press Enter twice to make one.
 ') . '</p>
@@ -230,7 +254,8 @@ Blank lines separate paragraphs. Press Enter twice to make one.
 <p>' . t('Use the preview button to see how your content will look on '
 . 'different devices.') . '
 </p>
-<p>' . t('See the <a href="http://cybercour.se">CyberCourse wiki</a> for more.') . '
+<p>' . t('See the <a href="http://cybercour.se/wiki/swim">CyberCourse wiki</a> for more.') . '
 </p>';
-  } // End if
+  return $help;
 }
+

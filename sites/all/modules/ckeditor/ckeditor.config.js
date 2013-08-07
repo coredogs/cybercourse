@@ -10,6 +10,7 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 CKEDITOR.editorConfig = function(config) {
   config.contentsCss = '/sites/all/modules/custom/characters/css/characters.css';
   config.basicEntities = false; //Keep <, >.
+  config.disableNativeSpellChecker = false;
 //  config.height = "30em";
   //Size the summary editor.
   if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
