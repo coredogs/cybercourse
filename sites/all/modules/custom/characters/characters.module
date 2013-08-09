@@ -180,7 +180,7 @@ function characters_filter_info() {
 function characters_process_filter($text, $filter, $format = 'characters', $langcode = 'und') {
   //Find all the characters on the page that are referred to.
   $regex_matches = array();
-  $regex_match_count = preg_match_all("/\{\s*character\s*\:\s*(.*?)\s*\}/i", 
+  $regex_match_count = preg_match_all("/\[\s*character\s*\:\s*(.*?)\s*\]/i", 
       $text, $regex_matches);
   if ( $regex_match_count > 0 ) {
     //Look up data for those characters.
@@ -246,7 +246,7 @@ function characters_process_filter($text, $filter, $format = 'characters', $lang
         );
       }
       //Count the closing tags.
-      $pattern = '/\{\s*\/\s*character\s*\}/i';
+      $pattern = '/\[\s*\/\s*character\s*\]/i';
         //{, white space, /, white space, 'character', white space, }
       $closing_matches = array();
       $closing_tag_count = preg_match_all($pattern, $text, $closing_matches);

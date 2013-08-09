@@ -15,6 +15,7 @@ regions[footer]         = 'Footer'
 
 ; Stylesheets
 stylesheets[all][] = css/style.css
+stylesheets[all][] = css/less_style.less
 
 ;scripts[] = js/init.js
 

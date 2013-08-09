@@ -184,10 +184,10 @@ function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und'
     // <, white space, br, white space, optional /, white space, >
   $text = preg_replace($pattern, '', $text);
   //Do the asides.
-  $pattern = '/\{\s*aside\s*\}/i';
+  $pattern = '/\[\s*aside\s*\]/i';
     // {, white space, aside, white space, }
   $text = preg_replace($pattern, '<aside class="swim" markdown="1">', $text);
-  $pattern = '/\{\s*\/\s*aside\s*\}/i';
+  $pattern = '/\[\s*\/\s*aside\s*\]/i';
     // {, white space, /, white space, aside, white space, }
   $text = preg_replace($pattern, '</aside>', $text);
 
@@ -239,7 +239,6 @@ Blank lines separate paragraphs. Press Enter twice to make one.
 #### Header 4<br>
 ##### Header 5
 ') . '</code></p>
-<p>' . t('Link:') . '<br><small><code>' . t('[CyberCourse](http://cybercour.se)') . '</small></code></p>
 <p>' . t('Inline markup like ') . '<code>_' . t('italics') . '_</code>,
  and <code>**' . t('bold') . '**</code>.</p>
 <p><code> > ' . t('This is a quote.') . '</code></p>
@@ -251,6 +250,28 @@ Blank lines separate paragraphs. Press Enter twice to make one.
 1. ' . t('Is like this.') . '<br>
 1. ' . t('Another one.') . '
 </code></p>
+<p>' . t('Any numbers will do. If you want to show:') . '<br><br>
+' . t('1969. The moon landings.') . '<br><br>
+' . t('Type:') . '<br><br>
+' . t('1969\. The moon landings.') . '
+</p>
+<p>
+  &gt; ' . t('First line of a quote.') . '
+  &gt; ' . t('Second line of a quote.') . '
+</p>
+<p>' . t('Horizontal rule:') . '<br>
+----
+</p>
+<p>[aside]<br>' . t('This is an aside.') . '<br>
+' . t('Type as much text as you like.') . '<br>
+[/aside]
+</p>
+<p>[character:aila_tea]<br>
+' . t('A comment from Aila, as she is drinking tea.') . '<br>
+[/character]
+</p>
+<p>' . t('Link:') . '<br><small><code>' . 
+      t('[CyberCourse](http://cybercour.se)') . '</small></code></p>
 <p>' . t('Use the preview button to see how your content will look on '
 . 'different devices.') . '
 </p>

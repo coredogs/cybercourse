@@ -35,6 +35,10 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
   $links = array();
   //Course main page.
   if ( $node->type == 'course' ) {
+    if ( !isset($node->book) ) {
+      drupal_set_message('Course node not a book. Check site config.');
+      return;
+    }
     $links['course_kid'] = _cacpl_make_link(
         'Create child page',
         'course-page',
@@ -63,6 +67,10 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
   }
   //Blueprint main page.
   if ( $node->type == 'blueprint' ) {
+    if ( !isset($node->book) ) {
+      drupal_set_message('Blueprint node not a book. Check site config.');
+      return;
+    }
     $links['blueprint_kid'] = _cacpl_make_link(
         'Create child page',
         'blueprint-page',
@@ -144,6 +152,20 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
         $node->book['mlid'] //Menu link id for the current page in the book menu.
     );
   } // End blueprint content page.
+  //Blueprint content page.
+  if ( $node->type == 'book_page' ) {
+    if ( ! isset( $node->book )) {
+      return;
+    }
+    $links['book_page_sib'] = _cacpl_make_link(
+        'Create sibling page',
+        'book-page',
+        $node->book['plid'], //Parent id for book module.
+        'addsib', //Operation
+        $node->book['menu_name'], //Name of the menu for this level in the book.
+        $node->book['mlid'] //Menu link id for the current page in the book menu.
+    );
+  } // End book page content page.
   if (sizeof($links) > 0 ) {
     $result = '';
     //Create each link using l().
@@ -169,13 +191,6 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
       '#markup' => $result,
       '#suffix' => '</div>',
     );    
-//    $build['links']['cacpl_links'] = array(
-//      '#links' => $links,
-//      '#attributes' => array(
-//        'class' => array( 'inline', 'links', ),
-//      ),
-//      '#theme' => '"links__node__book',
-//    );
   }
   if ( isset( $build['links']['book'] ) ) {
     unset( $build['links']['book'] );
@@ -213,7 +228,7 @@ function _cacpl_make_link( $link_text, $content_type, $parent_mlid, $op,
                             $book_level_menu_name, $left_sib_mlid = NULL ) {
   $query_params = array(
     'parent' => $parent_mlid,
-    'op' => $op,
+    'book_op' => $op,
     'book_level_menu' => $book_level_menu_name,
   );
   if ( $op == 'addkid' ) {
@@ -234,7 +249,7 @@ function _cacpl_make_link( $link_text, $content_type, $parent_mlid, $op,
       'title' => $link_text,
       'href' => 'node/add/' . $content_type,
       'attributes' => array(
-        'class' => array('active', 'cybercourse-create-page-link', 'btn', 'btn-default'),
+        'class' => array('cybercourse-create-page-link', 'btn', 'btn-default'),
       ),
     );
   return $link_data;
@@ -262,8 +277,124 @@ function cybercourse_add_create_page_links_menu_local_tasks_alter(&$data, $route
  *
  * Changes the book weight to add new sibling after current page.
  */
-function cybercourse_add_create_page_links_form_node_form_alter(&$form, &$form_state, $form_id) {
-  $x=drupal_get_query_parameters();
-  $form['book']['weight']['#weight'] = 6;
-  
-}
+//function cybercourse_add_create_page_links_form_node_form_alter(&$form, &$form_state, $form_id) {
+//  return;
+//  $params = drupal_get_query_parameters(); 
+//  if ( ! isset( $params['book_op'] ) || $params['book_op'] != 'addsib' ) {
+//    return;
+//  }
+//  //Add hidden fields to form for node save.
+//  $form['book_op'] = array(
+//    '#type' => 'hidden',
+//    '#value' => $params['book_op'],
+//  );
+//  $form['book_level_menu'] = array(
+//    '#type' => 'hidden',
+//    '#value' => $params['book_level_menu'],
+//  );
+//  $form['book_parent_mlid'] = array(
+//    '#type' => 'hidden',
+//    '#value' => $params['book_parent_mlid'],
+//  );
+//  $form['left_sib_mlid'] = array(
+//    '#type' => 'hidden',
+//    '#value' => $params['left_sib_mlid'],
+//  );
+//  
+//  $form['#submit'][] = '_capl_form_submit';
+//  
+//  
+//  $form['book']['weight']['#weight'] = 6;
+//  
+//}
+
+/**
+ * Creating a sibling. Copy data from form hidden fields into node.
+ */
+//function _capl_form_submit( $form, &$form_state ) {
+//  return;
+//  if ( $form_state['values']['book_level_menu'] ) {
+//    global $poo;
+//    $poo = 4;
+//    return;
+//    $form['#node']->book_level_menu = $form_state['values']['book_level_menu'];
+//  }
+//  if ( $form_state['values']['left_sib_mlid'] ) {
+//    $form['#node']->left_sib_mlid = $form_state['values']['left_sib_mlid'];
+//  }
+//  if ( $form_state['values']['book_parent_mlid'] ) {
+//    $form['#node']->book_parent_mlid = $form_state['values']['book_parent_mlid'];
+//  }
+//}
+
+
+//function cybercourse_add_create_page_links_menu_link_insert( $link ) {
+//  global $poo;
+//  $menu_name = $link['menu_name'];
+//  $menu_full = menu_load_links($menu_name);
+//  return;
+////  if ( ! isset( $node->book_level_menu ) ) {
+////    return;
+////  }
+//  //Get data cached in hidden fields.
+//  $menu_name = 'book-toc-118';  //$node->book_level_menu;
+//  $left_sib_mlid = $node->left_sib_mlid;
+//  $book_parent_mlid = 785;  //$node->book_parent_mlid;
+//  //Rebuild menu cache.
+//  //menu_cache_clear_all();
+//  //Load the menu.
+//  $menu_full = menu_load_links($menu_name);
+//  //Only want those items at the right level in the menu.
+//  $menu = array();
+//  for ( $i = 0; $i < sizeof( $menu_full ); $i++ ) {
+//    if ( $menu_full[$i]['plid'] == $book_parent_mlid ) {
+//      $menu[] = $menu_full[$i];
+//    }
+//  }
+//  //Sort the menu by weight and then title.
+//  
+//  //Set weight by inc of 2.
+//  for ( $i = 0; $i < sizeof( $menu ); $i++ ) {
+//    $menu[$i]['weight'] = $i * 2;
+//  }
+//  //Find the menu item for the newly created node.
+//  $new_item_menu_index = NULL;
+//  $new_nid = $node->nid;
+//  for ( $i = 0; $i < sizeof( $menu ); $i++ ) {
+//    list( $entity_type, $menu_item_nid ) = $menu[$i]['link_path'];
+//    if ( $menu_item_nid == $new_nid ) {
+//      $new_item_menu_index = $i;
+//      break;
+//    }
+//  }
+//  if ( $new_item_menu_index === NULL ) {
+//    throw new Exception(
+//        'cybercourse_add_create_page_links_node_insert: can\'t find 
+//          new menu item menu index. nid: ' . $new_nid
+//    );
+//  }
+//  //Find the menu item for the left sib.
+//  $left_sib_menu_index = NULL;
+//  for ( $i = 0; $i < sizeof( $menu ); $i++ ) {
+//    if ( $menu[$i]['mlid'] == $left_sib_mlid ) {
+//      $left_sib_menu_index = $i;
+//      break;
+//    }
+//  }
+//  if ( $left_sib_menu_index === NULL ) {
+//    throw new Exception(
+//        'cybercourse_add_create_page_links_node_insert: can\'t find 
+//          left sib item menu index. mlid: ' . $left_sib_mlid
+//    );
+//  }
+//  //Set the new item after the sib.
+//  $menu[ $new_item_menu_index ]['weight'] 
+//      = $menu[ $left_sib_menu_index ]['weight'] + 1;
+//  //Save the menu links.
+//  for ( $i = 0; $i < sizeof( $menu ); $i++ ) {
+//    menu_link_save( $menu[$i] );
+//  }  
+//  //Rebuild menu cache.
+//  menu_cache_clear_all();
+//    //Remove this one?
+//}

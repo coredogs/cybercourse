@@ -27,9 +27,9 @@ li.expanded.author-menu-parent ul {
   margin-bottom: 1em;
 }
 
-h3 {
+/*h3 {
   text-shadow: 3px 3px 6px rgba(150, 150, 150, 1);;
-}
+}*/
 
 aside.swim {
   border: 2px #CCC solid;
@@ -89,8 +89,6 @@ aside.swim {
 .panel-pane .more-link {
   text-align: right;
 }
-
-
 
 @media (max-width: 767px) {
   h3 {

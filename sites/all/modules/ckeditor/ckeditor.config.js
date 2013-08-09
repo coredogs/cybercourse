@@ -16,6 +16,9 @@ CKEDITOR.editorConfig = function(config) {
   if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
     CKEDITOR.instances['edit-body-und-0-summary'].config.height = "8em";
   }
+  if ( CKEDITOR.instances['edit-body-und-0-value'] ) {
+    CKEDITOR.instances['edit-body-und-0-value'].config.height = "30em";
+  }
   //Let images be inserted.
   config.allowedContent = true;
 //  config.indentClasses = [ 'rteindent1', 'rteindent2', 'rteindent3', 'rteindent4' ];
