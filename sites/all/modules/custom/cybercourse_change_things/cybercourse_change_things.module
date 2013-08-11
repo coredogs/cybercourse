@@ -12,7 +12,7 @@ function cybercourse_change_things_field_widget_form_alter(
   // Add a css class to widget form elements for all fields of type mytype.
   if ($context['field']['type'] == 'image' || $context['field']['type'] == 'file') {
     // Be sure not to overwrite existing attributes.
-    $element['#attributes']['class'][] = 'well';
+//    $element['#attributes']['class'][] = 'well collapsed';
   }
 }
 
@@ -27,5 +27,42 @@ function cybercourse_change_things_form_alter( &$form, &$form_state, $form_id ) 
         unset( $form['book']);
       }
     }
+//    $form['body'][LANGUAGE_NONE]['#post_render'][] = '_ccct_body_built';
   }
+}
+
+//function _ccct_body_built($element, $children) {
+//  $r=5;
+//  return $element; // $form;
+//}
+
+function cybercourse_form_comment_form_alter(&$form, &$form_state) {
+  $d=5;
+}
+
+/**
+* Wraps comments in a collapsible fieldset.
+*/
+function cybercourse_preprocess_comment_wrapper(&$variables) {
+  // Provide contextual information.
+  $variables['node'] = $variables['content']['#node'];
+  $variables['display_mode'] = variable_get('comment_default_mode_' . $variables['node']->type, COMMENT_MODE_THREADED);
+  // The comment form is optional and may not exist.
+  $variables['content'] += array('comment_form' => array());
+  $commentslist = $variables['content']['comments'];
+  $variables['content']['comments'] = array(
+    '#type' => 'fieldset',
+    '#title' => format_plural($variables['node']->comment_count, '1 comment', '@count comments'),
+    '#weight' => 0,
+    //'#collapsible' => TRUE, // does not work and thus is not necessary
+    //'#collapsed' => TRUE, // does not work and thus is not necessary
+    '#pre_render' => array(),
+    '#attributes' => array(),
+  );
+  // Make it manually collapsible as we cannot use #collapsible without the
+  // FAPI element processor.
+  $variables['content']['comments']['#attached']['library'][] = array('system', 'drupal.collapse');
+  $variables['content']['comments']['#attributes']['class'][] = 'collapsible';
+  $variables['content']['comments']['#attributes']['class'][] = 'collapsed';
+  $variables['content']['comments']['commentslist'] = $commentslist;
 }

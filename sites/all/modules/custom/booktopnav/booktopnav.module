@@ -11,7 +11,7 @@ define('BOOKTOPNAV_DEFAULT_MIN_CHARS', 500);
 //Default for whether ToC is show,
 define('BOOKTOPNAV_DEFAULT_SHOW_TOC', FALSE);
 //Weight for the top nav bar. Book module uses 100 for the bottom bar.
-define('BOOKTOPNAV_NAV_BAR_WEIGHT', 1);
+define('BOOKTOPNAV_NAV_BAR_WEIGHT', -10);
 
 /**
  * Implementation of hook_menu().
@@ -30,7 +30,7 @@ function booktopnav_menu() {
 }
 
 /**
- * Implementation of hook_nodeapi().
+ * Implementation of hook_node_view().
  *
  */
 function booktopnav_node_view($node, $view_mode, $langcode) {
@@ -53,7 +53,7 @@ function booktopnav_node_view($node, $view_mode, $langcode) {
               '#markup' => theme('book_navigation', 
                   array('book_link' => $n)),
             //theme('book_navigation', $n),
-              '#weight' => BOOKTOPNAV_NAV_BAR_WEIGHT,
+              '#weight' => ( $node->content['body']['#weight'] - 1 ) //BOOKTOPNAV_NAV_BAR_WEIGHT,
           );
         }
       }

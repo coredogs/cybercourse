@@ -1,5 +1,9 @@
 var swimDoneOnce = false;
 
+$(document).on('insertIntoActiveEditor', function() {
+    alert('Ima custom event');
+});
+
 (function ($) {
   Drupal.behaviors.swim = {
     attach: function (context, settings) {

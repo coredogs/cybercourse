@@ -21,6 +21,10 @@ CKEDITOR.editorConfig = function(config) {
   }
   //Let images be inserted.
   config.allowedContent = true;
+//  config.indentClasses = [ 'rteindent1', 'rteindent2', 'rteindent3', 'rteindent4' ];
+
+  // [ Left, Center, Right, Justified ]
+//  config.justifyClasses = [ 'rteleft', 'rtecenter', 'rteright', 'rtejustify' ];
 
   // The minimum editor width, in pixels, when resizing it with the resize handle.
   config.resize_minWidth = 400;

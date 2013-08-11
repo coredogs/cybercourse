@@ -25,4 +25,4 @@
  *   use the file's name. i.e. __title_or_filename__.
  */
 ?>
-<img src="<?php print $url ?>" <?php if ($width && $height): ?>width="<?php print $width; ?>" height="<?php print $height; ?>" <?php endif; ?>alt="__alt__" title="__title__" class="image-<?php print $style_name ?><?php print $class ? ' ' . $class : '' ?>" />
+EWVIL<img src="<?php print $url ?>" <?php if ($width && $height): ?>width="<?php print $width; ?>" height="<?php print $height; ?>" <?php endif; ?>alt="__alt__" title="__title__" class="image-<?php print $style_name ?><?php print $class ? ' ' . $class : '' ?>" />

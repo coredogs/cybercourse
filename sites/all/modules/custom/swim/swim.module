@@ -99,6 +99,7 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
             array('swim' => $settings),
             'setting'
         );
+        $form['#submit'][] = '_swim_content_submitted';
       } //Can use Ajax markup module.
     } //Using SWIM text format.
   } //This is a node form.
@@ -143,6 +144,11 @@ function _swim_check_swim_used( $node ) {
   return FALSE;
 }
 
+
+function _swim_content_submitted( $form, &$form_state ){
+  $r=6;
+}
+
 /**
  * Return a page with the right media queries and such, and a place to 
  * put markup.
@@ -179,10 +185,13 @@ require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/Markdown.p
 require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/MarkdownExtra.php';
 
 function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und') {
-  //Remove <br>s. Helps with markdown conversion.
-  $pattern = '/\<\s*br\s*\/??\s*\>/i';
-    // <, white space, br, white space, optional /, white space, >
-  $text = preg_replace($pattern, '', $text);
+  //Content is stored with user-typed chars (like <) escaped. This means that
+  //HTML can be typed by the user. The database stores the coded entities, 
+  //along with CK's HTML (<br>s and such). 
+  $text = strip_tags($text, '<img>');
+  $text = htmlspecialchars_decode($text);
+  //Doesn't handle spaces correctly.
+  $text = str_replace('&nbsp;', ' ', $text);
   //Do the asides.
   $pattern = '/\[\s*aside\s*\]/i';
     // {, white space, aside, white space, }
@@ -190,11 +199,8 @@ function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und'
   $pattern = '/\[\s*\/\s*aside\s*\]/i';
     // {, white space, /, white space, aside, white space, }
   $text = preg_replace($pattern, '</aside>', $text);
-
   $html = \Michelf\MarkdownExtra::defaultTransform($text);  
-  
   return $html;
-  
 }
 
 function swim_tips($filter, $format, $long = FALSE) {
@@ -233,45 +239,44 @@ function _swim_markup_help() {
 '<p>' . t('
 Blank lines separate paragraphs. Press Enter twice to make one.
 ') . '</p>
-<p><code>' . t('# Header 1<br>
+<p class="code-look">' . t('# Header 1<br>
 ## Header 2<br>
 ### Header 3<br>
 #### Header 4<br>
 ##### Header 5
-') . '</code></p>
+') . '</p>
 <p>' . t('Inline markup like ') . '<code>_' . t('italics') . '_</code>,
  and <code>**' . t('bold') . '**</code>.</p>
-<p><code> > ' . t('This is a quote.') . '</code></p>
-<p><code>* ' . t('Bulleted lists.') . '<br>
+<p class="code-look"> > ' . t('This is a quote.') . '</p>
+<p class="code-look">* ' . t('Bulleted lists.') . '<br>
         * ' . t('Put blank lines') . '<br>
         * ' . t('around them.') . '
-</code></p>
-<p><code>1. ' . t('A numbered list') . '<br>
+</p>
+<p class="code-look">1. ' . t('A numbered list') . '<br>
 1. ' . t('Is like this.') . '<br>
 1. ' . t('Another one.') . '
-</code></p>
-<p>' . t('Any numbers will do. If you want to show:') . '<br><br>
+</p>
+<p>' . t('Any numbers will do.') . '
+</p>
+<p>' . t('Sometimes you want numbers, not a list. If you want to show:') . '<br><br>
 ' . t('1969. The moon landings.') . '<br><br>
 ' . t('Type:') . '<br><br>
-' . t('1969\. The moon landings.') . '
+<code>' . t('1969\. The moon landings.') . '</code>
 </p>
-<p>
-  &gt; ' . t('First line of a quote.') . '
-  &gt; ' . t('Second line of a quote.') . '
-</p>
+
 <p>' . t('Horizontal rule:') . '<br>
-----
+<code>----</code>
 </p>
-<p>[aside]<br>' . t('This is an aside.') . '<br>
-' . t('Type as much text as you like.') . '<br>
+<p class="code-look">[aside]<br>' . t('This is an aside.') . '<br>
+' . t('More of it.') . '<br>
 [/aside]
 </p>
-<p>[character:aila_tea]<br>
-' . t('A comment from Aila, as she is drinking tea.') . '<br>
+<p class="code-look">[character:aila_tea]<br>
+' . t('Hi from Aila, drinking tea.') . '<br>
 [/character]
 </p>
 <p>' . t('Link:') . '<br><small><code>' . 
-      t('[CyberCourse](http://cybercour.se)') . '</small></code></p>
+      t('[CyberCourse](http://cybercour.se)') . '</code></small></p>
 <p>' . t('Use the preview button to see how your content will look on '
 . 'different devices.') . '
 </p>

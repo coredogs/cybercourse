@@ -95,13 +95,6 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
         'addkid', //Operation
         $node->book['menu_name'] //Name of the menu for this level in the book.
     );
-    $links['blueprint_page_kid_lm'] = _cacpl_make_link(
-        'Create child learning map',
-        'learning-map',
-        $node->book['mlid'], //Parent id for book module.
-        'addkid', //Operation
-        $node->book['menu_name'] //Name of the menu for this level in the book.
-    );
     $links['blueprint_page_sib'] = _cacpl_make_link(
         'Create sibling page',
         'blueprint-page',
@@ -109,6 +102,13 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
         'addsib', //Operation
         $node->book['menu_name'], //Name of the menu for this level in the book.
         $node->book['mlid'] //Menu link id for the current page in the book menu.
+    );
+    $links['blueprint_page_kid_lm'] = _cacpl_make_link(
+        'Create child learning map',
+        'learning-map',
+        $node->book['mlid'], //Parent id for book module.
+        'addkid', //Operation
+        $node->book['menu_name'] //Name of the menu for this level in the book.
     );
     $links['blueprint_page_sib_lm'] = _cacpl_make_link(
         'Create sibling learning map',
@@ -128,13 +128,6 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
         'addkid', //Operation
         $node->book['menu_name'] //Name of the menu for this level in the book.
     );
-    $links['learning_map_kid_lm'] = _cacpl_make_link(
-        'Create child learning map',
-        'learning-map',
-        $node->book['mlid'], //Parent id for book module.
-        'addkid', //Operation
-        $node->book['menu_name'] //Name of the menu for this level in the book.
-    );
     $links['learning_map_sib'] = _cacpl_make_link(
         'Create sibling page',
         'blueprint-page',
@@ -142,6 +135,13 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
         'addsib', //Operation
         $node->book['menu_name'], //Name of the menu for this level in the book.
         $node->book['mlid'] //Menu link id for the current page in the book menu.
+    );
+    $links['learning_map_kid_lm'] = _cacpl_make_link(
+        'Create child learning map',
+        'learning-map',
+        $node->book['mlid'], //Parent id for book module.
+        'addkid', //Operation
+        $node->book['menu_name'] //Name of the menu for this level in the book.
     );
     $links['learning_map_sib_lm'] = _cacpl_make_link(
         'Create sibling learning map',
