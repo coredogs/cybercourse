@@ -24,21 +24,13 @@ function cybercourse_change_things_form_alter( &$form, &$form_state, $form_id ) 
     if ( isset( $form['book'] ) ) {
       global $user;
       if ( ! in_array('administrator', $user->roles) ) {
-        unset( $form['book']);
+//        $form['book']['#access'] = FALSE;
       }
     }
 //    $form['body'][LANGUAGE_NONE]['#post_render'][] = '_ccct_body_built';
   }
 }
 
-//function _ccct_body_built($element, $children) {
-//  $r=5;
-//  return $element; // $form;
-//}
-
-function cybercourse_form_comment_form_alter(&$form, &$form_state) {
-  $d=5;
-}
 
 /**
 * Wraps comments in a collapsible fieldset.

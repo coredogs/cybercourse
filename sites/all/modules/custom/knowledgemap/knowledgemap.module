@@ -8,6 +8,8 @@ define( 'DRAWING_ID_CACHE_NAME', 'knowledgemap_drawing_id_cache');
 
 module_load_include('inc', 'knowledgemap', 'knowledgemap.utils');
 
+
+
 /**
  * Implements hook_init().
  * Load CTools stuff needed for the node edit form.
@@ -16,10 +18,9 @@ function knowledgemap_init() {
   ctools_include('ajax');
   ctools_include('modal');
   drupal_add_js('misc/ajax.js');
-    ctools_modal_add_js('ajax-responder');
+  ctools_modal_add_js('ajax-responder');
   ctools_modal_add_js('modal');
-    ctools_include('node.pages', 'node', '');
-
+  ctools_include('node.pages', 'node', '');
 }
 
 /**
@@ -140,6 +141,10 @@ function knowledgemap_field_widget_info() {
  */
 function knowledgemap_field_widget_form(&$form, &$form_state, 
     $field, $instance, $langcode, $items, $delta, $element) {
+  
+//  return $element;
+  
+  
   //$element contains some of the Right Stuff already. Add to it.
   $base = $element;
   //Can't add KM items on new node.
@@ -205,7 +210,14 @@ function knowledgemap_add_client_code() {
 //  ctools_include('modal');
 //  ctools_modal_add_js('ajax-responder');
 //  ctools_modal_add_js('modal');
+  
+  drupal_add_library('system', 'ui');  
   drupal_add_library('system', 'ui.dialog');
+//  drupal_add_js(
+//      drupal_get_path('module', 'knowledgemap') 
+//          . '/libs/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.min.js', 
+//      'file'
+//  );  
   drupal_add_js(
       drupal_get_path('module', 'knowledgemap') 
           . '/libs/jsPlumb/jquery.jsPlumb-1.4.1-all-min.js', 
@@ -242,16 +254,16 @@ function knowledgemap_add_client_code() {
 //          . '/libs/jquery-dialogextend/build/jquery.dialogextend.min.js', 
 //      'file'
 //  );
-//  drupal_add_js(
-//      drupal_get_path('module', 'knowledgemap') 
-//          . '/libs/jquery-collapse/src/jquery.collapse.js', 
-//      'file'
-//  );
-//  drupal_add_css(
-//      drupal_get_path('module', 'knowledgemap') 
-//          . '/css/jquery-collapse.css', 
-//      'file'
-//  );
+  drupal_add_js(
+      drupal_get_path('module', 'knowledgemap') 
+          . '/libs/jquery-collapse/src/jquery.collapse.js', 
+      'file'
+  );
+  drupal_add_css(
+      drupal_get_path('module', 'knowledgemap') 
+          . '/css/jquery-collapse.css', 
+      'file'
+  );
 //  $x = drupal_add_js(
 //      drupal_get_path('module', 'knowledgemap') 
 //          . '/libs/jquery-getscrollbarsize/getscrollbarsize.js', 
@@ -272,7 +284,7 @@ function knowledgemap_make_km_rep($km_nid) {
     $item_type = isset( $record->field_field_item_type[0]['raw']['value'] ) 
         ? $record->field_field_item_type[0]['raw']['value'] : '';
     $importance = isset( $record->field_field_importance[0]['raw']['value'] ) 
-        ? $record->field_field_importance[0]['raw']['value'] : 'empty';
+        ? $record->field_field_importance[0]['raw']['value'] : '';
     $body = isset( $record->field_body[0]['raw']['value'] ) 
         ? $record->field_body[0]['raw']['value'] : '';
     $coord_x = isset( $record->field_field_coord_x[0]['raw']['value'] ) 
@@ -323,6 +335,7 @@ function knowledgemap_make_km_rep($km_nid) {
 function knowledgemap_add_item_ajax() {
   $title = $_POST['title'];
   $item_type = $_POST['item_type'];
+  $importance = $_POST['importance'];
   $coord_x = $_POST['coord_x'];
   $coord_y = $_POST['coord_y'];
   $km_nid = $_POST['km_nid'];
@@ -339,6 +352,7 @@ function knowledgemap_add_item_ajax() {
   $new_node->field_coord_x[LANGUAGE_NONE][0]['value'] = $coord_x;
   $new_node->field_coord_y[LANGUAGE_NONE][0]['value'] = $coord_y;
   $new_node->field_item_type[LANGUAGE_NONE][0]['value'] = $item_type;
+  $new_node->field_importance[LANGUAGE_NONE][0]['value'] = $importance;
   node_save($new_node);
   $new_node_id = $new_node->nid;
   //@todo Check for fail here.
@@ -398,9 +412,17 @@ function knowledgemap_form_alter(&$form, &$form_state, $form_id) {
     //Erase Drupal's status messages.
     drupal_get_messages('status');
     //Remove the preview button.
-    unset( $form['actions']['preview'] );
+    if ( isset( $form['actions']['preview'] ) ) {
+      unset( $form['actions']['preview'] );
+    }
+    //Remove the view changes button.
+    if ( isset( $form['actions']['preview_changes'] ) ) {
+      unset( $form['actions']['preview_changes'] );
+    }
     //Remove the delete button.
-    unset( $form['actions']['delete'] );
+    if ( isset( $form['actions']['delete'] ) ) {
+      unset( $form['actions']['delete'] );
+    }
     //Add a cancel button.
     $form['actions']['cancel'] = array(
       '#type' => 'submit',
@@ -418,11 +440,11 @@ function knowledgemap_cancel_edit($form, &$form_state) {
   $nid = $form['#node']->nid;
   $commands = array();
   ctools_add_js('ajax-responder');
-      $commands[] = ajax_command_invoke(
-          'body', 
-          'returnFromEditCancel', 
-          array( $nid )
-      );  
+//  $commands[] = ajax_command_invoke(
+//      'body', 
+//      'returnFromEditCancel', 
+//      array( $nid )
+//  );  
   $commands[] = ctools_modal_command_dismiss();
   print ajax_render($commands);
   exit;
@@ -520,14 +542,14 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
             'importance' => 
                 isset( $node->field_importance[LANGUAGE_NONE][0]['value'] )
                   ? $node->field_importance[LANGUAGE_NONE][0]['value']
-                  : 'empty',
+                  : '',
           ),
         ),
       );
       $commands[] = ajax_command_settings($new_item_data, TRUE);
       $commands[] = ajax_command_invoke(
-          'body', 
-          'returnFromEditSave', 
+          NULL, 
+          'returnFromKmEditSave', 
           array( $node->nid )
       );
 //      if ($force_page_reload) {
@@ -824,6 +846,10 @@ function knowledgemap_get_add_form_content() {
               Patterns. Common ways of doing things.
               E.g., "Photographing social events."
             </li>
+            <li>
+              Other. Other experiences.
+              E.g., field trips.
+            </li>
           </ul>
         </li>
       </ul>
@@ -847,7 +873,7 @@ function knowledgemap_get_add_form_content() {
         <label for="km-item-type">Type</label>
         <div class="km-input-field-inner-container">
           <select id="km-item-type" title="What type of item is this?">
-            <option value="not selected">- Choose one -</option>
+            <option value="not selected" selected="selected">- Choose one -</option>
             <optgroup label="Knowledge item">
               <option value="skill">Skill</option>
               <option value="concept">Concept</option>
@@ -857,6 +883,7 @@ function knowledgemap_get_add_form_content() {
               <option value="example">Example</option>
               <option value="exercise">Exercise</option>
               <option value="pattern">Pattern</option>
+              <option value="other">Other</option>
             </optgroup>
           </select>
           <p class="km-input-field-hint">

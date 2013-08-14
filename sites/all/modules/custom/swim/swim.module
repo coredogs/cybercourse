@@ -46,6 +46,8 @@ function swim_menu() {
 }
 
 function swim_form_alter(&$form, &$form_state, $form_id) {
+//  return;
+  
   // @todo Instead of checking form_id, check for a field
   //having the SWIM format? Cache the results of the check 
   //so don't run check again on this page call.
@@ -70,9 +72,6 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
             )
         );
         drupal_add_css(drupal_get_path('module', 'swim') . '/css/swim.css' );
-//        if ( module_exists( 'characters' ) ) {
-//          drupal_add_css(drupal_get_path('module', 'characters') . '/css/characters.css' );
-//        }
         //Load JS to hide things.
         //Load late, so the link to hide has been built.
         drupal_add_js(
@@ -89,12 +88,6 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
           'base_url' => $base_url,
           'format_name' => $body_format_name,
         );
-//        if ( module_exists( 'characters' ) ) {
-//          //Pose preview data.
-//          $settings['pose_previews'] = characters_get_editor_previews();
-//          $settings['pose_stylesheet'] = 
-//              drupal_get_path('module', 'characters') . '/css/characters.css';
-//        }
         drupal_add_js(
             array('swim' => $settings),
             'setting'
@@ -177,6 +170,7 @@ function swim_filter_info() {
     'title' => t('SWIM'),
     'description' => t('Show What I Mean'),
     'process callback' => 'swim_process_filter',
+//    'cache' => FALSE,
   );
   return $filters;
 }

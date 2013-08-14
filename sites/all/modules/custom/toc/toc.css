@@ -1,6 +1,6 @@
 /* Styles for the table of contents module. */
 
-#cybercourse_toc {
+#toc {
   border: 1px solid #DDDDDD;
   background-color: #f4f4f4;
   margin: 40px 0 40px 0;
@@ -10,22 +10,26 @@
   -webkit-border-radius: 10px; 
 }
 
-#cybercourse_toc_label {
+#label {
   font-weight: bold;
 }
 
 #cybercourse_toc p {
 }
 
-#cybercourse_toc p.cybercourse_toc_h2 {
+#toc p.toc_h1 {
   margin-left: 0;
 }
 
-#cybercourse_toc p.cybercourse_toc_h3 {
-  margin-left: 20px;
+#toc p.toc_h2 {
+  margin-left: 2em;
 }
 
-#cybercourse_toc p.cybercourse_toc_h4 {
-  margin-left: 40px;
+#toc p.toc_h3 {
+  margin-left: 4em;
+}
+
+#toc p.toc_h4 {
+  margin-left: 6em;
 }
 

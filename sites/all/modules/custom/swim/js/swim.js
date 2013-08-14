@@ -1,10 +1,9 @@
-var swimDoneOnce = false;
-
-$(document).on('insertIntoActiveEditor', function() {
-    alert('Ima custom event');
-});
+//$(document).on('insertIntoActiveEditor', function() {
+//    alert('Ima custom event');
+//});
 
 (function ($) {
+  var swimDoneOnce = false;
   Drupal.behaviors.swim = {
     attach: function (context, settings) {
       if ( swimDoneOnce ) {
@@ -20,21 +19,21 @@ $(document).on('insertIntoActiveEditor', function() {
       = "<div id='swim-preview-toolbar' class='cke_top'>"
       +   "<span class='cke_toolgroup' role='presentation'>"
       +     "<a id='swim-preview-as-desktop' "
-      +        "class='cke_button swim-button'><img "
+      +        "class='cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "desktop.png' title='Laptop'>"
       +     "</a>"
       +     "<a id='swim-preview-as-tablet' "
-      +        "class='cke_button swim-button'><img "
+      +        "class='cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "tablet.png' title='Tablet'>"
       +     "</a>"
       +     "<a id='swim-preview-as-phone' "
-      +        "class='cke_button swim-button'><img "
+      +        "class='cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "phone.png' title='Phone'>"
       +     "</a>"
       +   "</span>"
       +   "<span class='cke_toolgroup' role='presentation'>"
       +     "<a id='swim-preview-refresh' "
-      +        "class='cke_button swim-button'><img "
+      +        "class='cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "refresh.png' title='Refresh'>"
       +     "</a>"
       +   "</span>"
@@ -44,35 +43,40 @@ $(document).on('insertIntoActiveEditor', function() {
       +   toolbarHtml
       +   "<div id='swim-preview-inner'>"
             //The device.
-      +     "<iframe id='swim-preview-device'></iframe>"
-            //A cache. Load pages into the cache. Then copy to display.
-            //Gives control over timing of device screen update.
-      +     "<iframe style='display:none;' id='swim-cache' "
-      +         "src='" + iframeSrc + "'></iframe>"
+      +     "<iframe id='swim-preview-device' src='" + iframeSrc + "'></iframe>"
+//            //A cache. Load pages into the cache. Then copy to display.
+//            //Gives control over timing of device screen update.
+//      +     "<iframe style='display:none;' id='swim-cache' "
+//      +         "src='" + iframeSrc + "'></iframe>"
       +   "</div>" //End inner.
       + "</div>"; //End outer.
       $("body").append( previewHtml );
       //Wait until the content is loaded.
-      Drupal.behaviors.swim.wait = {
-        counter : 0,
-        delay : 1000,
-        waitLimit : 20
-      };
+//      Drupal.behaviors.swim.wait = {
+//        counter : 0,
+//        delay : 1000,
+//        waitLimit : 20
+//      };
+//return;
       swimWaitForLoad();
-    },
-    iframeHasBeenLoaded : function() {
-//      if ( Drupal.behaviors.swim.initLoadComplete ) {
-//        return true;
-//      }      
-      var iframeContent = $("#swim-cache").contents();
-      return iframeContent.contents().find('body').find('#navbar').length > 0;
-    },
-    continueInit: function() {
-//      if ( Drupal.behaviors.swim.initLoadComplete ) {
-//        return;
+    }, //End attach.
+//    iframeHasBeenLoaded : function() {
+//      if ( CKEDITOR ) {
+//        if ( CKEDITOR.instances['edit-body-und-0-value'] ) {
+//          if ( CKEDITOR.instances['edit-body-und-0-value'].instanceReady ) {
+//            return true;
+//          }
+//        }
 //      }
+//      return false;
+////      var iframeContent = $("#swim-cache").contents();
+////      return iframeContent.contents().find('body').find('#navbar').length > 0;
+//    },
+    continueInit: function() {
       //Copy content of cache iframe.
-      var content = $("#swim-cache").contents().find("html").children().clone();
+//return;      //OK
+      var content = $("#swim-cache").contents().find("body").clone();
+//      var content = $("#swim-cache").contents().find("html").children().clone();
       //Prep the dialog.
       $( "#swim-preview-outer" )
         .dialog({
@@ -80,11 +84,13 @@ $(document).on('insertIntoActiveEditor', function() {
           autoOpen : false,
           dialogClass : "dialog-to-top" //Dialog on top of top nav bar.
         });
+//return;      //OK
       //Put the content into the dialog.
-      $("#swim-preview-device").contents().find("html").children().remove();
-      $("#swim-preview-device").contents().find("html").append(content);
+//      $("#swim-preview-device").contents().find("html").children().remove();
+//      $("#swim-preview-device").contents().find("html").append(content);
+//return;      
       //MT the cache.
-      $("#swim-cache").attr("src", "about:blank");
+//      $("#swim-cache").attr("src", "about:blank");
       //Prepare the iframe content. Remove content that isn't needed.
       this.prepareIframeContent();
       //Match toolbar height to the one creted by CKEditor.
@@ -127,7 +133,7 @@ $(document).on('insertIntoActiveEditor', function() {
       //Turn on the CKEditor preview button, so show all is ready.
       CKEDITOR.instances['edit-body-und-0-value'].commands.preview.enable();
 
-    }, //End attach.
+    }, //End continueInit.
     deviceButtonClicked : function( buttonClicked ) {
       this.selectedPreview = buttonClicked;
       this.showSelectedButton();
@@ -137,19 +143,27 @@ $(document).on('insertIntoActiveEditor', function() {
      * Adjust toolbar to show whichever button is pressed.
      */
     showSelectedButton : function() {
-      $("#swim-preview-as-desktop").removeClass("cke_button_on");
-      $("#swim-preview-as-tablet").removeClass("cke_button_on");
-      $("#swim-preview-as-phone").removeClass("cke_button_on");
-      $( "#swim-preview-as-" + this.selectedPreview ).addClass("cke_button_on");
+      $("#swim-preview-as-desktop").removeClass("cke_button_on").addClass("cke_button_off");
+      $("#swim-preview-as-tablet").removeClass("cke_button_on").addClass("cke_button_off");
+      $("#swim-preview-as-phone").removeClass("cke_button_on").addClass("cke_button_off");
+      $( "#swim-preview-as-" + this.selectedPreview )
+          .removeClass("cke_button_off").addClass("cke_button_on");
     },
     /**
      * Grab rendered text from the server and show it.
      */
     showPreview : function() {
       var iframe = $( "#swim-preview-device" );
+      //Add an obscuring thing.
+      var obscurer = 
+"<div style='margin:0;padding:0;background-color:white;position:absolute;"
++   "width:100%;height:100%;overflow:hidden;z-index:20000;top:0;left:0;'>"
++ "Working..."
++ "</div>";
+      iframe.contents().find("body").prepend(obscurer);
       var iframeContentContainer 
           = iframe.contents().find(".field-name-body");
-      iframeContentContainer.html('<p>Working...</p>');
+//      iframeContentContainer.html('<p>Working...</p>');
       //Set up the preview to mimic the device.
       $( "#swim-preview-device" ).css("width", "").css("height", "");
       $( "#swim-preview-device" )
@@ -195,6 +209,7 @@ $(document).on('insertIntoActiveEditor', function() {
       var editor = CKEDITOR.instances["edit-body-und-0-value"];
       var markup = editor.getData();
       var format = Drupal.settings.swim.format_name;
+      var swimBehavior = this; //Convenience for closures.
       $.ajaxMarkup(markup, format, function(result, success, request) {
         if ( success ) {
           //Show the content.
@@ -203,6 +218,7 @@ $(document).on('insertIntoActiveEditor', function() {
           var iframeContentContainer 
               = iframe.contents().find(".field-name-body");
           iframeContentContainer.html(result);
+          swimBehavior.prepareIframeContent();
         }
         else {
           throw "showPreview: Ajax call failed.";
@@ -211,12 +227,6 @@ $(document).on('insertIntoActiveEditor', function() {
     }, // end showPreview.
     prepareIframeContent : function() {
       var iframeContent = $("#swim-preview-device").contents();
-      //Check if already prepared it.
-//      var header = iframeContent.find('body').find('#navbar');
-//      if ( header.length == 0 ) {
-//        //Already done it.
-//        return;
-//      }
       //Kill all body children except for the main content.
       var $body = $(iframeContent.find('body'));
       $body.children().each(function(index, element) {
@@ -267,20 +277,36 @@ $(document).on('insertIntoActiveEditor', function() {
 }(jQuery));
 
 
+var donkeyCounter = 0;
+var donkeyDelay = 200;
+var donkeyWaitLimit = 50;
+var donkeyReady = false;
+
 function swimWaitForLoad() {
+//  alert('boo')
 //  if ( Drupal.behaviors.swim.initLoadComplete ) {
 //    return;
 //  }
-  Drupal.behaviors.swim.wait.counter ++;
-  if ( 
-          Drupal.behaviors.swim.wait.counter < Drupal.behaviors.swim.wait.waitLimit 
-       && ! Drupal.behaviors.swim.iframeHasBeenLoaded() 
-  ) {
-    setTimeout("swimWaitForLoad()", Drupal.behaviors.swim.wait.delay);
-    return;
+  donkeyCounter ++;
+  if ( donkeyCounter > donkeyWaitLimit ) {
+    donkeyReady = true;
+  }
+//  console.log('counter: ' + donkeyCounter);
+  if ( CKEDITOR ) {
+    if ( CKEDITOR.instances['edit-body-und-0-value'] ) {
+      if ( CKEDITOR.instances['edit-body-und-0-value'].instanceReady ) {
+        var iframeCacheContent = jQuery('#swim-preview-device').contents()
+                .find("body").find(".main-container");
+        if ( iframeCacheContent.length > 0 ) {
+          donkeyReady = true;
+        }
+      }
+    }
+  }
+  if ( donkeyReady ) {
+    Drupal.behaviors.swim.continueInit();
   }
   else {
-//    Drupal.behaviors.swim.initLoadComplete = true;
-    Drupal.behaviors.swim.continueInit();
+    setTimeout("swimWaitForLoad()", donkeyDelay);
   }
 }

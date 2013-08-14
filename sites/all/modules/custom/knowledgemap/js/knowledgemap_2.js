@@ -14,8 +14,6 @@
       //Set some convenience vars.
       //Mode - edit or view.
       this.mode = settings.knowledgemap.mode;
-      //The nid of the KM.
-      this.km_nid = settings.knowledgemap.km_nid;
       //Data about items and connecitons.
       this.km_rep = settings.knowledgemap.knowledgemap_rep;
       //Valid item types.
@@ -47,6 +45,8 @@
         this.createTopToolbar();
       } // End mode == edit
       this.addMethodsToDrawingArea();
+//      //Compute scrollbar height.
+//      var scrollbarSize = $.getScrollBarSize();
 //      this.scrollbarHeight = scrollbarSize[1];
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
@@ -60,6 +60,9 @@
           jsPlumb.bind("connection", function(info, evnt) {
             kmNamespace.makeNewConnection(info, evnt);
           });            
+//        jsPlumb.bind("connectionDetached", function(info, evnt) {
+//          console.log("Deattach:" + info.connection);
+//        });
         }
       });
       //Create the floating toolbars.
@@ -322,7 +325,7 @@
     showCorrectItems : function() {
       var knowledgeItems = $(".km-item").filter(".skill, .concept");
       var experienceItems = $(".km-item")
-          .filter(".explanation, .example, .exercise, .pattern .other");
+          .filter(".explanation, .example, .exercise, .pattern");
       var knowledgeConnections = $(".km-connection-knowledge");
       var experienceConnections = $(".km-connection-experience");
       if (    this.$drawing_area.showKnowledgeLayer 
@@ -437,8 +440,10 @@
         Connector: "Straight",
         Detachable: false,
         ReattachConnections : false,
-        ConnectionOverlays : [ "PlainArrow" ]
+        ConnectionOverlays : [ "PlainArrow" ],
+        logEnabled: true
       });
+      jsPlumb.logEnabled = true;
       //Paint styles for connections.
       //They need to be merged to get the right effects.
       this.requiredPaintStyle = {
@@ -575,12 +580,10 @@
       );
       //Show importance.
       var importance = itemData.importance;
-      if ( ! itemData.importance ) {
+      if ( itemData.importance == 'empty' ) {
         $itemDisplay.addClass('importance-empty');
       }
       else {
-        $itemDisplay.removeClass('importance-empty');
-          //Could be updating display.
         $itemDisplay.css({
           "border-width" : parseFloat(importance)/10 + "em"
         });
@@ -814,7 +817,7 @@
           ) {
         categoryClasses += "km-connection-knowledge ";
       }
-      var experiences = ["explanation", "example", "exercise", "pattern", "other"];
+      var experiences = ["explanation", "example", "exercise", "pattern"];
       if ( 
               $.inArray( fromType, experiences ) >= 0
            || $.inArray( toType, experiences ) >= 0
@@ -886,7 +889,7 @@
               );
       return base;
     }, //End computeConnPaintStyle.
-    createNewItemFromInput: function( newName, newType, newImportance ) {
+    createNewItemFromInput: function( newName, newType ) {
       //Start Drupal.behaviors.knowledgemap.createNewItemFromInput
       if ( this != Drupal.behaviors.knowledgemap ) {
         throw new Exception("createNewItemFromInput: this unexpected.");
@@ -894,7 +897,6 @@
       var newItem = {
         'title' : newName,
         'item_type' : newType,
-        'importance' : newImportance,
         'coord_x' : $("#coord_x").val(),
         'coord_y' : $("#coord_y").val(),
         'km_nid' : this.km_nid
@@ -927,7 +929,6 @@
       $("#coord_y").val(coord_y);
       //Empty old data.
       $("#km-item-name").val("");
-      $("#km-item-importance").val("");
       $("#km-item-type").val("not selected");
       $("#km-add-new-item-container").dialog("open");
     }, //End Drupal.behaviors.knowledgemap.addNewItem
@@ -966,10 +967,7 @@
                 click: function() {
               var newName = $('#km-item-name').val();
               var newType = $('#km-item-type').val();
-              var newImportance = $('#km-item-importance').val();
-              var errorMessage = kmNamespace.checkNewItemData(
-                  newName, newType, newImportance
-              );
+              var errorMessage = kmNamespace.checkNewItemData(newName, newType);
               if ( errorMessage != '') {
                 alert(errorMessage);
               }
@@ -977,7 +975,7 @@
                 var $dialogRef = $(this);
                 //Create data record.
                 var newItem = kmNamespace.createNewItemFromInput(
-                    newName, newType, newImportance
+                    newName, newType
                 );
                 $.ajax({
                   async: false,
@@ -1031,7 +1029,7 @@
           }
         });
     }, //End Drupal.behaviors.knowledgemap.createAddForm
-    checkNewItemData: function(itemTitle, itemType, itemImportance) {
+    checkNewItemData: function(itemTitle, itemType) {
       //Start Drupal.behaviors.knowledgemap.checkNewItemData
       if ( this != Drupal.behaviors.knowledgemap ) {
         throw new Exception("checkNewItemData: this unexpected.");
@@ -1042,11 +1040,6 @@
       }
       if ( ! itemType || itemType == "not selected" ){
         msg += " Please select a type.";
-      }
-      if ( itemImportance ) {
-        if ( itemImportance < 1 || itemImportance > 10 ) {
-          msg += " Please set importance between 1 and 10, or leave blank."
-        }
       }
       return msg;
     }, //End Drupal.behaviors.knowledgemap.checkNewItemData
@@ -1204,9 +1197,6 @@
         case 'pattern':
           category = 'experience';
           break;
-        case 'other':
-          category = 'experience';
-          break;
         }
         return category;
     }, //End Drupal.behaviors.knowledgemap.getItemCategory
@@ -1358,10 +1348,6 @@
 '              Patterns. Common ways of doing things.' +
 '              E.g., "Photographing social events."' +
 '            </li>' +
-'            <li>' +
-'              Other. Other experiences.' +
-'              E.g., field trips.' +
-'            </li>' +
 '          </ul>' +
 '        </li>' +
 '      </ul>' +
@@ -1369,7 +1355,7 @@
 '</div>' +
 '<form id="km-add-new-item-form">' +
 '  <div class="km-input-field-container">' +
-'    <label for="km-item-name">Name *</label>' +
+'    <label for="km-item-name">Name</label>' +
 '    <div class="km-input-field-inner-container">' +
 '      <input type="text" id="km-item-name" spellcheck ' +
 '             placeholder="E.g., Taking photographs" required autofocus' +
@@ -1381,7 +1367,7 @@
 '    </div>' +
 '  </div>' +
 '  <div class="km-input-field-container">' +
-'    <label for="km-item-type">Type *</label>' +
+'    <label for="km-item-type">Type</label>' +
 '    <div class="km-input-field-inner-container">' +
 '      <select id="km-item-type" title="What type of item is this?">' +
 '        <option value="not selected" selected="selected">- Choose one -</option>' +
@@ -1394,7 +1380,6 @@
 '          <option value="example">Example</option>' +
 '          <option value="exercise">Exercise</option>' +
 '          <option value="pattern">Pattern</option>' +
-'          <option value="other">Other</option>' +
 '        </optgroup>' +
 '      </select>' +
 '      <p class="km-input-field-hint">' +
@@ -1402,18 +1387,6 @@
 '      </p>' +
 '      <input type="hidden" name="coord_x" id="coord_x">' +
 '      <input type="hidden" name="coord_y" id="coord_y">' +
-'    </div>' +
-'  </div>' +
-'  <div class="km-input-field-container">' +
-'    <label for="km-item-importance">Importance</label>' +
-'    <div class="km-input-field-inner-container">' +
-'      <input type="text" id="km-item-importance" ' +
-'             placeholder="1-10" ' +
-'             title="How important is this? 1 is low importance, 10 is high."' +
-'             size="4" />' +
-'      <p class="km-input-field-hint">' +
-'        How important is this? 1 is low importance, 10 is high.' +
-'      </p>' +
 '    </div>' +
 '  </div>' +
 '</form>';

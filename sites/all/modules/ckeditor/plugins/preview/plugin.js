@@ -18,15 +18,15 @@ CKEDITOR.plugins.add( 'preview', {
           state: CKEDITOR.TRISTATE_DISABLED
 
       });
-      editor.on( 'configLoaded', function() {
-        CKEDITOR.instances['edit-body-und-0-value'].commands.preview.disable();
-      });
+//      editor.on( 'configLoaded', function() {
+//        CKEDITOR.instances['edit-body-und-0-value'].commands.preview.disable();
+//      });
     },
-    afterInit: function( editor ) {
-      editor.on( 'configLoaded', function() {
-        CKEDITOR.instances['edit-body-und-0-value'].commands.preview.disable();
-      });
-    }
+//    afterInit: function( editor ) {
+//      editor.on( 'configLoaded', function() {
+//        CKEDITOR.instances['edit-body-und-0-value'].commands.preview.disable();
+//      });
+//    }
 });
 
 //}(jQuery));

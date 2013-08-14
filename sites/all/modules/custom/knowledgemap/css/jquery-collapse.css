@@ -5,6 +5,8 @@ For the help collapse on the add form.
 #km-add-item-help p:first-of-type {
   font-size: 1em;
   font-weight: normal;
+  float: none;
+  opacity: 1;
 }
 
 #km-add-item-help p:first-of-type span {

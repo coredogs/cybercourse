@@ -62,10 +62,10 @@ function characters_permission() {
       'title' => t('Administer characters'),
       'description' => t('Create, delete, and update characters.')
     ),
-    'view character sheets' => array(
-      'title' => t('View character sheets'),
-      'description' => t('See characters and poses.')
-    ),
+//    'view character sheets' => array(
+//      'title' => t('View character sheets'),
+//      'description' => t('See characters and poses.')
+//    ),
     'use characters in content' => array(
       'title' => t('Use characters in content'),
       'description' => t('Insert character token in content.')

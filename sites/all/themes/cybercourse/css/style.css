@@ -43,9 +43,14 @@ li.expanded.author-menu-parent ul {
   border-radius: 3px;
 }
 
+/* Space betwixt workflow tags and content. */
+.field-name-field-workflow-tags {
+  margin-bottom: 1em;
+}
+
 
  /*Hide stuff from the image picker. Make it simpler.*/ 
-#imgp .imgp_help,
+/*#imgp .imgp_help,
 #imgp .messages,
 #imgp .form-item-thumb-1,
 #imgp .form-item-scale-1 {
@@ -68,7 +73,7 @@ li.expanded.author-menu-parent ul {
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
   border-radius: 3px;
   padding-top: 0.5em;
-}
+}*/
 
 /* Space out editing form elements. */
 .field-name-field-show-toc, #edit-body-file-upload {
