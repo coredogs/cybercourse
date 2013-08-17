@@ -610,46 +610,28 @@ function entity_metadata_field_file_validate_item($items, $context) {
 /**
  * Access callback for the node entity.
  *
- * Why the strange function name? This function does not implement
- * hook_node_access(), and thus it can't be called
- * entity_metadata_node_access().
- *
- * @see entity_access()
- *
- * @param $op
- *   The operation being performed. One of 'view', 'update', 'create' or
- *   'delete'.
- * @param $node
- *   A node to check access for. Must be a node object. Must have nid,
- *   except in the case of 'create' operations.
- * @param $account
- *   The user to check for. Leave it to NULL to check for the global user.
- *
- * @return boolean
- *   TRUE if access is allowed, FALSE otherwise.
+ * This function does not implement hook_node_access(), thus it may not be
+ * called entity_metadata_node_access().
  */
 function entity_metadata_no_hook_node_access($op, $node = NULL, $account = NULL) {
-  if (!is_object($node)) {
-    return FALSE;
-  }
-  if ('create' == $op) {
-    // Node's create access system needs a bundle name.
-    if (isset($node->type)) {
-      return node_access($op, $node->type, $account);
+  if (isset($node)) {
+    // If a non-default revision is given, incorporate revision access.
+    $default_revision = node_load($node->nid);
+    if ($node->vid != $default_revision->vid) {
+      return _node_revision_access($node, $op);
     }
-    // No way to glean the bundle type so we deny create access.
+    else {
+      return node_access($op, $node, $account);
+    }
+  }
+  // Is access to all nodes allowed?
+  if (!user_access('access content', $account)) {
     return FALSE;
   }
-  // Both _node_revision_access() and node_acces() require $node->nid.
-  if (!isset($node->nid)) {
-    return FALSE;
+  if (user_access('bypass node access', $account) || (!isset($account) && $op == 'view' && node_access_view_all_nodes())) {
+    return TRUE;
   }
-  // Handle the revision special case.
-  $default_revision = node_load($node->nid);
-  if ($node->vid !== $default_revision->vid) {
-    return _node_revision_access($node, $op, $account);
-  }
-  return node_access($op, $node, $account);
+  return FALSE;
 }
 
 /**
@@ -699,8 +681,24 @@ function entity_metadata_user_properties_access($op, $property, $entity = NULL, 
  * Access callback for the comment entity.
  */
 function entity_metadata_comment_access($op, $entity = NULL, $account = NULL) {
-  if (isset($entity) && !isset($account) && comment_access($op, $entity)) {
-    return TRUE;
+  // When determining access to a comment, 'comment_access' does not take any
+  // access restrictions to the comment's associated node into account. If a
+  // comment has an associated node, the user must be able to view it in order
+  // to access the comment.
+  if (isset($entity->nid)) {
+    if (!entity_access('view', 'node', node_load($entity->nid), $account)) {
+      return FALSE;
+    }
+  }
+  if (isset($entity) && $op == 'update') {
+    // Because 'comment_access' only checks the current user, we need to do our
+    // own access checking if an account was specified.
+    if (!isset($account)) {
+      return comment_access('edit', $entity);
+    }
+    else {
+      return ($account->uid && $account->uid == $entity->uid && $entity->status == COMMENT_PUBLISHED && user_access('edit own comments', $account)) || user_access('administer comments', $account);
+    }
   }
   if (user_access('administer comments', $account) || user_access('access comments', $account) && $op == 'view') {
     return TRUE;

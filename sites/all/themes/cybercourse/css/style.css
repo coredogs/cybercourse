@@ -1,6 +1,11 @@
 
 @import url("book.css");
 
+/* Wait cursors */
+.wait, .wait * { 
+  cursor: wait !important;
+}
+
 .node-unpublished {
   border-left: 1px solid #fff4f4;
   border-right: 1px solid #fff4f4;
@@ -81,25 +86,6 @@ li.expanded.author-menu-parent ul {
   margin-bottom: 2em;
 }
 
-/*h3 {
-  text-shadow: 3px 3px 6px rgba(150, 150, 150, 1);;
-}*/
-
-aside.swim {
-  border: 2px #CCC solid;
-  border-radius: 8px;
-  margin: 2em;
-  padding: 1em;
-  float: right;
-  max-width: 15em;
-}
-
-aside.swim img {
-  float: left;
-  margin-right: 1em;
-  margin-bottom: 1em;
-}
-
 /* Show workflow tags inline on node display. */
 .field-name-field-workflow-tags .field-item {
   display: inline-block;
@@ -149,16 +135,28 @@ aside.swim img {
   text-align: right;
 }
 
-@media (max-width: 767px) {
-/*  h3 {
-    text-shadow: none;
-  }*/
-  
-  aside.swim {
-    float: none;
-    margin: 1em 0 1em 0;
-    background-color: inherit;
-  }
-  
-  
+
+#comment-form-wrapper {
+  margin-bottom: 0;
 }
+
+#block-menu-menu-footer-menu {
+  margin-bottom: 0;
+}
+
+#block-menu-menu-footer-menu ul {
+  margin-bottom: 0;
+}
+
+#block-menu-menu-footer-menu ul li {
+  display: inline-block;
+  margin-right: 3em;
+}
+
+.footer {
+  padding: 0 20px 0 20px;
+  margin-bottom: 20px;
+  border: none;
+  margin-top: 20px;
+}
+

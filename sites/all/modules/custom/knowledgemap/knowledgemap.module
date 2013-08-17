@@ -8,8 +8,6 @@ define( 'DRAWING_ID_CACHE_NAME', 'knowledgemap_drawing_id_cache');
 
 module_load_include('inc', 'knowledgemap', 'knowledgemap.utils');
 
-
-
 /**
  * Implements hook_init().
  * Load CTools stuff needed for the node edit form.
@@ -220,6 +218,11 @@ function knowledgemap_add_client_code() {
 //  );  
   drupal_add_js(
       drupal_get_path('module', 'knowledgemap') 
+          . '/libs/blockui/jquery.blockUI.js', 
+      'file'
+  );
+  drupal_add_js(
+      drupal_get_path('module', 'knowledgemap') 
           . '/libs/jsPlumb/jquery.jsPlumb-1.4.1-all-min.js', 
       'file'
   );
@@ -352,7 +355,9 @@ function knowledgemap_add_item_ajax() {
   $new_node->field_coord_x[LANGUAGE_NONE][0]['value'] = $coord_x;
   $new_node->field_coord_y[LANGUAGE_NONE][0]['value'] = $coord_y;
   $new_node->field_item_type[LANGUAGE_NONE][0]['value'] = $item_type;
-  $new_node->field_importance[LANGUAGE_NONE][0]['value'] = $importance;
+  if ( $importance ) {
+    $new_node->field_importance[LANGUAGE_NONE][0]['value'] = $importance;
+  }
   node_save($new_node);
   $new_node_id = $new_node->nid;
   //@todo Check for fail here.
@@ -625,6 +630,9 @@ function knowledgemap_save_new_connection() {
     $source_km_item_nid = $_POST['source_km_item_nid'];
     $target_km_item_nid = $_POST['target_km_item_nid'];
     $required = $_POST['required'];
+    if ( $source_km_item_nid == $target_km_item_nid ) {
+      throw new Exception('Cannot link an item itself.');
+    }
     //@todo check nodes exist.
     //@todo check connection type.
     //Add a new relation.
@@ -960,7 +968,6 @@ function knowledgemap_field_formatter_view($entity_type, $entity, $field,
           'mode' => 'view', //Viewing mode.
           'all_item_types' => $allowed_item_types,
         );
-
         drupal_add_js(
             array('knowledgemap' => $settings),
             'setting'

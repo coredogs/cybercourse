@@ -74,7 +74,7 @@ function _cbb_courses() {
     $output .= $rendered_tree;
   }
   //Wrap some CSS around it.
-//  $output = '<div id="cybercourse-list-block" class="tree">' . $output . '</div>';
+  $output = '<div id="cybercourse-list-block">' . $output . '</div>';
   return $output;
 }
 
@@ -130,7 +130,7 @@ function _cbb_blueprints() {
     $output .= $rendered_tree;
   }
   //Wrap some CSS around it.
-//  $output = '<div id="blueprint-list-block">' . $output . '</div>';
+  $output = '<div id="blueprint-list-block">' . $output . '</div>';
   return $output;
 }
 
@@ -162,38 +162,6 @@ function _cbb_make_empty_message( $book_type_label_plural, $is_author ) {
  * @return string Content.
  */
 function _cbb_make_book_tree( $nid ) {
-  drupal_add_js(
-      drupal_get_path('module', 'cybercourse_book_blocks') 
-          . '/js/cybercourse_book_blocks.js', 
-      'file'
-  );
-  drupal_add_css(
-      drupal_get_path('module', 'cybercourse_book_blocks') 
-          . '/libs/bootstrap-tree/bootstrap-combined.min.css', 
-      'file'
-  );
-  drupal_add_css(
-      drupal_get_path('module', 'cybercourse_book_blocks') 
-          . '/css/cybercourse_book_blocks.css', 
-      'file'
-  );
-  //Sent path of current page.
-  global $base_url;
-  $settings = array(
-    'current_path' => request_path(),
-    'base_url' => $base_url,
-  );
-  drupal_add_js(
-      array('cyco_book_blocks' => $settings),
-      'setting'
-  );
-  
-  //Use cached menu?
-  $cache = variable_get('_cbb_menu_cache_' . $nid, NULL);
-  if ( ! is_null($cache) ) {
-    return $cache;
-  }
-  //Regenerate the menu.
   $node = node_load($nid);
   $current_recusion_level = 0;
   $tree = array();
@@ -205,46 +173,9 @@ function _cbb_make_book_tree( $nid ) {
       $current_recusion_level
   );
   $trail = array ( current_path() );
-  global $_cbb_root_path;
-  $_cbb_root_path = 'node/' . $nid;
-  $rendered = theme(
-      'cbb_book_tree', 
-      array(
-        'tree' => $tree, 
-        'trail' => $trail,
-      )
-  );
-//drupal_set_message('<pre>' . $rendered . '</pre>');  
-  $rendered = '<div class="tree menuTop">' . $rendered . '</div>';
-  variable_set('_cbb_menu_cache_' . $nid, $rendered);
+  $rendered = theme('cbb_book_tree', array('tree' => $tree, 'trail' => $trail));
   return $rendered;
 }
-
-
-function cybercourse_book_blocks_node_update($node) {
-  _ccbb_erase_menu_cache( $node );
-}
-
-
-function cybercourse_book_blocks_node_insert($node) {
-  _ccbb_erase_menu_cache( $node );
-}
-
-
-function cybercourse_book_blocks_node_delete($node) {
-  _ccbb_erase_menu_cache( $node );
-}
-
-/**
- * Erase the cache for book menu a node is in.
- */
-function _ccbb_erase_menu_cache( $node ) {
-  if ( $node->book ) {
-    $bid = $node->book['bid'];
-    variable_del( '_cbb_menu_cache_' . $bid );
-  }
-}
-
 
 /**
  * Implements hook_theme().
@@ -336,22 +267,18 @@ function theme_cbb_book_tree($variables) {
   $trail = $variables['trail'];
   $menu_output = cbb_recursive_link_creator($tree, $trail);
   if (!empty($menu_output)) {
-    $output = '';
     // We create the shell to hold the menu outside the recursive function.
-//    $output .= '<!--[if IE]><div class="ie"><![endif]-->';
-    $output .= '<ul class="cycobb">';
+    // Add a div that only shows up for that pesky IE so that we can style it into obedience.
+    $output  = '<!--[if IE]><div class="ie"><![endif]-->';
+    $output .= '<ul class="menu jquerymenu">';
     $output .= $menu_output;
     $output .= '</ul>';
-//    $output .= '<!--[if IE]></div><![endif]-->';
+    $output .= '<!--[if IE]></div><![endif]-->';
     return $output;
   }
 }
 
-function cbb_recursive_link_creator(
-    $items = array(), 
-    $trail, 
-    $parentid = ''
-) {
+function cbb_recursive_link_creator($items = array(), $trail, $parentid = '') {
   static $menucount = 0;
   $count = 0;
   $output = '';
@@ -374,28 +301,48 @@ function cbb_recursive_link_creator(
         $count++;
         $id = $parentid . '-' . $count;
         $classes = array();
-        //All closed to begin with.
         $state = 'closed';
-        $classes[] = 'closed';
         // If there are submenu items we assign the parent a class.
         if ( ! empty($item['below'])  ) {
           $nextlevel = '';
-          $nextlevel = cbb_recursive_link_creator(
-              $item['below'], $url_array, $id
-          );
+          $nextlevel = cbb_recursive_link_creator($item['below'], $url_array, $id);
           if (!empty($nextlevel)) {
-            $classes[] = 'parent_li';
+            $classes[] = 'parent';
           }
         }
 
-//        if (
-//                $_GET['q'] == $item['link']['path'] 
-//            || (    $item['link']['path'] == '<front>' 
-//                 && $_GET['q'] == variable_get('site_frontpage', 'node')
-//                )
-//           ) {
-//          $classes[] = 'currentPage';
-//        }
+        // If the menu item is expanded or in the active trail 
+        // and if has children add the "open" class.
+        if ( 
+               (    ! empty( $item['link']['mlid'] )
+                 && in_array($item['link']['mlid'], $url_array)
+               )
+            || ! empty( $item['link']['expanded'] )
+            || ( 
+                 (    in_array($item['link']['path'], $url_array)
+                   || ( $_GET['q'] == $item['link']['path'] )
+                 )
+                 && ! empty($item['link']['has_children'])
+                 && ! empty($nextlevel)
+                )
+            ) {
+          $classes[] = 'open';
+          $state = 'open';
+        }
+        elseif ( ! empty($item['below'] ) && ! empty($nextlevel) ) {
+          $classes[] = 'closed';
+        }
+        if (in_array($item['link']['path'], $url_array)) {
+          $classes[] = 'active-trail';
+        }
+        if (
+                $_GET['q'] == $item['link']['path'] 
+            || (    $item['link']['path'] == '<front>' 
+                 && $_GET['q'] == variable_get('site_frontpage', 'node')
+                )
+           ) {
+          $classes[] = 'active';
+        }
         if ($count == 1) {
           $classes[] = 'first';
         }
@@ -408,7 +355,6 @@ function cbb_recursive_link_creator(
         }
         $output .= theme('cbb_listitem', array(
           'item' => $item,
-          'id' => $id,
           'link_text' => $item['link']['link_text'],
           'path' => $item['link']['path'],
           'options' => $options,
@@ -429,7 +375,6 @@ function cbb_recursive_link_creator(
  */
 function theme_cbb_listitem($variables) {
   $item         = $variables['item'];
-  $id           = $variables['id'];
   $link_text    = $variables['link_text'];
   $path         = $variables['path'];
   $options      = $variables['options'];
@@ -442,16 +387,8 @@ function theme_cbb_listitem($variables) {
   if (!isset($output)) {
     $output = '';
   }
-  
-  //Everything hidden initially, except the root.
-  $output .= '<li id="' . $id . '" ' 
-      . (empty($classes) ? '>' : ' class="' . implode(' ', $classes) 
-      . '" ');
-  global $_cbb_root_path;
-  if ( $path != $_cbb_root_path ) {
-    $output .= ' style="display:none;" ';
-  }
-  $output .= '>';
+
+  $output .= '<li ' . (variable_get('jquerymenu_insert_list_item_id', 0) ? 'id="jquerymenu-' . $id . '" ' : '') . (empty($classes) ? '>' : ' class="' . implode(' ', $classes) . '">');
 
   $output .= theme('cbb_links', array(
     'link_text' => $item['link']['link_text'], //KRM ?? $link_text?
@@ -489,17 +426,14 @@ function theme_cbb_links($variables) {
   $has_children = $variables["has_children"];
   $published    = $variables['published'];
   
-//  $parentlink = variable_get('jquerymenu_parentlink', 0);
+  $parentlink = variable_get('jquerymenu_parentlink', 0);
 
-  $icon_class = '';
-  //Choose one of three icon classes.
-  if ( ! $has_children ) {
-    $icon_class = 'icon-stop';
-  }
-  else {
-    $icon_class = 'icon-plus-sign';
-  }
-  $output = '<span title="Expand this branch"><i class="' . $icon_class . '"></i></span> ';
+  $output = '';
+  // This is the span that becomes the little plus and minus symbol.
+  $plus = '<span' . 
+      (empty($classes) 
+        ? '>' 
+        : ' class="' . implode(' ', $classes) . '">') . '</span>';
   //Add the unpublished marker if needed.
   $link_text = ( $published == 0 )
         ? '(u) ' . $link_text 
@@ -511,12 +445,12 @@ function theme_cbb_links($variables) {
       $path, 
       $options
   );
-//  if ($has_children != 0) {
-//    $output .= $parentlink ? $plus . $link_text : $plus . $link;
-//  }
-//  else {
+  if ($has_children != 0) {
+    $output .= $parentlink ? $plus . $link_text : $plus . $link;
+  }
+  else {
     $output .= $link;
-//  }
+  }
   return $output;
 }
 

@@ -10,7 +10,8 @@
       }
       html += "</select> <button id='cacpl-create' type='button' "
           + "class='btn'>Create</button><br>";
-      html += "<small>Siblings not inserted in the right spot. Use Rearrange pages link.</small></form>"
+      html += "<small>Siblings may not be inserted in the right spot. "
+          + "Use the Rearrange pages link to fix mistakes.</small></form>"
       $("#cacpl-create-widget-location").append(html);
       $("#cacpl-create").click( function() {
         var selectedIndex = $("#cacpl-page-list").val();

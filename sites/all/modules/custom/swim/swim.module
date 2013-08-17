@@ -193,15 +193,41 @@ function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und'
   $pattern = '/\[\s*\/\s*aside\s*\]/i';
     // {, white space, /, white space, aside, white space, }
   $text = preg_replace($pattern, '</aside>', $text);
-  $html = \Michelf\MarkdownExtra::defaultTransform($text);  
+  $pattern = '/\[\s*caption\s*\]/i';
+  $text = preg_replace($pattern, '<p class="swim-indent-caption">', $text);
+  $pattern = '/\[\s*\/caption\s*\]/i';
+  $text = preg_replace($pattern, '</p>', $text);
+  $html = \Michelf\MarkdownExtra::defaultTransform($text);
   return $html;
 }
 
 function swim_tips($filter, $format, $long = FALSE) {
-  return t('Failure is not an option. It comes standard.');
+  return t('Failure is not an option. It comes standard on all models.');
 }
 
-
+/**
+ * Implements hook_preprocess_page.
+ * 
+ * Add "swim" class if the SWIM filter was used.
+ * See https://drupal.org/node/805006
+ */
+function swim_process_html(&$variables) {
+  //Is SWIM CSS added to the page?
+  $css_path = drupal_get_path('module', 'swim') . '/css/swim.css';
+  if ( array_key_exists($css_path, $variables['css']) ) {
+    //Check if class not already in array.
+    if ( ! in_array( 'swim', $variables['classes_array'] ) ) {
+      $variables['classes_array'][] = 'swim';
+      $variables['classes'] .= ' swim';
+      //Add JS code to help render SWIM stuff.
+      drupal_add_js(
+          drupal_get_path('module', 'swim') 
+              . '/js/swim_render.js', 
+          'file'
+      );
+    }
+  }
+}
 
 /**
  * Implements hook_block_info().

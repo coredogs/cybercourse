@@ -3,3 +3,5 @@ description = Show what I mean editing interface.
 package = CyberCourse
 core = 7.x
 dependencies[] = ckeditor
+stylesheets[all][] = css/swim.css
+scripts[] = js/swim_render.js

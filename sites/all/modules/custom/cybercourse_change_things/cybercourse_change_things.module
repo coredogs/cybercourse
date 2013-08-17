@@ -4,33 +4,25 @@
  * Changes to this and that.
  */
 
-/**
- * Add the well class around image and file widgets.
- */
-function cybercourse_change_things_field_widget_form_alter(
-    &$element, &$form_state, $context) {
-  // Add a css class to widget form elements for all fields of type mytype.
-  if ($context['field']['type'] == 'image' || $context['field']['type'] == 'file') {
-    // Be sure not to overwrite existing attributes.
-//    $element['#attributes']['class'][] = 'well collapsed';
-  }
-}
+
 
 /**
  * Kill the book section of node edit forms for non-admins.
  */
-function cybercourse_change_things_form_alter( &$form, &$form_state, $form_id ) {
-  if ( stristr( $form_id, 'node_form' ) !== FALSE ) {
-    if ( isset( $form['book'] ) ) {
-      global $user;
-      if ( ! in_array('administrator', $user->roles) ) {
-//        $form['book']['#access'] = FALSE;
-      }
-    }
-//    $form['body'][LANGUAGE_NONE]['#post_render'][] = '_ccct_body_built';
-  }
+function cybercourse_change_things_menu_alter( &$items ) {
+  $items['node/add/course']['access callback'] = '_cctma_check_access';
+  $items['node/add/blueprint']['access callback'] = '_cctma_check_access';
 }
 
+/**
+ * Menu access callback.
+ * @return boolean True if user has right role.
+ */
+function _cctma_check_access() {
+  global $user;
+  $access = in_array('administrator', $user->roles);
+  return $access;
+}  
 
 /**
 * Wraps comments in a collapsible fieldset.
