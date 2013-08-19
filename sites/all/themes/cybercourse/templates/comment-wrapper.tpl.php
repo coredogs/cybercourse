@@ -9,7 +9,7 @@
 
   <?php if ($content['comment_form']): ?>
     <section id="comment-form-wrapper" class="well well-small">
-      <h2 class="title"><?php print t('Add new comment'); ?></h2>
+      <h3 class="title"><?php print t('Add new comment'); ?></h3>
       <?php print render($content['comment_form']); ?>
     </section> <!-- /#comment-form-wrapper -->
   <?php endif; ?>

@@ -1,5 +1,18 @@
 /* Book navigation */
 
+.book-navigation p.topics-list-header {
+  font-weight: bold;
+  margin-top: 2em;
+}
+
+.book-navigation .topics-list-header + ul {
+  margin-left: 2em;
+}
+
+.book-navigation .topics-list-header + ul li{
+  margin-bottom: 1em;
+}
+
 .book-navigation .page-links {
   border-top: 1px solid #888;
   border-bottom: 1px solid #888;

@@ -1,7 +1,8 @@
 /* Based on jquerymenu CSS. */
 
 /* Redo stuff from the tree menu CSS. */
-.region .block div.tree {
+.region .block div.tree,
+.pane-block div.tree {
   -webkit-border-radius: 0;
   -moz-border-radius: 0;
   border-radius: 0;
@@ -18,21 +19,25 @@
 }
 
 div.tree {
-  margin-left: -25px;
+  margin-left: -15px;
 }
 
-.tree li::after {
+div.tree ul {
+  margin-left: 0.8em;
+}
+
+div.tree li::after {
   border-top: none;
 }
 
-.tree li::before {
+div.tree li::before {
   border-left: none;
 }
 
-.tree .currentPage > span + a {
+div.tree .currentPage > span + a {
   font-weight: bold;
 }
 
-.tree li span {
+div.tree li span {
   border: 1px transparent solid;
 }

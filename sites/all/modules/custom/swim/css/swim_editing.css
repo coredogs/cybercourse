@@ -82,3 +82,12 @@ MT for desktop. */
   box-shadow: 0 1px 5px rgba(0,0,0,.6) inset,0 1px 0 rgba(0,0,0,.2);*/
 }
 
+.tips-code-look {
+    background-color: #F7F7F9;
+    border: 1px solid #E1E1E8;
+    border-radius: 3px 3px 3px 3px;
+    color: #DD1144;
+    font-family: Monaco,Menlo,Consolas,"Courier New",monospace;
+    padding: 2px 4px;
+    white-space: nowrap;
+}

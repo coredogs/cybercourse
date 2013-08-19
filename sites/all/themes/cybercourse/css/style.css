@@ -1,6 +1,19 @@
 
 @import url("book.css");
 
+body, body h1, body h2, body h3, body h4, body h5, body h6 {
+  line-height: 1.5em;
+}
+
+p {
+  margin: 0 0 1.5em;
+}
+
+ul, ol {
+  padding: 0;
+  margin: 0 0 1.5em 25px;
+}
+
 /* Wait cursors */
 .wait, .wait * { 
   cursor: wait !important;
