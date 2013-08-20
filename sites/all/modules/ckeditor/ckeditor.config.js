@@ -8,7 +8,7 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
  If you don't do this, you may notice that browser is ignoring all your changes.
  */
 CKEDITOR.editorConfig = function(config) {
-  config.contentsCss = '/sites/all/modules/custom/characters/css/characters.css';
+  config.contentsCss = '/sites/all/modules/custom/pseudents/css/pseudents.css';
   config.basicEntities = true; //Entity encode <, >.
   config.disableNativeSpellChecker = false;
 //  config.height = "30em";

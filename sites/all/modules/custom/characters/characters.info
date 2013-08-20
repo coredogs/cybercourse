@@ -1,8 +1,0 @@
-name = Characters
-description = Characters are like characters in novels. This module helps you define and use characters in your content.
-package = CyberCourse
-core = 7.x
-files[] = characters.module
-stylesheets[all][] = css/characters.css
-;dependencies[] = user_variable
-;dependencies[] = inline_entity_form

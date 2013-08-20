@@ -2,19 +2,19 @@
 /**
  * Flag showing whether the poses preview data (used with CKEditor) is dirty.
  */
-define('POSES_PREVIW_DIRTY_FLAG_VAR', 'characters_poses_preview_dirty');
+define('POSES_PREVIW_DIRTY_FLAG_VAR', 'pseudents_poses_preview_dirty');
 /**
  * Poses preview data used with CKEditor.
  */
-define('POSES_PREVIEW_DATA_VAR', 'characters_poses_preview_data');
+define('POSES_PREVIEW_DATA_VAR', 'pseudents_poses_preview_data');
 
 /**
  * Implements hook_help().
  */
-function characters_help($path, $arg) {
+function pseudents_help($path, $arg) {
   switch ($path) {
       // Help for another path in the block module
-    case 'admin/help#characters':
+    case 'admin/help#pseudents':
       return '<p>' . t('Helpy help help, <a href="@jquery">jQuery</a>.', 
           array(
             '@jquery' => 'http://jquery.com',
@@ -22,53 +22,64 @@ function characters_help($path, $arg) {
   }
 }
 
+//function pseudents_menu() {
+//  $items['pseudent-poses'] = array(
+//    'title' => 'Pseudent poses',
+//    'page callback' => 'drupal_get_form',
+//    'page arguments' => array('booktopnav_admin_settings'),
+//    'access arguments' => array('administer site configuration'),
+//    'type' => MENU_LOCAL_TASK,
+//  );
+//  return $items;
+//  
+//}
 
 /**
  * Implements hook_menu().
  */
-//function characters_menu() {
-//  $items['characters/sheets'] = array(
-//    'title' => 'Character sheets',
-//    'description' => 'See a list of characters.',
-//    'page callback' => 'characters_show_character_sheet_list',
-//    'access callback' => 'characters_check_access_sheets',
+//function pseudents_menu() {
+//  $items['pseudents/sheets'] = array(
+//    'title' => 'pseudent sheets',
+//    'description' => 'See a list of pseudents.',
+//    'page callback' => 'pseudents_show_pseudent_sheet_list',
+//    'access callback' => 'pseudents_check_access_sheets',
 //    'type' => MENU_NORMAL_ITEM,
 //  );
-//  $items['characters/sheets/%'] = array(
-//    'title callback' => 'characters_sheet_title',
+//  $items['pseudents/sheets/%'] = array(
+//    'title callback' => 'pseudents_sheet_title',
 //    'title arguments' => array(2),
-//    'description' => 'See poses for a character.',
-//    'page callback' => 'characters_show_character_sheet',
+//    'description' => 'See poses for a pseudent.',
+//    'page callback' => 'pseudents_show_pseudent_sheet',
 //    'page arguments' => array(2),
-//    'access callback' => 'characters_check_access_sheets',
+//    'access callback' => 'pseudents_check_access_sheets',
 //    'type' => MENU_NORMAL_ITEM,
 //  );
 //  return $items;
 //}
 
 
-//function characters_sheet_title( $nid ) {
+//function pseudents_sheet_title( $nid ) {
 //  $node = node_load($nid);
-//  $title = t( 'Character sheet for @name', array('@name' => $node->title) );
+//  $title = t( 'pseudent sheet for @name', array('@name' => $node->title) );
 //  return $title;
 //}
 
 /**
  * Implementation of hook_perm().
  */
-function characters_permission() {
+function pseudents_permission() {
   return array(
-    'administer characters' => array(
-      'title' => t('Administer characters'),
-      'description' => t('Create, delete, and update characters.')
+    'administer pseudents' => array(
+      'title' => t('Administer pseudents'),
+      'description' => t('Create, delete, and update pseudents.')
     ),
-//    'view character sheets' => array(
-//      'title' => t('View character sheets'),
-//      'description' => t('See characters and poses.')
+//    'view pseudent sheets' => array(
+//      'title' => t('View pseudent sheets'),
+//      'description' => t('See pseudents and poses.')
 //    ),
-    'use characters in content' => array(
-      'title' => t('Use characters in content'),
-      'description' => t('Insert character token in content.')
+    'use pseudents in content' => array(
+      'title' => t('Use pseudents in content'),
+      'description' => t('Insert pseudent token in content.')
     ),
   );
 }
@@ -76,84 +87,84 @@ function characters_permission() {
 /**
 * Implements hook_entity_info_alter().
 */
-//function characters_entity_info_alter(&$entity_info) {
-//  $entity_info['node']['view modes']['character_sheet'] = array(
-//    'label' => t('Character sheet'),
+//function pseudents_entity_info_alter(&$entity_info) {
+//  $entity_info['node']['view modes']['pseudent_sheet'] = array(
+//    'label' => t('pseudent sheet'),
 //    'custom settings' => TRUE,
 //  );
 //}
 //
 //
-//function characters_check_access_sheets() {
+//function pseudents_check_access_sheets() {
 //  return 
-//         user_access('administer characters') 
-//      || user_access('view character sheets');
+//         user_access('administer pseudents') 
+//      || user_access('view pseudent sheets');
 //}
 
 /**
- * Show a list of links to character sheets.
+ * Show a list of links to pseudent sheets.
  */
-//function characters_show_character_sheet_list() {
-//  //Fetch character data.
+//function pseudents_show_pseudent_sheet_list() {
+//  //Fetch pseudent data.
 //  $query = new EntityFieldQuery;
 //  $query
 //    ->entityCondition('entity_type', 'node')
-//    ->entityCondition('bundle', 'character')
+//    ->entityCondition('bundle', 'pseudent')
 //    ->propertyCondition('status', 1)
 //    ->propertyOrderBy('title');
 //  $query_result = $query->execute();
-//  //Fetch the character names.
-//  $characters = array();
+//  //Fetch the pseudent names.
+//  $pseudents = array();
 //  foreach ( $query_result['node'] as $nid => $value ) {
 //    $node = node_load($nid);
-//    $characters[$nid] = $node->title;
+//    $pseudents[$nid] = $node->title;
 //  }
-//  //Show the characters.
+//  //Show the pseudents.
 //  $output = array();
-//  if ( sizeof( $characters ) == 0 ) {
-//    //There are no characters to show.
-//    $output['no characters'] = array(
+//  if ( sizeof( $pseudents ) == 0 ) {
+//    //There are no pseudents to show.
+//    $output['no pseudents'] = array(
 //      '#type' => 'markup',
-//      '#markup' => '<p>' . t('No characters have been created yet.') . '</p>',
+//      '#markup' => '<p>' . t('No pseudents have been created yet.') . '</p>',
 //    );
 //    return $output;
 //  }
 //  else {
-//    //There are characters to show.
+//    //There are pseudents to show.
 //    $output['intro'] = array(
 //      '#type' => 'markup',
 //      '#markup' => 
 //             '<p>' 
-//           .   ( sizeof( $characters ) == 1 )
-//                  ? t('Here is the character that has been created.') 
-//                  : t('Here are the characters that have been created.') 
+//           .   ( sizeof( $pseudents ) == 1 )
+//                  ? t('Here is the pseudent that has been created.') 
+//                  : t('Here are the pseudents that have been created.') 
 //           . '</p>',
 //    );
 //    global $base_url;
-//    foreach ( $characters as $nid => $title ) {
+//    foreach ( $pseudents as $nid => $title ) {
 //      $output[$nid] = array(
 //        '#type' => 'markup',
 //        '#markup' => 
-//              '<p class="character-link">'
+//              '<p class="pseudent-link">'
 //              . l( check_plain( $title ),  
-//                   $base_url . '/characters/sheets/' . $nid 
+//                   $base_url . '/pseudents/sheets/' . $nid 
 //                 )
 //            . '</p>'
 //      );
 //    } 
-//  } //End there are characters to show.
+//  } //End there are pseudents to show.
 //  return $output;
 //}
 
 /**
- * Show a character sheet.
- * @param integer $char_nid The nid of the character to show.
+ * Show a pseudent sheet.
+ * @param integer $char_nid The nid of the pseudent to show.
  */
-//function characters_show_character_sheet( $char_nid ) {
+//function pseudents_show_pseudent_sheet( $char_nid ) {
 //  //Load the node.
 //  $node = node_load( $char_nid );
 //  //Show it, using a special view mode.
-//  $output = node_view($node, 'character_sheet');
+//  $output = node_view($node, 'pseudent_sheet');
 //  if ( isset( $output['#contextual_links'] ) ) {
 //    unset( $output['#contextual_links'] );
 //  }
@@ -167,23 +178,23 @@ function characters_permission() {
 /**
 * Implements hook_filter_info().
 */
-function characters_filter_info() {
-  $filters['filter_characters'] = array(
-    'title' => t('Characters'),
-    'description' => t('Replace character tokens'),
-    'process callback' => 'characters_process_filter',
+function pseudents_filter_info() {
+  $filters['filter_pseudents'] = array(
+    'title' => t('Pseudents'),
+    'description' => t('Replace pseudent tokens'),
+    'process callback' => 'pseudents_process_filter',
   );
   return $filters;
 }
 
 
-function characters_process_filter($text, $filter, $format = 'characters', $langcode = 'und') {
-  //Find all the characters on the page that are referred to.
+function pseudents_process_filter($text, $filter, $format = 'pseudents', $langcode = 'und') {
+  //Find all the pseudents on the page that are referred to.
   $regex_matches = array();
-  $regex_match_count = preg_match_all("/\[\s*character\s*\:\s*(.*?)\s*\]/i", 
+  $regex_match_count = preg_match_all("/\[\s*pseudent\s*\:\s*(.*?)\s*\]/i", 
       $text, $regex_matches);
   if ( $regex_match_count > 0 ) {
-    //Look up data for those characters.
+    //Look up data for those pseudents.
     $token_list = '';
     foreach( $regex_matches[1] as $key => $match ) {
       if ( $key > 0 ) {
@@ -207,7 +218,7 @@ function characters_process_filter($text, $filter, $format = 'characters', $lang
             = node.nid
         where 
           node.status = 1
-          and field_data_field_token.bundle = \'character_pose\'
+          and field_data_field_token.bundle = \'pseudent_pose\'
           and field_token_value in ( ' . $token_list . ' )
     ';
     $query_result = db_query($sql); //, array( ':token_list' => $token_list ));
@@ -225,7 +236,7 @@ function characters_process_filter($text, $filter, $format = 'characters', $lang
           if ( $row->uri ) {
             if ( $regex_match == $row->field_token_value ) {
               //Compute the HTML.
-              $html = _characters_compute_char_html( $row );
+              $html = _pseudents_compute_char_html( $row );
               //Add to substitutions array.
               $substitutions[] = array(
                 'matched' => $regex_matches[0][$regex_key],
@@ -246,13 +257,13 @@ function characters_process_filter($text, $filter, $format = 'characters', $lang
         );
       }
       //Count the closing tags.
-      $pattern = '/\[\s*\/\s*character\s*\]/i';
-        //{, white space, /, white space, 'character', white space, }
+      $pattern = '/\[\s*\/\s*pseudent\s*\]/i';
+        //{, white space, /, white space, 'pseudent', white space, }
       $closing_matches = array();
       $closing_tag_count = preg_match_all($pattern, $text, $closing_matches);
       if ( $closing_tag_count != $regex_match_count ) {
         drupal_set_message(
-            'Please check for a missing or incorrect character closing tag.', 
+            'Please check for a missing or incorrect pseudent closing tag.', 
             'warning'
         );
       }
@@ -265,18 +276,18 @@ function characters_process_filter($text, $filter, $format = 'characters', $lang
 }
 
 /*
- * Create HTML for a character.
+ * Create HTML for a pseudent.
  */
-function _characters_compute_char_html( $query_result ) {
+function _pseudents_compute_char_html( $query_result ) {
   $html = 
-'<div class="cyco_character" markdown="1">'
-  . '<div class="cyco_character_figure">'
+'<div class="cyco_pseudent" markdown="1">'
+  . '<div class="cyco_pseudent_figure">'
   .   '<img src="' . file_create_url( $query_result->uri ) . '" '
   .     'alt="' . t( $query_result->field_image_alt ) . '"  '
   .     'height="' . check_plain( $query_result->field_image_height ) . '" '
   .     'width="' . check_plain( $query_result->field_image_width ) . '" '
   .   '>' 
-  .   '<div class="cyco_character_figcaption">' 
+  .   '<div class="cyco_pseudent_figcaption">' 
   .     t($query_result->field_caption_value) 
   .   '</div>'
   . '</div>';
@@ -284,21 +295,21 @@ function _characters_compute_char_html( $query_result ) {
 }
 
 
-function characters_get_editor_previews() {
-  $characters_preview_dirty = variable_get(POSES_PREVIW_DIRTY_FLAG_VAR, TRUE);
-  if ( $characters_preview_dirty ) {
-    _characters_generate_ck_select_data();
+function pseudents_get_editor_previews() {
+  $pseudents_preview_dirty = variable_get(POSES_PREVIW_DIRTY_FLAG_VAR, TRUE);
+  if ( $pseudents_preview_dirty ) {
+    _pseudents_generate_ck_select_data();
   }
   return variable_get(POSES_PREVIEW_DATA_VAR, 'none');
 }
 
 /*
- * Create HTML for a character.
+ * Create HTML for a pseudent.
  */
 //Bugs in markdown library's <figure> handling, so use divs above.
-//function _characters_compute_char_html( $query_result ) {
+//function _pseudents_compute_char_html( $query_result ) {
 //  $html = 
-//'<div class="cyco_character" markdown="1">'
+//'<div class="cyco_pseudent" markdown="1">'
 //  . '<figure>'
 //  .   '<img src="' . file_create_url( $query_result->uri ) . '" '
 //  .     'alt="' . t( $query_result->field_image_alt ) . '"  '
@@ -313,17 +324,17 @@ function characters_get_editor_previews() {
 //}
 
 
-function _characters_generate_ck_select_data() {
-  //Fetch character pose data.
+function _pseudents_generate_ck_select_data() {
+  //Fetch pseudent pose data.
   $query = new EntityFieldQuery;
   $query
     ->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'character_pose')
+    ->entityCondition('bundle', 'pseudent_pose')
     ->propertyCondition('status', 1)
     ->fieldOrderBy('field_token', 'value');
   $query_result = $query->execute();
-  //Fetch the character names.
-  $character_pose_previews = array();
+  //Fetch the pseudent names.
+  $pseudent_pose_previews = array();
   foreach ( $query_result['node'] as $nid => $value ) {
     $node = node_load($nid);
     $token = $node->field_token[LANGUAGE_NONE][0]['safe_value'];
@@ -337,77 +348,77 @@ function _characters_generate_ck_select_data() {
     $uri = $node->field_image[LANGUAGE_NONE][0]['uri'];
     $usable_url = file_create_url( $uri );
     $preview_html = 
-        '<div class="characters_ck_preview">'
-        . '<div class="characters_ck_preview_image">'
+        '<div class="pseudents_ck_preview">'
+        . '<div class="pseudents_ck_preview_image">'
         .   '<img src="' . $usable_url . '" alt="' . $caption . '">'
-        .   '<div class="characters_ck_preview_caption">'
+        .   '<div class="pseudents_ck_preview_caption">'
         .     $caption
         .   '</div>'
         .  '</div>'
-        .  '<div class="characters_ck_preview_token">'
+        .  '<div class="pseudents_ck_preview_token">'
         .     'Token:<br>' . $token . '<br><br>'
         .  '</div>'
         .'</div>'
       ;
-    $character_pose_previews[] = array(
+    $pseudent_pose_previews[] = array(
       'token' => $token,
       'caption' => $caption,
       'html' => $preview_html,
     );
   }
-  if ( sizeof($character_pose_previews) == 0 ) {
+  if ( sizeof($pseudent_pose_previews) == 0 ) {
     variable_set(POSES_PREVIEW_DATA_VAR, 'none');
   }
   else {
-    variable_set( POSES_PREVIEW_DATA_VAR, $character_pose_previews );
+    variable_set( POSES_PREVIEW_DATA_VAR, $pseudent_pose_previews );
   }
   variable_set(POSES_PREVIW_DIRTY_FLAG_VAR, FALSE);
 }
 
-function characters_node_update( $node ) {
-  _characters_set_dirty_flag( $node );
+function pseudents_node_update( $node ) {
+  _pseudents_set_dirty_flag( $node );
 }
 
-function characters_node_delete( $node ) {
-  _characters_set_dirty_flag( $node );
+function pseudents_node_delete( $node ) {
+  _pseudents_set_dirty_flag( $node );
 }
 
-function characters_node_insert( $node ) {
-  _characters_set_dirty_flag( $node );
+function pseudents_node_insert( $node ) {
+  _pseudents_set_dirty_flag( $node );
 }
 
-function _characters_set_dirty_flag( $node ) {
-  if ( $node->type == 'character_pose' ) {
-    //Mark character pose preview data used in editor as dirty.
+function _pseudents_set_dirty_flag( $node ) {
+  if ( $node->type == 'pseudent_pose' ) {
+    //Mark pseudent pose preview data used in editor as dirty.
     variable_set(POSES_PREVIW_DIRTY_FLAG_VAR, TRUE);
   }  
 }
 
 
-function characters_form_alter(&$form, &$form_state, $form_id) {
+function pseudents_form_alter(&$form, &$form_state, $form_id) {
   // @todo Instead of checking form_id, check for a field
   //having the SWIM format? Cache the results of the check 
   //so don't run check again on this page call.
   //Not sure if this is the right approach.
   if ( stristr($form_id, 'node_form') !== FALSE ) {
-    _characters_load_client_side_stuff();
+    _pseudents_load_client_side_stuff();
   }
 }
 
 /**
- * Add client-side stuff the character code needs.
+ * Add client-side stuff the pseudent code needs.
  */
-function _characters_load_client_side_stuff() {
-  drupal_add_css(drupal_get_path('module', 'characters') . '/css/characters.css' );
+function _pseudents_load_client_side_stuff() {
+  drupal_add_css(drupal_get_path('module', 'pseudents') . '/css/pseudents.css' );
   global $base_url;
   $settings = array(
     'base_url' => $base_url,
-    'pose_previews' => characters_get_editor_previews(),
+    'pose_previews' => pseudents_get_editor_previews(),
     'pose_stylesheet' => 
-        drupal_get_path('module', 'characters') . '/css/characters.css',
+        drupal_get_path('module', 'pseudents') . '/css/pseudents.css',
   );
   drupal_add_js(
-      array('characters' => $settings),
+      array('pseudents' => $settings),
       'setting'
   );
 }
@@ -415,17 +426,17 @@ function _characters_load_client_side_stuff() {
 /**
  * Implements hook_form_alter().
  */
-function characters_form_character_pose_node_form_alter( &$form, &$form_state ) {
-  $form['#validate'][] = '_character_validate_pose_form';
+function pseudents_form_pseudent_pose_node_form_alter( &$form, &$form_state ) {
+  $form['#validate'][] = '_pseudent_validate_pose_form';
 }
 
 /**
  * Validate the pose data.
  */
-function _character_validate_pose_form( &$form, &$form_state ) {
+function _pseudent_validate_pose_form( &$form, &$form_state ) {
   $token 
       = $form_state['values']['field_token'][LANGUAGE_NONE][0]['value'];
-  // Verify that the token contains no disallowed characters.
+  // Verify that the token contains no disallowed pseudents.
   if ( preg_match('/[^a-z0-9_]/', $token) ) {
     form_set_error(
         'field_token', 
@@ -440,13 +451,13 @@ function _character_validate_pose_form( &$form, &$form_state ) {
   $query = new EntityFieldQuery();
   $query
     ->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'character_pose')
+    ->entityCondition('bundle', 'pseudent_pose')
     ->fieldCondition('field_token', 'value', $token);
   $result = $query->execute();
   if ( isset( $result['node'] ) ) {
     //There is at least one node using the token.
     if ( sizeof($result['node']) > 1 ) {
-      throw new Exception('Characters module: duplicate tokens!');
+      throw new Exception('pseudents module: duplicate tokens!');
     }
     list($nid) = array_keys($result['node']);
     //Error if it is some other node.

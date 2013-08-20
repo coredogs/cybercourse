@@ -13,9 +13,12 @@ try {
       }
       //In an aside, center images.
       $("aside.swim p img").closest("p").css("text-align", "center");
-      //Images that are not in asides - indent them a little.
+      //Images that are not in asides or pseudents - indent them a little.
       $(".swim .field-name-body img").each(function() {
-        if ( $(this).closest("aside.swim").length == 0 ) {
+        if ( 
+                $(this).closest("aside.swim").length == 0 
+             && $(this).closest("div.cyco_pseudent_figure").length == 0
+           ) {
           $(this).addClass("swim-indent-image");
         }
       });

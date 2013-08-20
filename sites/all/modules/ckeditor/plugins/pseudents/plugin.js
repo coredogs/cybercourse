@@ -1,18 +1,18 @@
 /**
- * @file Plugin for adding characters.
+ * @file Plugin for adding pseudents.
  */
 //(function ($) {
   
-CKEDITOR.plugins.add( 'characters', {
+CKEDITOR.plugins.add( 'pseudents', {
     init: function( editor ) {
       var config = editor.config;
-      editor.addCommand( 'insertCharacter', {
+      editor.addCommand( 'insertPseudent', {
         exec: function( editor ) {
         }
       });
-      editor.ui.addRichCombo( 'Characters', {
-          label: 'Characters',
-          toolbar: 'characters,10',
+      editor.ui.addRichCombo( 'Pseudents', {
+          label: 'Pseudents',
+          toolbar: 'pseudents,10',
           panel: {
             css: [ CKEDITOR.skin.getPath( 'editor' ) ].concat( config.contentsCss ),
             multiSelect: false
@@ -20,18 +20,18 @@ CKEDITOR.plugins.add( 'characters', {
           init: function() {
             //Check that there are poses available.
             if (
-                 ! Drupal.settings.characters   
-              || ! Drupal.settings.characters.pose_previews
-              || Drupal.settings.characters.pose_previews == 'none'
-              || Drupal.settings.characters.pose_previews.length == 0
+                 ! Drupal.settings.pseudents   
+              || ! Drupal.settings.pseudents.pose_previews
+              || Drupal.settings.pseudents.pose_previews == 'none'
+              || Drupal.settings.pseudents.pose_previews.length == 0
             ) {
                 this.add( '', 'No poses available', 
-                  'See the wiki to learn how to create character poses' );
+                  'See the wiki to learn how to create pseudent poses' );
             }
             else {
               var i, pose;
-              for ( i in Drupal.settings.characters.pose_previews ) {
-                pose = Drupal.settings.characters.pose_previews[i];
+              for ( i in Drupal.settings.pseudents.pose_previews ) {
+                pose = Drupal.settings.pseudents.pose_previews[i];
                 this.add( pose.token, pose.html, 'Insert this pose' );
               }
             }
@@ -39,7 +39,7 @@ CKEDITOR.plugins.add( 'characters', {
           },
           onClick: function( value ) {
             CKEDITOR.currentInstance.insertText( 
-                '{character:' + value + '}\n\n{/character}\n' 
+                '[pseudent:' + value + ']\n\n[/pseudent]\n' 
             );
           },
 //          onRender: function() {
@@ -47,16 +47,16 @@ CKEDITOR.plugins.add( 'characters', {
 //          },
           loadedCss : false,
           onOpen: function() {
-            //Inject the CSS needed to show character previews into the 
+            //Inject the CSS needed to show pseudent previews into the 
             //document in the iframe.
 //            alert(jQuery("iframe.cke_panel_frame").length)
             if ( ! this.loadedCss ) {
               var iframe = jQuery(".cke_combopanel .cke_panel_frame");
               if ( iframe ) {
                 var cssLink = document.createElement("link") 
-                cssLink.href = Drupal.settings.characters.base_url
+                cssLink.href = Drupal.settings.pseudents.base_url
                     + Drupal.settings.basePath 
-                    + Drupal.settings.characters.pose_stylesheet; 
+                    + Drupal.settings.pseudents.pose_stylesheet; 
                 cssLink.rel = "stylesheet"; 
                 cssLink.type = "text/css";
                 iframe.contents().find('body').append(cssLink);    
