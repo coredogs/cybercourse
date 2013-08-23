@@ -7,6 +7,8 @@ define( 'DRAWING_ID_CACHE_NAME', 'knowledgemap_drawing_id_cache');
 //define( 'NEW_KM_ITEM_INDICATOR', '(New modal)');
 
 module_load_include('inc', 'knowledgemap', 'knowledgemap.utils');
+module_load_include('inc', 'knowledgemap', 'kmItemType.inc');
+module_load_include('inc', 'knowledgemap', 'kmItem.inc');
 
 /**
  * Implements hook_init().
@@ -1029,9 +1031,6 @@ function knowledgemap_node_presave( $node ) {
     $node->field_km[LANGUAGE_NONE][0]['value'] = 'place holder';
   }
 }
-
-require_once 'kmItemType.inc';
-require_once 'kmItem.inc';
 
 /**
  * Implements hook_book_copy_clone().
