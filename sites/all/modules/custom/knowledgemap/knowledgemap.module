@@ -1029,3 +1029,94 @@ function knowledgemap_node_presave( $node ) {
     $node->field_km[LANGUAGE_NONE][0]['value'] = 'place holder';
   }
 }
+
+require_once 'kmItemType.inc';
+require_once 'kmItem.inc';
+
+/**
+ * Implements hook_book_copy_clone().
+ * @param integer $original_km_nid Nid of original KM node.
+ * @param integer $clone_km_nid Nid of cloned KM node.
+ * @throws Exception Something bad happened.
+ */
+function knowledgemap_book_copy_clone($original_km_nid, $clone_km_nid) {
+  $original_km_node = node_load($original_km_nid);
+  if ( $original_km_node->type == 'learning_map' ) {
+    //Need to duplicate all the attached learning items, ahte their connections.
+    //Run the view showing KM items linked to the given KM.
+    $view_results = views_get_view_result( 'items_related_to_km', 'default', 
+        $original_km_nid );
+    $original_km_items = array();
+    $cloned_km_items = array();
+    //Duplicate the KM item nodes, keeping a mapping from original to clones.
+    foreach( $view_results as $record ) {
+      //Remember original item
+      $original_km_item = new KmItem(
+                                $record->nid, 
+                                $original_km_nid
+                             );
+      $cloned_km_item = $original_km_item->cloneItemIntoKm($clone_km_nid);
+      //Keep the original and new items, with matching indices.
+      $original_km_items[] = $original_km_item;
+      $cloned_km_items[] = $cloned_km_item;
+    }
+    //Load all the connections.
+    $view_results = views_get_view_result(
+        'km_items_linked_to_other_km_items', 
+        'default', 
+        $original_km_nid
+    );
+    foreach ( $view_results as $record ) {
+      //Fetch connection data.
+      $entity = $record->_field_data['relation_node_rid']['entity'];
+      $rid = $entity->rid;
+      $from_nid = $entity->endpoints[LANGUAGE_NONE][0]['entity_id'];
+      $to_nid = $entity->endpoints[LANGUAGE_NONE][1]['entity_id'];
+      $required = $entity->field_required[LANGUAGE_NONE][0]['value'];    
+      //Create a new relationship, replacing from/to nids with 
+      //their cloned equivalents.
+      //Find the index of the from node in the item node list.
+      $from_index = '';
+      foreach( $original_km_items as $index => $original_km_item ) {
+        if ( $original_km_item->getNid() == $from_nid ) {
+          $from_index = $index;
+          break;
+        }
+      }
+      if ( $from_index === '' ) {
+        throw new Exception(
+            'knowledgemap_book_copy_clone: canna find from_nid: ' . $from_nid
+        );
+      }
+      //Find the index of the to node in the item node list.
+      $to_index = '';
+      foreach( $original_km_items as $index => $original_km_item ) {
+        if ( $original_km_item->getNid() == $to_nid ) {
+          $to_index = $index;
+          break;
+        }
+      }
+      if ( $to_index === '' ) {
+        throw new Exception(
+            'knowledgemap_book_copy_clone: canna find to_nid: ' . $to_nid
+        );
+      }
+      //Get the substitute values to use for from/to.
+      $clone_from_nid = $cloned_km_items[$from_index]->getNid();
+      $clone_to_nid = $cloned_km_items[$to_index]->getNid();
+      $endpoints = array(
+        array('entity_type' => 'node', 'entity_id' => $clone_from_nid),
+        array('entity_type' => 'node', 'entity_id' => $clone_to_nid),
+      );
+      //Create new relation object.
+      $new_relation = relation_create(RELATION_NAME_KM_ITEM_CONNECTION, $endpoints);
+      //Set the required field.
+      $new_relation->field_required[LANGUAGE_NONE][0]['value'] = $required;
+      //Save it.
+      $rid = relation_save($new_relation);
+      if ( $rid === FALSE ) {
+        throw new Exception('knowledgemap_book_copy_clone: KM relationship creation failed.');
+      }
+    } // End for each connection. 
+  } // End for KM.
+} // End knowledgemap_book_copy_clone.
