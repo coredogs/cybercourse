@@ -1032,6 +1032,9 @@ function knowledgemap_node_presave( $node ) {
   }
 }
 
+require_once 'kmItem.inc';
+require_once 'kmItemType.inc';
+
 /**
  * Implements hook_book_copy_clone().
  * @param integer $original_km_nid Nid of original KM node.
