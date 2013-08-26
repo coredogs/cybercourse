@@ -196,7 +196,8 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
   );
   drupal_add_js(
       array('knowledgemap' => $settings),
-      'setting'
+      'setting',
+      array( 'cache' => FALSE )
   );
   knowledgemap_add_client_code();
   return $element;
