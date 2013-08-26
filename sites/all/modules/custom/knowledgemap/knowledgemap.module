@@ -194,6 +194,7 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
     'mode' => 'edit', //Editing mode.
     'all_item_types' => $allowed_item_types,
   );
+  //Cannot cache this file.
   drupal_add_js(
       array('knowledgemap' => $settings),
       'setting',
@@ -971,9 +972,11 @@ function knowledgemap_field_formatter_view($entity_type, $entity, $field,
           'mode' => 'view', //Viewing mode.
           'all_item_types' => $allowed_item_types,
         );
+        //Cannot cache the settings file.
         drupal_add_js(
             array('knowledgemap' => $settings),
-            'setting'
+            'setting',
+            array( 'cache' => FALSE, )
         );
       } // End for each.
       knowledgemap_add_client_code();
