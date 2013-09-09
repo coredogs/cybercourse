@@ -50,6 +50,24 @@ class KmItem {
   protected $body_content = '';
   
   /**
+   * Duration (low). Can be MT.
+   * @var integer
+   */
+  protected $duration_low = '';
+  
+  /**
+   * Duration (medium). Can be MT.
+   * @var integer
+   */
+  protected $duration_medium = '';
+
+  /**
+   * Duration (high). Can be MT.
+   * @var integer
+   */
+  protected $duration_high = '';
+
+  /**
    * Position on screen, X axis (left is 0). MT string means no value.
    * @var integer
    */
@@ -78,15 +96,35 @@ class KmItem {
     $this->setKmNid( $km_nid );
     $this->setTitle( $node->title );
     $this->setItemType( $node->field_item_type[LANGUAGE_NONE][0]['value'] );
-    $this->setBodyContent( $node->body[LANGUAGE_NONE][0]['value'] );
+    $body = isset( $node->body[LANGUAGE_NONE][0]['value'] )
+        ? $node->body[LANGUAGE_NONE][0]['value']
+        : '';
+    $this->setBodyContent( $body );
     $importance = isset( $node->field_importance[LANGUAGE_NONE][0]['value'] )
         ? $node->field_importance[LANGUAGE_NONE][0]['value']
         : '';
     $this->setImportance( $importance );
+
+    $duration_low = isset( $node->field_duration_low[LANGUAGE_NONE][0]['value'] )
+        ? $node->field_duration_low[LANGUAGE_NONE][0]['value']
+        : '';
+    $this->setDurationLow($duration_low);
+    
+    $duration_medium = isset( $node->field_duration_medium[LANGUAGE_NONE][0]['value'] )
+        ? $node->field_duration_medium[LANGUAGE_NONE][0]['value']
+        : '';
+    $this->setDurationMedium($duration_medium);
+    
+    $duration_high = isset( $node->field_duration_high[LANGUAGE_NONE][0]['value'] )
+        ? $node->field_duration_high[LANGUAGE_NONE][0]['value']
+        : '';
+    $this->setDurationHigh($duration_high);
+    
     $coord_x = isset( $node->field_coord_x[LANGUAGE_NONE][0]['value'] )
         ? $node->field_coord_x[LANGUAGE_NONE][0]['value']
         : '';
     $this->setCoordX( $coord_x );
+
     $coord_y = isset( $node->field_coord_y[LANGUAGE_NONE][0]['value'] )
         ? $node->field_coord_y[LANGUAGE_NONE][0]['value']
         : '';
@@ -238,6 +276,90 @@ class KmItem {
   }
   
   /**
+   * Set low duration. MT string means no value.
+   * @param integer $duration_low Duration, from 1 up.
+   * @return KmItem $this, for chaining.
+   * @throws Exception Something bad happened.
+   */
+  public function setDurationLow($duration_low) {
+    if ( ! $this->validateDuration($duration_low) ){
+      throw new Exception('KmItem.setDurationLow: Bad value: ' . $duration_low);
+    }
+    $this->duration_low = $duration_low;
+    return $this;
+  }
+  
+  /**
+   * Validate duration.
+   * @param integer $duration Value to check.
+   * @return boolean TRUE if duration valid value.
+   */
+  protected function validateDuration($duration) {
+    if ( $duration != '' 
+         && 
+            ( 
+              is_nan($duration) 
+              || $duration < 1
+            )
+       ) {
+      return FALSE;
+    }
+    return TRUE;
+  }
+  
+  /**
+   * Return the duration low value.
+   * @return integer The duration, MT string for no value.
+   */
+  public function getDurationLow() {
+    return $this->duration_low;
+  }
+  
+  /**
+   * Set medium duration. MT string means no value.
+   * @param integer $duration_medium Duration, from 1 up.
+   * @return KmItem $this, for chaining.
+   * @throws Exception Something bad happened.
+   */
+  public function setDurationMedium($duration_medium) {
+    if ( ! $this->validateDuration($duration_medium) ){
+      throw new Exception('KmItem.setDurationMedium: Bad value: ' . $duration_medium);
+    }
+    $this->duration_medium = $duration_medium;
+    return $this;
+  }
+  
+  /**
+   * Return the duration medium value.
+   * @return integer The duration, MT string for no value.
+   */
+  public function getDurationMedium() {
+    return $this->duration_medium;
+  }
+  
+  /**
+   * Set high duration. MT string means no value.
+   * @param integer $duration_high Duration, from 1 up.
+   * @return KmItem $this, for chaining.
+   * @throws Exception Something bad happened.
+   */
+  public function setDurationHigh($duration_high) {
+    if ( ! $this->validateDuration($duration_high) ){
+      throw new Exception('KmItem.setDurationHigh: Bad value: ' . $duration_high);
+    }
+    $this->duration_high = $duration_high;
+    return $this;
+  }
+  
+  /**
+   * Return the duration high value.
+   * @return integer The duration, MT string for no value.
+   */
+  public function getDurationHigh() {
+    return $this->duration_high;
+  }
+  
+  /**
    * Set the body content.
    * @param string $content The content.
    */
@@ -322,22 +444,47 @@ class KmItem {
     $node->status = 1; //(1 or 0): published or not
     $node->promote = 0; //(1 or 0): promoted to front page
     $node->comment = 2; // 0 = comments disabled, 1 = read only, 2 = read/write
+
     //Item type.
     $node->field_item_type[$node->language][0]['value'] 
         = $this->getItemType()->getCode();
+
     //Importance.
     if ( $this->getImportance() != '' ) {
       $node->field_importance[$node->language][0]['value'] 
           = $this->getImportance();
     }
+    
     //Body content
-    $node->field_coord_x[$node->language][0]['value']
-        = $this->getBodyContent();
+    if ( $this->getBodyContent() != '' ) {
+      $node->body[$node->language][0]['value']
+          = $this->getBodyContent();
+    }
+    
+    //Duration low
+    if ( $this->getDurationLow() != '' ) {
+      $node->field_duration_low[$node->language][0]['value'] 
+          = $this->getDurationLow();
+    }
+    
+    //Duration medium
+    if ( $this->getDurationMedium() != '' ) {
+      $node->field_duration_medium[$node->language][0]['value'] 
+          = $this->getDurationMedium();
+    }
+    
+    //Duration low
+    if ( $this->getDurationHigh() != '' ) {
+      $node->field_duration_high[$node->language][0]['value'] 
+          = $this->getDurationHigh();
+    }
+    
     //Coord X.
     if ( $this->getCoordX() != '' ) {
       $node->field_coord_x[$node->language][0]['value'] 
           = $this->getCoordX();
     }
+    
     //Coord Y.
     if ( $this->getCoordY() != '' ) {
       $node->field_coord_y[$node->language][0]['value'] 

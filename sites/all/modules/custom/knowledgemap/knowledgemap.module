@@ -292,8 +292,9 @@ function knowledgemap_make_km_rep($km_nid) {
         ? $record->field_field_item_type[0]['raw']['value'] : '';
     $importance = isset( $record->field_field_importance[0]['raw']['value'] ) 
         ? $record->field_field_importance[0]['raw']['value'] : '';
-    $body = isset( $record->field_body[0]['raw']['value'] ) 
-        ? $record->field_body[0]['raw']['value'] : '';
+    //Note: sends summary of the body only.
+    $body = isset( $record->field_body[0]['raw']['summary'] ) 
+        ? $record->field_body[0]['raw']['summary'] : '';
     $coord_x = isset( $record->field_field_coord_x[0]['raw']['value'] ) 
         ? $record->field_field_coord_x[0]['raw']['value'] : '';
     $coord_y = isset( $record->field_field_coord_y[0]['raw']['value'] ) 

@@ -94,16 +94,15 @@ try {
         //attached to Drupal.behaviors.knowledgemap.
         var kmNamespace = this;
         $("#add-km-item").click(function(evnt) {
+          evnt.stopPropagation();
           kmNamespace.clearSelection();
           //If already in add, exit state.
           if ( kmNamespace.$drawing_area.state == 'add') {
             //Exit add mode.
-            evnt.stopPropagation();
             kmNamespace.$drawing_area.exitAddMode();
             return;
           }
           //Move into adding state.
-          evnt.stopPropagation();
           $("#add-km-item").button("toggle");
           $("#cancel-km-add").removeAttr("disabled");
           kmNamespace.$drawing_area.addClass("adding-state");
@@ -334,9 +333,59 @@ try {
       }); //End click show experiences.
     }, //End Drupal.behaviors.knowledgemap.addMethodsToDrawingArea'
     showCorrectItems : function() {
+      var connections = jsPlumb.getConnections();
+      if (    this.$drawing_area.showKnowledgeLayer 
+           && this.$drawing_area.showExperiencesLayer
+         )
+        {
+          //Show everything.
+          for(var i in connections) {
+            connections[i].setVisible(true);
+          }
+        }
+      else if (    ! this.$drawing_area.showKnowledgeLayer 
+                && ! this.$drawing_area.showExperiencesLayer
+         )
+        {
+        //Hide everything.
+          for(i in connections) {
+            connections[i].setVisible(false);
+          }
+        }
+      else if (      this.$drawing_area.showKnowledgeLayer 
+                && ! this.$drawing_area.showExperiencesLayer
+         )
+        {
+        //Show knowledge, hide experiences.
+          for(i in connections) {
+            if ( connections[i].getParameter("knowledge") )
+              connections[i].setVisible(true);
+          }
+          for(i in connections) {
+            if ( connections[i].getParameter("experience") )
+              connections[i].setVisible(false);
+          }
+        }
+      else if (    ! this.$drawing_area.showKnowledgeLayer 
+                &&   this.$drawing_area.showExperiencesLayer
+         )
+        {
+        //Show knowledge, hide experiences.
+          for(i in connections) {
+            if ( connections[i].getParameter("km-connection-experience") )
+              connections[i].setVisible(true);
+          }
+          for(i in connections) {
+            if ( connections[i].getParameter("km-connection-knowledge") )
+              connections[i].setVisible(false);
+          }
+        }
+      return;
+      
+      
       var knowledgeItems = $(".km-item").filter(".skill, .concept");
       var experienceItems = $(".km-item")
-          .filter(".explanation, .example, .exercise, .pattern .other");
+          .filter(".explanation, .example, .exercise, .pattern, .other");
       var knowledgeConnections = $(".km-connection-knowledge");
       var experienceConnections = $(".km-connection-experience");
       if (    this.$drawing_area.showKnowledgeLayer 
@@ -363,7 +412,6 @@ try {
                 && ! this.$drawing_area.showExperiencesLayer
          )
         {
-        //Hide everything.
         knowledgeItems.show();
         experienceItems.hide();
         knowledgeConnections.show();
@@ -588,7 +636,9 @@ try {
       var nid = domId.replace("km-item-", "");
       var itemData = this.km_rep.km_items[nid];
       //Update the fields showing on an item display.
+      //Item title.
       $("#km-item-" + nid + " header h1").html( trimLR(itemData.title) ); 
+      //Item type.
       $("#km-item-" + nid + " section.km-item-type").html( 
         capitaliseFirstLetter( itemData.item_type )
       );
@@ -792,14 +842,25 @@ try {
       //skipAdjustDrawingHeight is true if drawItem should not check whether 
       //the connection changes the max height of all elements in the drawing.
       //This is false, except when drawing the initial connections.
-      //Is this a knowledge or experience item? 
+      //Compute array of classes for this connection.
       var connCategoryClasses = this.computeConnectionCategoryClasses( connData );
+      var classes = connCategoryClasses.join(" ");
+      //Make parameters from rid and classes.
+      var parameters = {};
+      parameters.rid = connData.rid;
+      if ( $.inArray("km-connection-knowledge", connCategoryClasses) ) {
+        parameters.knowledge = true;
+      }
+      if ( $.inArray("km-connection-experience", connCategoryClasses) ) {
+        parameters.experience = true;
+      }
       var connection = jsPlumb.connect({
         source : "km-item-" + connData.from_nid, 
         target : "km-item-" + connData.to_nid,
-        cssClass : connCategoryClasses,
+        cssClass : classes,
         //Add the relationship id, index into km_rep.
-        'parameters' : { 'rid' : connData.rid }
+        'parameters' : parameters
+//        'parameters' : { 'rid' : connData.rid }
       });
       connection.setPaintStyle(
         this.computeConnPaintStyle( connection )
@@ -817,13 +878,14 @@ try {
       }
     }, //End Drupal.behaviors.knowledgemap.drawConnection
     computeConnectionCategoryClasses : function( connData ) {
+      //Return array of classes for a connection.
       //Start Drupal.behaviors.knowledgemap.computeConnectionCategoryClasses
       if ( this != Drupal.behaviors.knowledgemap ) {
         throw new Exception("computeConnectionCategoryClasses: this unexpected.");
       }
       var fromType = this.km_rep.km_items[connData.from_nid].item_type;
       var toType = this.km_rep.km_items[connData.to_nid].item_type;
-      var categoryClasses = "";
+      var categoryClasses = new Array();
       //Work out whether a connection connects just knowledge items, 
       //or involves experiences as well.
       var knowledge = ["skill", "concept"];
@@ -831,14 +893,14 @@ try {
               $.inArray( fromType, knowledge ) >= 0
            || $.inArray( toType, knowledge ) >= 0
           ) {
-        categoryClasses += "km-connection-knowledge ";
+        categoryClasses.push("km-connection-knowledge");
       }
       var experiences = ["explanation", "example", "exercise", "pattern", "other"];
       if ( 
               $.inArray( fromType, experiences ) >= 0
            || $.inArray( toType, experiences ) >= 0
           ) {
-        categoryClasses += " km-connection-experience ";
+        categoryClasses.push("km-connection-experience");
       }
       return categoryClasses;
     }, //End Drupal.behaviors.knowledgemap.computeConnectionCategoryClasses
@@ -1069,7 +1131,7 @@ try {
       }
       return msg;
     }, //End Drupal.behaviors.knowledgemap.checkNewItemData
-    makeNewConnection: function(connInfo, evnt) {
+    makeNewConnection: function(connInfoFromJsPlumb, evnt) {
       //Start Drupal.behaviors.knowledgemap.makeNewConnection
       if ( this != Drupal.behaviors.knowledgemap ) {
         throw new Exception("makeNewConnection: this unexpected.");
@@ -1081,14 +1143,29 @@ try {
       //Kill the selection.
       this.clearSelection();
       //Check whether the connection is allowed. Modify if necessary.
-      if ( this.checkConnection( connInfo ) ) {
+      if ( this.checkConnection( connInfoFromJsPlumb ) ) {
         //Tell the server about it.
-        this.saveConnection( connInfo );
+        this.saveConnection( connInfoFromJsPlumb );
         //Set the style of the connection.
-        var connection = connInfo.connection;
+        var connection = connInfoFromJsPlumb.connection;
         connection.setPaintStyle(
             this.computeConnPaintStyle( connection )
         );
+        //Get info object for internal rep.
+        var rid = connection.getParameter('rid');
+        var connInfo = this.km_rep.connections[rid];
+        //Add classes for this type of connection.
+        var connCategoryClasses 
+                = this.computeConnectionCategoryClasses( connInfo );
+        var classes = connCategoryClasses.join(" ");
+        connection.addClass(classes);
+        //Add classes as parameters as well.
+        if ( $.inArray("km-connection-knowledge", connCategoryClasses) ) {
+          connection.setParameter("knowledge", true);
+        }
+        if ( $.inArray("km-connection-experience", connCategoryClasses) ) {
+          connection.setParameter("experience", true);
+        }
         //Convenience var for JS namespace for this module. Everything gets
         //attached to Drupal.behaviors.knowledgemap.
         var kmNamespace = this;

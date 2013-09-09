@@ -335,36 +335,38 @@ function _pseudents_generate_ck_select_data() {
   $query_result = $query->execute();
   //Fetch the pseudent names.
   $pseudent_pose_previews = array();
-  foreach ( $query_result['node'] as $nid => $value ) {
-    $node = node_load($nid);
-    $token = $node->field_token[LANGUAGE_NONE][0]['safe_value'];
-    //Caption is not a required field.
-    if ( isset($node->field_caption[LANGUAGE_NONE][0]['safe_value']) ) {
-      $caption = $node->field_caption[LANGUAGE_NONE][0]['safe_value'];
+  if ( isset($query_result['node']) ) {
+    foreach ( $query_result['node'] as $nid => $value ) {
+      $node = node_load($nid);
+      $token = $node->field_token[LANGUAGE_NONE][0]['safe_value'];
+      //Caption is not a required field.
+      if ( isset($node->field_caption[LANGUAGE_NONE][0]['safe_value']) ) {
+        $caption = $node->field_caption[LANGUAGE_NONE][0]['safe_value'];
+      }
+      else {
+        $caption = '';
+      }
+      $uri = $node->field_image[LANGUAGE_NONE][0]['uri'];
+      $usable_url = file_create_url( $uri );
+      $preview_html = 
+          '<div class="pseudents_ck_preview">'
+          . '<div class="pseudents_ck_preview_image">'
+          .   '<img src="' . $usable_url . '" alt="' . $caption . '">'
+          .   '<div class="pseudents_ck_preview_caption">'
+          .     $caption
+          .   '</div>'
+          .  '</div>'
+          .  '<div class="pseudents_ck_preview_token">'
+          .     'Token:<br>' . $token . '<br><br>'
+          .  '</div>'
+          .'</div>'
+        ;
+      $pseudent_pose_previews[] = array(
+        'token' => $token,
+        'caption' => $caption,
+        'html' => $preview_html,
+      );
     }
-    else {
-      $caption = '';
-    }
-    $uri = $node->field_image[LANGUAGE_NONE][0]['uri'];
-    $usable_url = file_create_url( $uri );
-    $preview_html = 
-        '<div class="pseudents_ck_preview">'
-        . '<div class="pseudents_ck_preview_image">'
-        .   '<img src="' . $usable_url . '" alt="' . $caption . '">'
-        .   '<div class="pseudents_ck_preview_caption">'
-        .     $caption
-        .   '</div>'
-        .  '</div>'
-        .  '<div class="pseudents_ck_preview_token">'
-        .     'Token:<br>' . $token . '<br><br>'
-        .  '</div>'
-        .'</div>'
-      ;
-    $pseudent_pose_previews[] = array(
-      'token' => $token,
-      'caption' => $caption,
-      'html' => $preview_html,
-    );
   }
   if ( sizeof($pseudent_pose_previews) == 0 ) {
     variable_set(POSES_PREVIEW_DATA_VAR, 'none');

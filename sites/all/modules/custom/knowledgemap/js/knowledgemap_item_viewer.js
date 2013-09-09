@@ -97,10 +97,18 @@
     $("#" + dialogDomId).dialog({ title: this.itemData.title });
     $("#" + dialogDomId + " .km-item-type")
         .html( capitaliseFirstLetter( this.itemData.item_type ) );
+    var bodyDisplay = 
+        this.itemData.body
+        ? this.itemData.body
+        : '';
     $("#" + dialogDomId + " .km-item-body")
-        .html( this.itemData.body );
+        .html( bodyDisplay );
+    var importanceDisplay = 
+        this.itemData.importance
+          ? this.itemData.importance
+          : "(Not set)";
     $("#" + dialogDomId + " .km-item-importance span")
-        .html( this.itemData.importance );      
+        .html( importanceDisplay );      
   }
 
   $.KmItemViewer.prototype.makeDialogHtml = function() {
