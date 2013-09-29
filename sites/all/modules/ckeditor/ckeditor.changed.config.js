@@ -8,7 +8,12 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
  If you don't do this, you may notice that browser is ignoring all your changes.
  */
 CKEDITOR.editorConfig = function(config) {
-  config.contentsCss = '/sites/all/modules/custom/characters/css/characters.css';
+//  config.contentsCss = [
+//    '/sites/all/modules/custom/pseudents/css/pseudents.css',
+//    '/sites/all/modules/custom/swim/css/ck_changes.css',
+//  ];
+//  config.contentsCss = CKEDITOR.basePath + 'contents.css';
+  //alert(CKEDITOR.basePath )
   config.basicEntities = true; //Entity encode <, >.
   config.disableNativeSpellChecker = false;
 //  config.height = "30em";
@@ -21,10 +26,6 @@ CKEDITOR.editorConfig = function(config) {
   }
   //Let images be inserted.
   config.allowedContent = true;
-//  config.indentClasses = [ 'rteindent1', 'rteindent2', 'rteindent3', 'rteindent4' ];
-
-  // [ Left, Center, Right, Justified ]
-//  config.justifyClasses = [ 'rteleft', 'rtecenter', 'rteright', 'rtejustify' ];
 
   // The minimum editor width, in pixels, when resizing it with the resize handle.
   config.resize_minWidth = 400;
@@ -37,7 +38,7 @@ CKEDITOR.editorConfig = function(config) {
   // (as does Drupal), so just leave this line as is.
   config.protectedSource.push(/<\?[\s\S]*?\?>/g); // PHP Code
   config.protectedSource.push(/<code>[\s\S]*?<\/code>/gi); // Code tags
-  config.protectedSource.push(/<aside>[\s\S]*?<\/aside>/gi); // Aside tags
+//  config.protectedSource.push(/<aside>[\s\S]*?<\/aside>/gi); // Aside tags
   config.extraPlugins = '';
 
   /*

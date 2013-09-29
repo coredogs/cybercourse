@@ -11,7 +11,7 @@ body.swim .main-container blockquote p {
   margin-bottom: inherit !important;
 }
 
-aside.swim {
+div.field-name-body div.document div.sidebar {
   border: 2px #CCC solid;
   border-radius: 8px;
   margin: 0 0 0 2em;
@@ -20,7 +20,7 @@ aside.swim {
   max-width: 15em;
 }
 
-aside.swim img {
+div.field-name-body div.document div.sidebar img {
   margin-top: 1em;
   margin-bottom: 1em;
 }
@@ -32,6 +32,13 @@ aside.swim img {
 
 .swim-indent-caption {
   color: #777;
+}
+
+/* reStructText warnings. */
+div.field-name-body div.document .system-message {
+  border: 0.2em red dotted;
+  margin-top: 1em;
+  padding: 0.2em;
 }
 
 @media (max-width: 767px) {

@@ -46,8 +46,6 @@ function swim_menu() {
 }
 
 function swim_form_alter(&$form, &$form_state, $form_id) {
-//  return;
-  
   // @todo Instead of checking form_id, check for a field
   //having the SWIM format? Cache the results of the check 
   //so don't run check again on this page call.
@@ -92,10 +90,50 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
             array('swim' => $settings),
             'setting'
         );
-        $form['#submit'][] = '_swim_content_submitted';
+        //Put files CK needs in the right places.
+        swim_copy_ckeditor_components();
+//        $form['#submit'][] = '_swim_content_submitted';
       } //Can use Ajax markup module.
     } //Using SWIM text format.
   } //This is a node form.
+}
+
+/**
+ * Make sure that the files CK needs are available in the right places.
+ */
+function swim_copy_ckeditor_components() {
+  //Check whether ckeditor.config.js is in the theme dir. If not, copy it there.
+  $dest_path = DRUPAL_ROOT . '/' . path_to_theme() . '/ckeditor.config.js';
+  if ( ! file_exists($dest_path) ) {
+    //Check to make sure that we can write.
+    $dest_dir = DRUPAL_ROOT . '/' . path_to_theme();
+    if ( ! is_writable($dest_dir) ) { 
+      drupal_set_message(
+            'SWIM: Cannot write ckeditor.config.js to theme directory. '
+          . 'Please check the module\'s help.'
+      );
+    }
+    else {
+      $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/ckeditor.config.js';
+      copy($source, $dest_path);
+    }
+  }
+  //Check whether the preview plugin is in the CKEditor module's plugin
+  //set. If not, copy the files there.
+  $dest_parent = DRUPAL_ROOT . '/' . drupal_get_path('module', 'ckeditor') . '/plugins';
+  $dest_dir = $dest_parent . '/preview';
+  if ( ! file_exists($dest_dir) ) {
+    if ( ! is_writable($dest_parent) ) { 
+      drupal_set_message(
+            'SWIM: Cannot write preview plugin to CKEditor module\'s plugin directory. '
+          . 'Please check the module\'s help.'
+      );
+    }
+    else {
+      $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/preview';
+      swim_recurse_copy($source, $dest_dir);
+    }
+  }
 }
 
 /**
@@ -138,9 +176,9 @@ function _swim_check_swim_used( $node ) {
 }
 
 
-function _swim_content_submitted( $form, &$form_state ){
-  $r=6;
-}
+//function _swim_content_submitted( $form, &$form_state ){
+//  $r=6;
+//}
 
 /**
  * Return a page with the right media queries and such, and a place to 
@@ -166,40 +204,97 @@ function swim_mt_preview() {
 * Implements hook_filter_info().
 */
 function swim_filter_info() {
-  $filters['filter_swim'] = array(
+//  $filters['filter_swim'] = array(
+//    'title' => t('SWIM'),
+//    'description' => t('Show What I Mean'),
+//    'process callback' => 'swim_process_filter',
+////    'cache' => FALSE,
+//  );
+  $filters['filter_rest'] = array(
     'title' => t('SWIM'),
-    'description' => t('Show What I Mean'),
-    'process callback' => 'swim_process_filter',
+    'description' => t('Extended reStructuredText using Python DocUtils'),
+    'process callback' => 'rest_process_filter',
 //    'cache' => FALSE,
   );
   return $filters;
 }
 
-require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/Markdown.php';
-require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/MarkdownExtra.php';
+//require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/Markdown.php';
+//require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/MarkdownExtra.php';
+//
+//function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und') {
+//  //Content is stored with user-typed chars (like <) escaped. This means that
+//  //HTML can be typed by the user. The database stores the coded entities, 
+//  //along with CK's HTML (<br>s and such). 
+//  $text = strip_tags($text, '<img>');
+//  $text = htmlspecialchars_decode($text);
+//  //Doesn't handle spaces correctly.
+//  $text = str_replace('&nbsp;', ' ', $text);
+//  //Do the asides.
+//  $pattern = '/\[\s*aside\s*\]/i';
+//    // {, white space, aside, white space, }
+//  $text = preg_replace($pattern, '<aside class="swim" markdown="1">', $text);
+//  $pattern = '/\[\s*\/\s*aside\s*\]/i';
+//    // {, white space, /, white space, aside, white space, }
+//  $text = preg_replace($pattern, '</aside>', $text);
+//  $pattern = '/\[\s*caption\s*\]/i';
+//  $text = preg_replace($pattern, '<p class="swim-indent-caption">', $text);
+//  $pattern = '/\[\s*\/caption\s*\]/i';
+//  $text = preg_replace($pattern, '</p>', $text);
+//  $html = \Michelf\MarkdownExtra::defaultTransform($text);
+//  return $html;
+//}
 
-function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und') {
+function rest_process_filter($text, $filter, $format = 'ReST', $langcode = 'und') {
   //Content is stored with user-typed chars (like <) escaped. This means that
   //HTML can be typed by the user. The database stores the coded entities, 
   //along with CK's HTML (<br>s and such). 
-  $text = strip_tags($text, '<img>');
-  $text = htmlspecialchars_decode($text);
   //Doesn't handle spaces correctly.
   $text = str_replace('&nbsp;', ' ', $text);
-  //Do the asides.
-  $pattern = '/\[\s*aside\s*\]/i';
-    // {, white space, aside, white space, }
-  $text = preg_replace($pattern, '<aside class="swim" markdown="1">', $text);
-  $pattern = '/\[\s*\/\s*aside\s*\]/i';
-    // {, white space, /, white space, aside, white space, }
-  $text = preg_replace($pattern, '</aside>', $text);
-  $pattern = '/\[\s*caption\s*\]/i';
-  $text = preg_replace($pattern, '<p class="swim-indent-caption">', $text);
-  $pattern = '/\[\s*\/caption\s*\]/i';
-  $text = preg_replace($pattern, '</p>', $text);
-  $html = \Michelf\MarkdownExtra::defaultTransform($text);
+  $text = strip_tags($text, '<img>'); //Except for img.
+  $text = html_entity_decode($text);
+  //Handle numeric codes correctly.
+  // See http://www.php.net/manual/en/function.html-entity-decode.php#47371
+  $text= preg_replace('/&#(\d+);/me',"chr(\\1)",$text); #decimal notation
+  $text= preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$text);  #hex notation
+  // descriptor array
+  $desc = array(
+      0 => array('pipe', 'r'), // 0 is STDIN for process
+      1 => array('pipe', 'w'), // 1 is STDOUT for process
+      2 => array('pipe', 'w') // 2 is STDERR for process - IS THIS RIGHT?
+  );
+
+  // command to invoke markup engine
+  $py_path = $_SERVER["DOCUMENT_ROOT"] . '/' . drupal_get_path('module', 'swim') .'/python/convert_rest.py';
+  $command =  'python ' . $py_path;
+
+  // spawn the process
+  $p = proc_open($command, $desc, $pipes);
+
+//  $can_swear = 'no can_swear';
+//  $content = 
+//      "=====\n" 
+//    . "hello\n" 
+//    . "=====\n" 
+//    . "\n" 
+//    . ".. swear::\n" 
+//    . "  pigs and things\n";
+
+//  fwrite($pipes[0], $can_swear . "\n");
+  fwrite($pipes[0], $text);
+  fclose($pipes[0]);
+
+  // read the output from the engine
+  $html = stream_get_contents($pipes[1]);
+
+  // all done! Clean up
+  fclose($pipes[1]);
+  //fclose($pipes[2]);
+  proc_close($p);
+
   return $html;
 }
+
 
 function swim_tips($filter, $format, $long = FALSE) {
   return t('Failure is not an option. It comes standard on all models.');
@@ -259,18 +354,28 @@ function _swim_markup_help() {
 '<p>' . t('
 Blank lines separate paragraphs. Press Enter twice to make one.
 ') . '</p>
-<p class="tips-code-look">' . t('# Header 1<br>
-## Header 2<br>
-### Header 3<br>
-#### Header 4<br>
-##### Header 5
+<p class="tips-code-look">' . t('Sections:<br>
+Animals<br>
+=======<br>
+Mammals<br>
+-------<br>
+Dogs<br>
+~~~~<br>
+Cats<br>
+~~~~<br>
+Birds<br>
+-----<br>
+Swans<br>
+~~~~~<br>
+Plants<br>
+======
 ') . '</p>
-<p>' . t('Inline markup like ') . '<code>_' . t('italics') . '_</code>,
+<p>' . t('Inline markup like ') . '<code>*' . t('italics') . '*</code>,
  and <code>**' . t('bold') . '**</code>.</p>
-<p class="tips-code-look"> > ' . t('This is a quote.') . '</p>
+<p class="tips-code-look">&nbsp;&nbsp;&nbsp;' . t('Indented quote.') . '</p>
 <p class="tips-code-look">* ' . t('Bulleted lists.') . '<br>
         * ' . t('Put blank lines') . '<br>
-        * ' . t('around them.') . '
+        * ' . t('around lists.') . '
 </p>
 <p class="tips-code-look">1. ' . t('A numbered list') . '<br>
 1. ' . t('Is like this.') . '<br>
@@ -278,30 +383,37 @@ Blank lines separate paragraphs. Press Enter twice to make one.
 </p>
 <p>' . t('Any numbers will do.') . '
 </p>
-<p>' . t('Sometimes you want numbers, not a list. If you want to show:') . '<br><br>
-' . t('1969. The moon landings.') . '<br><br>
-' . t('Type:') . '<br><br>
-<code>' . t('1969\. The moon landings.') . '</code>
-</p>
 
-<p>' . t('Horizontal rule:') . '<br>
-<code>----</code>
+<p class="tips-code-look">.. sidebar:: Title<br><br>
+' . t('&nbsp;&nbsp;&nbsp;This is a sidebar.') . '<br><br>
+' . t('&nbsp;&nbsp;&nbsp;More of it.') . '
 </p>
-<p class="tips-code-look">[aside]<br>' . t('This is an aside.') . '<br>
-' . t('More of it.') . '<br>
-[/aside]
-</p>
-<p class="tips-code-look">[character:aila_tea]<br>
-' . t('Hi from Aila, drinking tea.') . '<br>
-[/character]
+<p class="tips-code-look">.. pseudent:: aila_tea<br>
+' . t('   Hi from Aila, drinking tea.') . '
 </p>
 <p>' . t('Link:') . '<br><small><code>' . 
-      t('[CyberCourse](http://cybercour.se)') . '</code></small></p>
+      t('`Link text &lt;http://example.com/&gt;`_') . '</code></small></p>
 <p>' . t('Use the preview button to see how your content will look on '
 . 'different devices.') . '
 </p>
 <p>' . t('See the <a href="http://cybercour.se/wiki/swim">CyberCourse wiki</a> for more.') . '
 </p>';
   return $help;
+}
+
+//See http://php.net/manual/en/function.copy.php
+function swim_recurse_copy($src, $dst) {
+  $dir = opendir($src);
+  @mkdir($dst);
+  while (false !== ( $file = readdir($dir))) {
+    if (( $file != '.' ) && ( $file != '..' )) {
+      if (is_dir($src . '/' . $file)) {
+        swim_recurse_copy($src . '/' . $file, $dst . '/' . $file);
+      } else {
+        copy($src . '/' . $file, $dst . '/' . $file);
+      }
+    }
+  }
+  closedir($dir);
 }
 

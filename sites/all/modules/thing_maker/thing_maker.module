@@ -1,7 +1,0 @@
-<?php
-/**
- * @file
- * Code for the Thing maker feature.
- */
-
-include_once 'thing_maker.features.inc';
