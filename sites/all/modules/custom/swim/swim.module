@@ -24,8 +24,8 @@ function swim_help($path, $arg) {
 function swim_permission() {
   return 
     array(
-      'preview content' => array(
-        'title' => t('Preview content'),
+      'peek content' => array(
+        'title' => t('Peek at content'),
         'description' => t('See what content will look like on a device.')
       ),
     );
@@ -36,10 +36,10 @@ function swim_permission() {
  */
 function swim_menu() {
   $items = array();
-  $items['swim-mt-preview'] = array(
-    'page callback' => 'swim_mt_preview',
+  $items['swim-mt-peek'] = array(
+    'page callback' => 'swim_mt_peek',
     'access callback' => 'user_access',
-    'access arguments' => array('preview content'),
+    'access arguments' => array('peek content'),
     'type' => MENU_CALLBACK,
   );
   return $items;
@@ -57,13 +57,13 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
     //Is the SWIM format being used?
     $swimInUse = TRUE; //_swim_check_swim_used( $form['#node'] );
     if (    $swimInUse 
-         && user_access('preview content') 
+         && user_access('peek content') 
          //&& user_access('use characters in content')
         ) {
       // todo: improve, separate access checks.
       if (module_invoke('ajax_markup', 'on')) {
         drupal_add_library('system', 'ui.dialog');
-        //Load JS for doing previews. Load it early, to set stuff up afore
+        //Load JS for doing peeks. Load it early, to set stuff up afore
         //CK does its thing.
         drupal_add_js(
             drupal_get_path('module', 'swim') .'/js/swim.js',
@@ -120,19 +120,19 @@ function swim_copy_ckeditor_components() {
       copy($source, $dest_path);
     }
   }
-  //Check whether the preview plugin is in the CKEditor module's plugin
+  //Check whether the peek plugin is in the CKEditor module's plugin
   //set. If not, copy the files there.
   $dest_parent = DRUPAL_ROOT . '/' . drupal_get_path('module', 'ckeditor') . '/plugins';
-  $dest_dir = $dest_parent . '/preview';
+  $dest_dir = $dest_parent . '/peek';
   if ( ! file_exists($dest_dir) ) {
     if ( ! is_writable($dest_parent) ) { 
       drupal_set_message(
-            'SWIM: Cannot write preview plugin to CKEditor module\'s plugin directory. '
+            'SWIM: Cannot write peek plugin to CKEditor module\'s plugin directory. '
           . 'Please check the module\'s help.'
       );
     }
     else {
-      $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/preview';
+      $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/peek';
       swim_recurse_copy($source, $dest_dir);
     }
   }
@@ -182,9 +182,9 @@ function _swim_check_swim_used( $node ) {
  * put markup.
  * @return array Output - renderable array.
  */
-function swim_mt_preview() {
+function swim_mt_peek() {
   //Check perm.
-  if ( !user_access('preview content') ) {
+  if ( !user_access('peek content') ) {
     return MENU_ACCESS_DENIED;
   }
   //Grab the front page, and send it to the client.
@@ -356,10 +356,8 @@ Plants<br>
 </p>
 <p>' . t('Link:') . '<br><small><code>' . 
       t('`Link text &lt;http://example.com/&gt;`_') . '</code></small></p>
-<p>' . t('Use the preview button to see how your content will look on '
+<p>' . t('Use the peek button to see how your content will look on '
 . 'different devices.') . '
-</p>
-<p>' . t('See the <a href="http://cybercour.se/wiki/swim">CyberCourse wiki</a> for more.') . '
 </p>';
   return $help;
 }
@@ -379,4 +377,3 @@ function swim_recurse_copy($src, $dst) {
   }
   closedir($dir);
 }
-

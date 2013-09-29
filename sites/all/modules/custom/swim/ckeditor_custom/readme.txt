@@ -13,9 +13,9 @@ writable, the copy will fail. The Apache user needs to have
 permissions to write to this dir. Perms can be revoked once the 
 writing has been done.
 
-* Check to make sure that the preview plugin is in ckeditor/plugins/preview. 
-If the file isn't there, swim_form_alter tries to copy the preview dir 
-from swim/ckeditor_custom/preview to ckeditor/plugins/preview. If the target 
+* Check to make sure that the peek plugin is in ckeditor/plugins/peek. 
+If the file isn't there, swim_form_alter tries to copy the peek dir 
+from swim/ckeditor_custom/peek to ckeditor/plugins/peek. If the target 
 dir is not writable, the copy will fail. The Apache user needs to have 
 permissions to write to this dir. Perms can be revoked once the writing 
 has been done.
