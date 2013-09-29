@@ -45,6 +45,9 @@ function swim_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_form_alter().
+ */
 function swim_form_alter(&$form, &$form_state, $form_id) {
   // @todo Instead of checking form_id, check for a field
   //having the SWIM format? Cache the results of the check 
@@ -92,7 +95,6 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
         );
         //Put files CK needs in the right places.
         swim_copy_ckeditor_components();
-//        $form['#submit'][] = '_swim_content_submitted';
       } //Can use Ajax markup module.
     } //Using SWIM text format.
   } //This is a node form.
@@ -175,11 +177,6 @@ function _swim_check_swim_used( $node ) {
   return FALSE;
 }
 
-
-//function _swim_content_submitted( $form, &$form_state ){
-//  $r=6;
-//}
-
 /**
  * Return a page with the right media queries and such, and a place to 
  * put markup.
@@ -204,48 +201,23 @@ function swim_mt_preview() {
 * Implements hook_filter_info().
 */
 function swim_filter_info() {
-//  $filters['filter_swim'] = array(
-//    'title' => t('SWIM'),
-//    'description' => t('Show What I Mean'),
-//    'process callback' => 'swim_process_filter',
-////    'cache' => FALSE,
-//  );
-  $filters['filter_rest'] = array(
+  $filters['filter_swim'] = array(
     'title' => t('SWIM'),
-    'description' => t('Extended reStructuredText using Python DocUtils'),
-    'process callback' => 'rest_process_filter',
-//    'cache' => FALSE,
+    'description' => t('Show What I Mean'),
+    'process callback' => 'swim_process_filter',
   );
   return $filters;
 }
 
-//require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/Markdown.php';
-//require_once drupal_get_path('module', 'swim') .'/libs/markdown_extra/MarkdownExtra.php';
-//
-//function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und') {
-//  //Content is stored with user-typed chars (like <) escaped. This means that
-//  //HTML can be typed by the user. The database stores the coded entities, 
-//  //along with CK's HTML (<br>s and such). 
-//  $text = strip_tags($text, '<img>');
-//  $text = htmlspecialchars_decode($text);
-//  //Doesn't handle spaces correctly.
-//  $text = str_replace('&nbsp;', ' ', $text);
-//  //Do the asides.
-//  $pattern = '/\[\s*aside\s*\]/i';
-//    // {, white space, aside, white space, }
-//  $text = preg_replace($pattern, '<aside class="swim" markdown="1">', $text);
-//  $pattern = '/\[\s*\/\s*aside\s*\]/i';
-//    // {, white space, /, white space, aside, white space, }
-//  $text = preg_replace($pattern, '</aside>', $text);
-//  $pattern = '/\[\s*caption\s*\]/i';
-//  $text = preg_replace($pattern, '<p class="swim-indent-caption">', $text);
-//  $pattern = '/\[\s*\/caption\s*\]/i';
-//  $text = preg_replace($pattern, '</p>', $text);
-//  $html = \Michelf\MarkdownExtra::defaultTransform($text);
-//  return $html;
-//}
-
-function rest_process_filter($text, $filter, $format = 'ReST', $langcode = 'und') {
+/**
+ * SWIM text formatter.
+ * @param string $text SWIM text to translate.
+ * @param type $filter
+ * @param type $format
+ * @param type $langcode
+ * @return string Result.
+ */
+function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und') {
   //Content is stored with user-typed chars (like <) escaped. This means that
   //HTML can be typed by the user. The database stores the coded entities, 
   //along with CK's HTML (<br>s and such). 
@@ -263,39 +235,26 @@ function rest_process_filter($text, $filter, $format = 'ReST', $langcode = 'und'
       1 => array('pipe', 'w'), // 1 is STDOUT for process
       2 => array('pipe', 'w') // 2 is STDERR for process - IS THIS RIGHT?
   );
-
+  //Can't remember where this code was adapted from. Some human.
   // command to invoke markup engine
-  $py_path = $_SERVER["DOCUMENT_ROOT"] . '/' . drupal_get_path('module', 'swim') .'/python/convert_rest.py';
+  $py_path = $_SERVER["DOCUMENT_ROOT"] . '/' 
+      . drupal_get_path('module', 'swim') .'/python/convert_rest.py';
   $command =  'python ' . $py_path;
-
   // spawn the process
   $p = proc_open($command, $desc, $pipes);
-
-//  $can_swear = 'no can_swear';
-//  $content = 
-//      "=====\n" 
-//    . "hello\n" 
-//    . "=====\n" 
-//    . "\n" 
-//    . ".. swear::\n" 
-//    . "  pigs and things\n";
-
-//  fwrite($pipes[0], $can_swear . "\n");
   fwrite($pipes[0], $text);
   fclose($pipes[0]);
-
   // read the output from the engine
   $html = stream_get_contents($pipes[1]);
-
   // all done! Clean up
   fclose($pipes[1]);
-  //fclose($pipes[2]);
   proc_close($p);
-
   return $html;
 }
 
-
+/**
+ * User tips about the input filter.
+ */
 function swim_tips($filter, $format, $long = FALSE) {
   return t('Failure is not an option. It comes standard on all models.');
 }
@@ -343,13 +302,17 @@ function swim_block_view($delta = '') {
   switch ($delta) {
     case 'swim_markup' :
       $block['subject'] = 'Editing tips';
-      $block['content'] = _swim_markup_help();
+      $block['content'] = swim_markup_help();
       return $block;
       break;
   }
 }
 
-function _swim_markup_help() {
+/**
+ * Some help for SWIM, on node editing pages.
+ * @return string
+ */
+function swim_markup_help() {
   $help = 
 '<p>' . t('
 Blank lines separate paragraphs. Press Enter twice to make one.
