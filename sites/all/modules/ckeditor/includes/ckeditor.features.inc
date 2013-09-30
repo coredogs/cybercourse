@@ -110,7 +110,7 @@ function ckeditor_profile_features_revert($module) {
         }
         else {
           // Make sure they don't have access
-          db_query("DELETE FROM {ckeditor_input_format} WHERE format = :format AND name = :name", array(':name' => $name, ':format' => $input_format));
+//          db_query("DELETE FROM {ckeditor_input_format} WHERE format = :format AND name = :name", array(':name' => $name, ':format' => $input_format));
         }
       }
     }

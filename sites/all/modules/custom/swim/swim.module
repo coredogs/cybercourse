@@ -104,27 +104,12 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
  * Make sure that the files CK needs are available in the right places.
  */
 function swim_copy_ckeditor_components() {
-  //Check whether ckeditor.config.js is in the theme dir. If not, copy it there.
-  $dest_path = DRUPAL_ROOT . '/' . path_to_theme() . '/ckeditor.config.js';
-  if ( ! file_exists($dest_path) ) {
-    //Check to make sure that we can write.
-    $dest_dir = DRUPAL_ROOT . '/' . path_to_theme();
-    if ( ! is_writable($dest_dir) ) { 
-      drupal_set_message(
-            'SWIM: Cannot write ckeditor.config.js to theme directory. '
-          . 'Please check the module\'s help.'
-      );
-    }
-    else {
-      $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/ckeditor.config.js';
-      copy($source, $dest_path);
-    }
-  }
-  //Check whether the peek plugin is in the CKEditor module's plugin
-  //set. If not, copy the files there.
+  //Make sure that the peek plugin and the right CK config file are available.
+  //Check whether the peek plugin is in the CKEditor module's plugin set. 
   $dest_parent = DRUPAL_ROOT . '/' . drupal_get_path('module', 'ckeditor') . '/plugins';
   $dest_dir = $dest_parent . '/peek';
   if ( ! file_exists($dest_dir) ) {
+    //Oeek plugin needs to be copied to the right place.
     if ( ! is_writable($dest_parent) ) { 
       drupal_set_message(
             'SWIM: Cannot write peek plugin to CKEditor module\'s plugin directory. '
@@ -132,8 +117,39 @@ function swim_copy_ckeditor_components() {
       );
     }
     else {
+      //Copy the peek plugin dir.
       $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/peek';
       swim_recurse_copy($source, $dest_dir);
+      //Assume we also need to copy the ckeditor config file as well.
+      //Put it in the CKEditor module dir. This will become a global setting,
+      //meaning that non-SWIM configs cannot be used w/o fucking things up.      
+      $dest = DRUPAL_ROOT . '/' . drupal_get_path('module', 'ckeditor') 
+          . '/ckeditor.config.js';
+      //Does the file already exist?
+      if ( file_exists( $dest_dir ) ) {
+        //Rename the file.
+        $original_file = $dest . '.original';
+        if ( ! file_exists( $original_file ) ) {
+          if ( ! is_writable($dest) ) { 
+            drupal_set_message(
+                  'SWIM: Cannot rename CKEditor module\'s existing config file. '
+                . 'Please check the module\'s help.'
+            );
+          }
+          else {
+            rename($dest, $original_file);
+          }
+        } //Original file not renamed yet.
+      }
+      //Copy
+      if ( ! is_writable($dest) ) { 
+        drupal_set_message(
+              'SWIM: Cannot copy new CKEditor config file. '
+            . 'Please check the module\'s help.'
+        );
+      }
+      $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/ckeditor.config.js';
+      copy($source, $dest);
     }
   }
 }
@@ -218,12 +234,17 @@ function swim_filter_info() {
  * @return string Result.
  */
 function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und') {
-  //Content is stored with user-typed chars (like <) escaped. This means that
+  //Content is stored with user-typed chars (like <) as entities. This means that
   //HTML can be typed by the user. The database stores the coded entities, 
-  //along with CK's HTML (<br>s and such). 
+  //along with CK's HTML (<br>s and such).  We need to convert the < and > entities
+  //back into their native characters so ReST can do the right things with them.
   //Doesn't handle spaces correctly.
   $text = str_replace('&nbsp;', ' ', $text);
-  $text = strip_tags($text, '<img>'); //Except for img.
+  //Change <br>s into nothing. The \ns after the brs are enough.
+  $text = preg_replace('/\<\s*br\s*\/?\s*\>/i', '', $text);
+  $text = strip_tags($text, '<img>'); 
+    //Except for img. <img> is not types by
+    //user, but inserted by the insert module.
   $text = html_entity_decode($text);
   //Handle numeric codes correctly.
   // See http://www.php.net/manual/en/function.html-entity-decode.php#47371

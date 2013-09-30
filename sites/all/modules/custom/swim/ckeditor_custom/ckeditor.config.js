@@ -9,10 +9,12 @@
 CKEDITOR.editorConfig = function(config) {
 config.basicEntities = true; //Entity encode <, >.
 config.disableNativeSpellChecker = false;
+config.removePlugins = 'tabletools,contextmenu';
 //Size the summary editor.
 if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
   CKEDITOR.instances['edit-body-und-0-summary'].config.height = "8em";
 }
+//Size the main editor.
 if ( CKEDITOR.instances['edit-body-und-0-value'] ) {
   CKEDITOR.instances['edit-body-und-0-value'].config.height = "30em";
 }

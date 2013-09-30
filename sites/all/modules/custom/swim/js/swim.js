@@ -11,149 +11,120 @@
       }
       swimDoneOnce = true;
       //Compute the URL for the iframe that simulates the device.
-      var iframeSrc = Drupal.settings.swim.base_url + "/swim-mt-preview";      
-      //Make preview toolbar.
+      var iframeSrc = Drupal.settings.swim.base_url + "/swim-mt-peek";      
+      //Make peek toolbar.
       var iconPath = Drupal.settings.swim.base_url 
-          + "/sites/all/modules/ckeditor/plugins/preview/icons/";
+          + "/sites/all/modules/ckeditor/plugins/peek/icons/";
       var toolbarHtml
-      = "<div id='swim-preview-toolbar' class='cke_top'>"
+      = "<div id='swim-peek-toolbar' class='cke_top'>"
       +   "<span class='cke_toolgroup' role='presentation'>"
-      +     "<a id='swim-preview-as-desktop' "
+      +     "<a id='swim-peek-as-desktop' "
       +        "class='cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "desktop.png' title='Laptop'>"
       +     "</a>"
-      +     "<a id='swim-preview-as-tablet' "
+      +     "<a id='swim-peek-as-tablet' "
       +        "class='cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "tablet.png' title='Tablet'>"
       +     "</a>"
-      +     "<a id='swim-preview-as-phone' "
+      +     "<a id='swim-peek-as-phone' "
       +        "class='cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "phone.png' title='Phone'>"
       +     "</a>"
       +   "</span>"
       +   "<span class='cke_toolgroup' role='presentation'>"
-      +     "<a id='swim-preview-refresh' "
+      +     "<a id='swim-peek-refresh' "
       +        "class='cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "refresh.png' title='Refresh'>"
       +     "</a>"
       +   "</span>"
       + "</div>";
-      var previewHtml = 
-        "<div id='swim-preview-outer'>" //Everything in the dialog.
+      var peekHtml = 
+        "<div id='swim-peek-outer'>" //Everything in the dialog.
       +   toolbarHtml
-      +   "<div id='swim-preview-inner'>"
+      +   "<div id='swim-peek-inner'>"
             //The device.
-      +     "<iframe id='swim-preview-device' src='" + iframeSrc + "'></iframe>"
+      +     "<iframe id='swim-peek-device' src='" + iframeSrc + "'></iframe>"
 //            //A cache. Load pages into the cache. Then copy to display.
 //            //Gives control over timing of device screen update.
 //      +     "<iframe style='display:none;' id='swim-cache' "
 //      +         "src='" + iframeSrc + "'></iframe>"
       +   "</div>" //End inner.
       + "</div>"; //End outer.
-      $("body").append( previewHtml );
+      $("body").append( peekHtml );
       //Wait until the content is loaded.
-//      Drupal.behaviors.swim.wait = {
-//        counter : 0,
-//        delay : 1000,
-//        waitLimit : 20
-//      };
-//return;
       swimWaitForLoad();
     }, //End attach.
-//    iframeHasBeenLoaded : function() {
-//      if ( CKEDITOR ) {
-//        if ( CKEDITOR.instances['edit-body-und-0-value'] ) {
-//          if ( CKEDITOR.instances['edit-body-und-0-value'].instanceReady ) {
-//            return true;
-//          }
-//        }
-//      }
-//      return false;
-////      var iframeContent = $("#swim-cache").contents();
-////      return iframeContent.contents().find('body').find('#navbar').length > 0;
-//    },
     continueInit: function() {
       //Copy content of cache iframe.
-//return;      //OK
       var content = $("#swim-cache").contents().find("body").clone();
-//      var content = $("#swim-cache").contents().find("html").children().clone();
       //Prep the dialog.
-      $( "#swim-preview-outer" )
+      $( "#swim-peek-outer" )
         .dialog({
-          title: 'Preview',
+          title: 'peek',
           autoOpen : false,
           dialogClass : "dialog-to-top" //Dialog on top of top nav bar.
         });
-//return;      //OK
-      //Put the content into the dialog.
-//      $("#swim-preview-device").contents().find("html").children().remove();
-//      $("#swim-preview-device").contents().find("html").append(content);
-//return;      
-      //MT the cache.
-//      $("#swim-cache").attr("src", "about:blank");
       //Prepare the iframe content. Remove content that isn't needed.
       this.prepareIframeContent();
       //Match toolbar height to the one creted by CKEditor.
-//      var toolbarHeight = $('#cke_2_top').outerHeight();
-      var toolbarHeight = $("#swim-preview-toolbar").outerHeight();
-//      $("#swim-preview-toolbar").css("height", toolbarHeight);
-      $("#swim-preview-device").css("top", toolbarHeight );
-      //Set up events on the preview buttons.
-      //Now the preview processing code.
+      var toolbarHeight = $("#swim-peek-toolbar").outerHeight();
+      $("#swim-peek-device").css("top", toolbarHeight );
+      //Set up events on the peek buttons.
+      //Now the peek processing code.
       var swimBehavior = this; //Convenience for closures.
-      $("#swim-preview-as-desktop").click( function() {
+      $("#swim-peek-as-desktop").click( function() {
         swimBehavior.deviceButtonClicked("desktop");
       } );
-      $("#swim-preview-as-tablet").click( function() {
+      $("#swim-peek-as-tablet").click( function() {
         swimBehavior.deviceButtonClicked("tablet");
       } );
-      $("#swim-preview-as-phone").click( function() {
+      $("#swim-peek-as-phone").click( function() {
         swimBehavior.deviceButtonClicked("phone");
       } );
       //Set up the refresh button.
-      $("#swim-preview-refresh").click( function() {
-        swimBehavior.showPreview();
+      $("#swim-peek-refresh").click( function() {
+        swimBehavior.showpeek();
       } );
       /**
-       * Watch the plugin's preview button.
+       * Watch the plugin's peek button.
        */
-      $(".cke_button__preview").click(function() {
-        if ( ! $( "#swim-preview-outer" ).dialog( "isOpen" ) ) {
-          $( "#swim-preview-outer" ).dialog( "open" );
+      $(".cke_button__peek").click(function() {
+        if ( ! $( "#swim-peek-outer" ).dialog( "isOpen" ) ) {
+          $( "#swim-peek-outer" ).dialog( "open" );
         }
-        //Show the current preview.
-        Drupal.behaviors.swim.showPreview();
+        //Show the current peek.
+        Drupal.behaviors.swim.showpeek();
       });
       
       //Init display.
-      this.selectedPreview = "phone";
+      this.selectedpeek = "phone";
       this.showSelectedButton();
       
       
-      //Turn on the CKEditor preview button, so show all is ready.
-      CKEDITOR.instances['edit-body-und-0-value'].commands.preview.enable();
+      //Turn on the CKEditor peek button, so show all is ready.
+      CKEDITOR.instances['edit-body-und-0-value'].commands.peek.enable();
 
     }, //End continueInit.
     deviceButtonClicked : function( buttonClicked ) {
-      this.selectedPreview = buttonClicked;
+      this.selectedpeek = buttonClicked;
       this.showSelectedButton();
-      this.showPreview();
+      this.showpeek();
     },
     /**
      * Adjust toolbar to show whichever button is pressed.
      */
     showSelectedButton : function() {
-      $("#swim-preview-as-desktop").removeClass("cke_button_on").addClass("cke_button_off");
-      $("#swim-preview-as-tablet").removeClass("cke_button_on").addClass("cke_button_off");
-      $("#swim-preview-as-phone").removeClass("cke_button_on").addClass("cke_button_off");
-      $( "#swim-preview-as-" + this.selectedPreview )
+      $("#swim-peek-as-desktop").removeClass("cke_button_on").addClass("cke_button_off");
+      $("#swim-peek-as-tablet").removeClass("cke_button_on").addClass("cke_button_off");
+      $("#swim-peek-as-phone").removeClass("cke_button_on").addClass("cke_button_off");
+      $( "#swim-peek-as-" + this.selectedpeek )
           .removeClass("cke_button_off").addClass("cke_button_on");
     },
     /**
      * Grab rendered text from the server and show it.
      */
-    showPreview : function() {
-      var iframe = $( "#swim-preview-device" );
+    showpeek : function() {
+      var iframe = $( "#swim-peek-device" );
       //Add an obscuring thing.
       var obscurer = 
 "<div style='margin:0;padding:0;background-color:white;position:absolute;"
@@ -164,46 +135,46 @@
       var iframeContentContainer 
           = iframe.contents().find(".field-name-body");
 //      iframeContentContainer.html('<p>Working...</p>');
-      //Set up the preview to mimic the device.
-      $( "#swim-preview-device" ).css("width", "").css("height", "");
-      $( "#swim-preview-device" )
-        .removeClass("swim-preview-device-desktop "
-            + "swim-preview-device-tablet "
-            + "swim-preview-device-phone")
-        .addClass("swim-preview-device-" + this.selectedPreview);
-      var toolbarHeight = $('#swim-preview-toolbar').outerHeight();
+      //Set up the peek to mimic the device.
+      $( "#swim-peek-device" ).css("width", "").css("height", "");
+      $( "#swim-peek-device" )
+        .removeClass("swim-peek-device-desktop "
+            + "swim-peek-device-tablet "
+            + "swim-peek-device-phone")
+        .addClass("swim-peek-device-" + this.selectedpeek);
+      var toolbarHeight = $('#swim-peek-toolbar').outerHeight();
       var dialogTitleHeight = $(".ui-dialog-titlebar").outerHeight();
-      if ( this.selectedPreview == 'desktop') {
+      if ( this.selectedpeek == 'desktop') {
         //Base size of dialog on what sizing the user has done. 
         var h = $("#cke_2_contents").innerHeight();
         var w = $(document).innerWidth() * 0.75;
-        $( "#swim-preview-device" ).css("height", h).css("width", w);
-        $( "#swim-preview-outer" )
+        $( "#swim-peek-device" ).css("height", h).css("width", w);
+        $( "#swim-peek-outer" )
             .dialog( "option", "width", w + 40 )
             .dialog( "option", "height", 
               h + toolbarHeight + dialogTitleHeight + 40 
             )
-            .dialog( "option", "title", "Preview (Desktop/laptop)");
+            .dialog( "option", "title", "peek (Desktop/laptop)");
       }
-      else if (    this.selectedPreview == 'phone' 
-                || this.selectedPreview == 'tablet' ) {
+      else if (    this.selectedpeek == 'phone' 
+                || this.selectedpeek == 'tablet' ) {
         //Base size of dialog on device size. 
-        $( "#swim-preview-outer" )
+        $( "#swim-peek-outer" )
             .dialog( "option", "width", 
-              $('#swim-preview-device').outerWidth() + 20
+              $('#swim-peek-device').outerWidth() + 20
             )
             .dialog( "option", "height", 
-                $("#swim-preview-device").outerHeight() 
+                $("#swim-peek-device").outerHeight() 
               + toolbarHeight + dialogTitleHeight + 40
             )
             .dialog( "option", "title", 
-                (this.selectedPreview == 'phone')
-                ? "Preview (iPhone 1 to 4S, landscape)"
-                : "Preview (iPad 1 and 2, portrait)"
+                (this.selectedpeek == 'phone')
+                ? "peek (iPhone 1 to 4S, landscape)"
+                : "peek (iPad 1 and 2, portrait)"
         );
       }
       else {
-        throw "showPreview: bad selectedPreview: *" + this.selectedPreview + "*";
+        throw "showpeek: bad selectedpeek: *" + this.selectedpeek + "*";
       }
       //Get content from server.
       var editor = CKEDITOR.instances["edit-body-und-0-value"];
@@ -213,7 +184,7 @@
       $.ajaxMarkup(markup, format, function(result, success, request) {
         if ( success ) {
           //Show the content.
-          var iframe = $( "#swim-preview-device" );
+          var iframe = $( "#swim-peek-device" );
           //Get ref to the markup in the iframe.
           var iframeContentContainer 
               = iframe.contents().find(".field-name-body");
@@ -221,12 +192,12 @@
           swimBehavior.prepareIframeContent();
         }
         else {
-          throw "showPreview: Ajax call failed.";
+          throw "showpeek: Ajax call failed.";
         } // end not success.
       });
-    }, // end showPreview.
+    }, // end showpeek.
     prepareIframeContent : function() {
-      var iframeContent = $("#swim-preview-device").contents();
+      var iframeContent = $("#swim-peek-device").contents();
       //Kill all body children except for the main content.
       var $body = $(iframeContent.find('body'));
       $body.children().each(function(index, element) {
@@ -295,7 +266,7 @@ function swimWaitForLoad() {
   if ( CKEDITOR ) {
     if ( CKEDITOR.instances['edit-body-und-0-value'] ) {
       if ( CKEDITOR.instances['edit-body-und-0-value'].instanceReady ) {
-        var iframeCacheContent = jQuery('#swim-preview-device').contents()
+        var iframeCacheContent = jQuery('#swim-peek-device').contents()
                 .find("body").find(".main-container");
         if ( iframeCacheContent.length > 0 ) {
           donkeyReady = true;
