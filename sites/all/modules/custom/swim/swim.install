@@ -61,10 +61,8 @@ function swim_filter_default_formats() {
 function swim_ckeditor_profile_defaults() {
   // " [\'Pseudents\'], " goes before peek.
   global $base_url;
-  $swim_module_root = $base_url . '/' 
-      . drupal_get_path('module', 'ckeditor') . '/../swim';
-  $swim_module_root = realpath($swim_module_root);
-  $cklib = drupal_get_path('library', 'ckeditor');
+  $swim_module_root = $base_url . '/' . drupal_get_path('module', 'swim');
+  $cklib_path = $base_url . '/' . libraries_get_path('ckeditor');
   $data = array(
     'SWIM' => array(
       'name' => 'SWIM',
@@ -81,7 +79,8 @@ function swim_ckeditor_profile_defaults() {
     [\'Cut\',\'Copy\',\'Paste\',\'PasteText\',\'PasteFromWord\', \'RemoveFormat\'],
     [\'Undo\',\'Redo\',\'Find\',\'Replace\'],
     [\'Peek\'],
-    [\'Maximize\']
+    [\'Maximize\'],
+    [\'Source\']
 ]',
         'expand' => 't',
         'width' => '100%',
@@ -103,8 +102,8 @@ function swim_ckeditor_profile_defaults() {
           ),
         ),
         'css_mode' => 'self',
-        'css_path' => '%hsites/all/libraries/ckeditor/contents.css,' 
-            . $swim_module_root . ' /css/ck_changes.css',
+        'css_path' => $cklib_path . '/contents.css,' 
+            . $swim_module_root . '/css/ck_changes.css',
         'css_style' => 'theme',
         'styles_path' => '',
         'filebrowser' => 'none',

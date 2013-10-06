@@ -239,7 +239,7 @@ function cybercourse_book_blocks_node_delete($node) {
  * Erase the cache for book menu a node is in.
  */
 function _ccbb_erase_menu_cache( $node ) {
-  if ( $node->book ) {
+  if ( isset($node->book) ) {
     $bid = $node->book['bid'];
     variable_del( '_cbb_menu_cache_' . $bid );
   }

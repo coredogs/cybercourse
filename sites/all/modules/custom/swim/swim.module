@@ -3,8 +3,6 @@
  * @todo Create SWIM text format at install.
  */
 
-
-
 /**
  * Implements hook_help().
  */
@@ -63,15 +61,8 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
       // todo: improve, separate access checks.
       if (module_invoke('ajax_markup', 'on')) {
         drupal_add_library('system', 'ui.dialog');
-        //Load JS for doing peeks. Load it early, to set stuff up afore
-        //CK does its thing.
-        drupal_add_js(
-            drupal_get_path('module', 'swim') .'/js/swim.js',
-            array(
-              'group' => JS_DEFAULT,
-              'weight' => -20,
-            )
-        );
+        //Load JS for doing peeks.
+        drupal_add_js( drupal_get_path('module', 'swim') .'/js/swim.js' );
         drupal_add_css(drupal_get_path('module', 'swim') . '/css/swim.css' );
         //Load JS to hide things.
         //Load late, so the link to hide has been built.
@@ -126,7 +117,7 @@ function swim_copy_ckeditor_components() {
       $dest = DRUPAL_ROOT . '/' . drupal_get_path('module', 'ckeditor') 
           . '/ckeditor.config.js';
       //Does the file already exist?
-      if ( file_exists( $dest_dir ) ) {
+      if ( file_exists( $dest ) ) {
         //Rename the file.
         $original_file = $dest . '.original';
         if ( ! file_exists( $original_file ) ) {
@@ -152,6 +143,24 @@ function swim_copy_ckeditor_components() {
       copy($source, $dest);
     }
   }
+  //Check that the ckeditor.config.js file exists.
+  //This code is run independently of whether the peek plugin exsits.
+  //For cases where an admin removed ckeditor.config.js manually,
+  //w/o removing the peek files.
+  $dest = DRUPAL_ROOT . '/' . drupal_get_path('module', 'ckeditor') 
+      . '/ckeditor.config.js';
+  //Does the file already exist?
+  if ( ! file_exists( $dest ) ) {
+      //Copy
+      if ( ! is_writable($dest) ) { 
+        drupal_set_message(
+              'SWIM: Cannot copy new CKEditor config file. '
+            . 'Please check the module\'s help.'
+        );
+      }
+      $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/ckeditor.config.js';
+      copy($source, $dest);
+  }    
 }
 
 /**
@@ -242,14 +251,21 @@ function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und'
   $text = str_replace('&nbsp;', ' ', $text);
   //Change <br>s into nothing. The \ns after the brs are enough.
   $text = preg_replace('/\<\s*br\s*\/?\s*\>/i', '', $text);
+  //Strip tags except for images, which are added by the insert module.
+  //HTML the user has entered with be HTML encoded (e.g., &gt;), so won't
+  //be affected.
+  //Strip tags so that HTML tags that are accidentally added (through
+  //pasting) don't cause ReST errors.
   $text = strip_tags($text, '<img>'); 
     //Except for img. <img> is not types by
     //user, but inserted by the insert module.
   $text = html_entity_decode($text);
   //Handle numeric codes correctly.
   // See http://www.php.net/manual/en/function.html-entity-decode.php#47371
-  $text= preg_replace('/&#(\d+);/me',"chr(\\1)",$text); #decimal notation
-  $text= preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$text);  #hex notation
+  $text = preg_replace('/&#(\d+);/me',"chr(\\1)",$text); #decimal notation
+  $text = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$text);  #hex notation
+  //Place raw directive around <img>s. <img>s are inserted by CK. 
+  $text = swim_wrap_imgs( $text );
   // descriptor array
   $desc = array(
       0 => array('pipe', 'r'), // 0 is STDIN for process
@@ -258,7 +274,7 @@ function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und'
   );
   //Can't remember where this code was adapted from. Some human.
   // command to invoke markup engine
-  $py_path = $_SERVER["DOCUMENT_ROOT"] . '/' 
+  $py_path = DRUPAL_ROOT . '/' 
       . drupal_get_path('module', 'swim') .'/python/convert_rest.py';
   $command =  'python ' . $py_path;
   // spawn the process
@@ -271,6 +287,43 @@ function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und'
   fclose($pipes[1]);
   proc_close($p);
   return $html;
+}
+
+/**
+ * Wrap img tags in ReST raw directive (stand-alone) and role (inline).
+ * @param string $text Text to be treated.
+ * @return string Result.
+ */
+function swim_wrap_imgs( $text ) {
+  $pattern = '/^(.*)\<img\s*(.*)\/?\>(.*)$/im';
+  $text = preg_replace_callback(
+      $pattern, 
+      function ($matches) {
+        $left = $matches[1];
+        $left_empty = (strlen(trim($left)) == 0);
+        $img_properties = $matches[2];
+        $right = $matches[3];
+        $right_empty = (strlen(trim($right)) == 0);
+        //Stand-alone or inline image?
+        if ( $left_empty && $right_empty ) {
+          //Use a directive
+          $replacement = '.. raw:: html' . PHP_EOL . PHP_EOL 
+              . '  <img ' . $img_properties . '>';
+        }
+        else {
+          //Use a role.
+          $replacement = $left . ' :raw-role:`<img ' . $img_properties . '>` ' . $right;
+        }
+        return $replacement;
+      },
+      $text
+  );
+  //Define raw-role.
+  $text = '.. role:: raw-role(raw)' . PHP_EOL 
+        . '   :format: html' . PHP_EOL 
+        . PHP_EOL 
+        . $text;
+  return $text;
 }
 
 /**
@@ -294,12 +347,6 @@ function swim_process_html(&$variables) {
     if ( ! in_array( 'swim', $variables['classes_array'] ) ) {
       $variables['classes_array'][] = 'swim';
       $variables['classes'] .= ' swim';
-      //Add JS code to help render SWIM stuff.
-      drupal_add_js(
-          drupal_get_path('module', 'swim') 
-              . '/js/swim_render.js', 
-          'file'
-      );
     }
   }
 }
@@ -336,25 +383,18 @@ function swim_block_view($delta = '') {
 function swim_markup_help() {
   $help = 
 '<p>' . t('
-Blank lines separate paragraphs. Press Enter twice to make one.
+Blank lines separate paragraphs.
 ') . '</p>
-<p class="tips-code-look">' . t('Sections:<br>
-Animals<br>
+<p>' . t('Headings:') . '</p>
+<p class="tips-code-look">
+' . t('Level 1<br>
 =======<br>
-Mammals<br>
+Level 2<br>
 -------<br>
-Dogs<br>
-~~~~<br>
-Cats<br>
-~~~~<br>
-Birds<br>
------<br>
-Swans<br>
-~~~~~<br>
-Plants<br>
-======
+Level 3<br>
+~~~~~~~
 ') . '</p>
-<p>' . t('Inline markup like ') . '<code>*' . t('italics') . '*</code>,
+<p><code>*' . t('italics') . '*</code>,
  and <code>**' . t('bold') . '**</code>.</p>
 <p class="tips-code-look">&nbsp;&nbsp;&nbsp;' . t('Indented quote.') . '</p>
 <p class="tips-code-look">* ' . t('Bulleted lists.') . '<br>

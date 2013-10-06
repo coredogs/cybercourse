@@ -1,27 +1,30 @@
 /*
  * Custom config for CKEditor.
  * 
- * CKEditor module is configured to read the config file from the theme.
- * What happens if the theme is updated? Lose config.
+ * This file is copied to the CKEditor module, overwriting what is there.
  * 
- * SWIM module copies this file to theme if it is missing.
  */
 CKEDITOR.editorConfig = function(config) {
-config.basicEntities = true; //Entity encode <, >.
-config.disableNativeSpellChecker = false;
-config.removePlugins = 'tabletools,contextmenu';
-//Size the summary editor.
-if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
-  CKEDITOR.instances['edit-body-und-0-summary'].config.height = "8em";
-}
-//Size the main editor.
-if ( CKEDITOR.instances['edit-body-und-0-value'] ) {
-  CKEDITOR.instances['edit-body-und-0-value'].config.height = "30em";
-}
-//Let images be inserted.
-config.allowedContent = true;
-// The minimum editor width, in pixels, when resizing it with the resize handle.
-config.resize_minWidth = 400;
+  CKEDITOR.on("instanceReady", function(evnt) {
+    if ( evnt.editor.name == "edit-body-und-0-value" ) {
+      Drupal.behaviors.swim.swimSetup();
+    }
+  });
+  config.basicEntities = true; //Entity encode <, >.
+  config.disableNativeSpellChecker = false;
+  config.removePlugins = 'tabletools,contextmenu';
+  //Size the summary editor.
+  if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
+    CKEDITOR.instances['edit-body-und-0-summary'].config.height = "8em";
+  }
+  //Size the main editor.
+  if ( CKEDITOR.instances['edit-body-und-0-value'] ) {
+    CKEDITOR.instances['edit-body-und-0-value'].config.height = "30em";
+  }
+  //Let images be inserted.
+  config.allowedContent = true;
+  // The minimum editor width, in pixels, when resizing it with the resize handle.
+  config.resize_minWidth = 400;
 
   config.protectedSource.push(/<\?[\s\S]*?\?>/g); // PHP Code
   config.protectedSource.push(/<code>[\s\S]*?<\/code>/gi); // Code tags

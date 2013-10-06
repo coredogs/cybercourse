@@ -1,4 +1,7 @@
 @import url("swim_editing.css");
+@import url("rest/html4css1.css");
+@import url("rest/math.css");
+
 
 /*h3 {
   text-shadow: 3px 3px 6px rgba(150, 150, 150, 1);;
@@ -8,7 +11,7 @@ body.swim .main-container blockquote p {
   font-size: 100% !important;
   line-height: 1.5 !important;
   color: #666 !important;
-  margin-bottom: inherit !important;
+  /*margin-bottom: inherit !important;*/
 }
 
 div.field-name-body div.document div.sidebar {

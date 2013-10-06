@@ -1,2 +1,0 @@
-console.log(Drupal.settings);
-alert(9);
