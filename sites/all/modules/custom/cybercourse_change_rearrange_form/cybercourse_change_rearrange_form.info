@@ -1,5 +1,0 @@
-name = Change book rearrange form
-description = Changes the book rearrange form.
-package = CyberCourse
-core = 7.x
-dependencies[] = book

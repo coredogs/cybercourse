@@ -1,0 +1,97 @@
+<?php
+
+
+/**
+ * Implements hook_form_FORM_alter().
+ * Adds instructiond to the book rearrange form.
+ */
+function cybercourse_tweaks_form_book_admin_edit_alter(&$form, &$form_state) {
+  $form['save']['#value'] = t('Save');
+  $form['cybercourse_instructions'] = array(
+    '#markup' => 
+      '<p class="rearrange-form-instructions">' .
+      t('Drag-and-drop to rearrage pages. You can change titles as well.') .
+      '</p><p>' .
+      t('Unpublished pages are not shown.') .
+      '</p>',
+    '#weight' => -10,
+  );
+}
+
+/**
+ * Implements hook_form_FORM_alter().
+ * Remove the delete button from blueprint form.
+ * Tell admin user to use control panel delete link instead.
+ */
+function cybercourse_tweaks_form_blueprint_node_form_alter(&$form, &$form_state) {
+  _cct_kill_delete_button($form);
+}
+
+/**
+ * Implements hook_form_FORM_alter().
+ * Remove the delete button from course form.
+ * Tell admin user to use control panel delete link instead.
+ */
+function cybercourse_tweaks_form_course_node_form_alter(&$form, &$form_state) {
+  _cct_kill_delete_button($form);  
+}
+
+/**
+ * Remove Delete button from a form. 
+ * @param array $form Renderable array for a form.
+ */
+function _cct_kill_delete_button(&$form) {
+  $form['actions']['delete'] = array(
+    '#type' => 'markup',
+    '#markup' => '<br>Use the "Delete courses and blueprints" link on '
+                 . 'the control panel if you want to delete this. Admins only.',
+    '#weight' => 99,
+  );
+}
+
+
+
+/**
+ * Implements hook_menu_breadcrumb_alter().
+ * Remove the breadcrumb from the book rearrange page.
+ */
+function cybercourse_tweaks_menu_breadcrumb_alter(&$active_trail, $item) {
+  $to_find = 'admin/content/book';
+  if (substr( current_path(), 0, strlen($to_find) ) == $to_find ) {
+    $active_trail = array();
+  }
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function cybercourse_tweaks_menu_alter( &$items ) {
+  //Kill the book section of node edit forms for non-admins.
+  $items['node/add/course']['access callback'] = '_cctma_check_access';
+  $items['node/add/blueprint']['access callback'] = '_cctma_check_access';
+  //Add "Duplicate page" link.
+  $items['node/%node/clone']['type'] = MENU_LOCAL_TASK;
+  $items['node/%node/clone']['title'] = t('Duplicate page');
+  //Only admins can use "Delete courses and blueprints" link on the control panel.
+  $items['admin/content/book']['access callback'] = '_cctma_check_access';  
+}
+
+/**
+ * Menu access callback.
+ * @return boolean True if user has right role.
+ */
+function _cctma_check_access() {
+  global $user;
+  $access = in_array('administrator', $user->roles);
+  return $access;
+} 
+
+/**
+ * Implements hook_node_view_alter().
+ */
+function cybercourse_tweaks_node_view_alter (&$build) {
+  if ( isset($build['links']['comment']['#links']['comment_forbidden']) ) {
+    //Remove the "Login to add comments" link.
+    unset($build['links']['comment']['#links']['comment_forbidden']);
+  }
+}

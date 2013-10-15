@@ -15,7 +15,8 @@ body.swim .main-container blockquote p {
 }
 
 div.field-name-body div.document div.sidebar {
-  border: 2px #CCC solid;
+  border: none;
+  background-color: #EEE; 
   border-radius: 8px;
   margin: 0 0 0 2em;
   padding: 1em;
@@ -25,6 +26,10 @@ div.field-name-body div.document div.sidebar {
 
 div.field-name-body div.document div.sidebar img {
   margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+div.field-name-body div.document img {
   margin-bottom: 1em;
 }
 

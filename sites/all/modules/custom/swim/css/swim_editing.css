@@ -26,6 +26,10 @@ Styles for doing editing with SWIM.
   height: 30px;
 }
 
+#swim-peek-toolbar img {
+  vertical-align: inherit;
+}
+
 #swim-peek-inner {
   overflow:auto;
   width: 100%;

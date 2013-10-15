@@ -36,13 +36,10 @@ function cybercourse_book_blocks_block_view($delta = '') {
       $block['subject'] = '';
       $block['content'] = _cbb_courses();
       return $block;
-      break;
     case 'blueprints' :
       $block['subject'] = ''; 
       $block['content'] = _cbb_blueprints();
       return $block;
-      break;
-      break;
   }
 }
 
@@ -167,11 +164,11 @@ function _cbb_make_book_tree( $nid ) {
           . '/js/cybercourse_book_blocks.js', 
       'file'
   );
-  drupal_add_css(
-      drupal_get_path('module', 'cybercourse_book_blocks') 
-          . '/libs/bootstrap-tree/bootstrap-combined.min.css', 
-      'file'
-  );
+//  drupal_add_css(
+//      drupal_get_path('module', 'cybercourse_book_blocks') 
+//          . '/libs/bootstrap-tree/bootstrap-combined.min.css', 
+//      'file'
+//  );
   drupal_add_css(
       drupal_get_path('module', 'cybercourse_book_blocks') 
           . '/css/cybercourse_book_blocks.css', 

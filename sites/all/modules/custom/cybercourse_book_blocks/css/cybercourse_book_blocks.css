@@ -34,6 +34,10 @@ div.tree li::before {
   border-left: none;
 }
 
+div.tree li {
+  list-style-type: none;
+}
+
 div.tree .currentPage > span + a {
   font-weight: bold;
 }
