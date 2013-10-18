@@ -1,6 +1,9 @@
 name = Bootstrap
 description = Built to use Bootstrap, a sleek, intuitive, and powerful front-end framework for faster and easier web development.
 core = 7.x
+simplytest_dependencies[] = jquery_update
+
+; Regions
 regions[navigation]     = 'Navigation'
 regions[header]         = 'Top Bar'
 regions[highlighted]    = 'Highlighted'
@@ -10,17 +13,26 @@ regions[sidebar_first]  = 'Primary'
 regions[sidebar_second] = 'Secondary'
 regions[footer]         = 'Footer'
 
+; Core Settings
 settings[toggle_name] = 0
 settings[toggle_search] = 1
-settings[cdn_bootstrap] = 1
-settings[cdn_bootstrap_version] = 2.3.2
 
-;Exclude
-;javascript
+; CDN
+settings[bootstrap_cdn] = 3.0.0
+
+; Breadcrumbs
+settings[bootstrap_breadcrumb] = 1
+settings[bootstrap_breadcrumb_home] = 0
+settings[bootstrap_breadcrumb_title] = 1
+
+; Visual Effects
+settings[bootstrap_fade_tabs] = 1
+
+;Exclude JavaScript
 ;exclude[js][] = 'modules/contextual/contextual.js'
 
-;css
-;exclude[css][] = 'misc/vertical-tabs.css'
+;Exclude CSS
+exclude[css][] = 'misc/vertical-tabs.css'
 exclude[css][] = 'modules/aggregator/aggregator.css'
 exclude[css][] = 'modules/block/block.css'
 exclude[css][] = 'modules/book/book.css'
@@ -51,9 +63,9 @@ exclude[css][] = 'modules/tracker/tracker.css'
 exclude[css][] = 'modules/update/update.css'
 exclude[css][] = 'modules/user/user.css'
 
-; Information added by drupal.org packaging script on 2013-06-25
-version = "7.x-2.1"
+; Information added by drupal.org packaging script on 2013-10-01
+version = "7.x-3.0-rc1"
 core = "7.x"
 project = "bootstrap"
-datestamp = "1372204551"
+datestamp = "1380586270"
 
