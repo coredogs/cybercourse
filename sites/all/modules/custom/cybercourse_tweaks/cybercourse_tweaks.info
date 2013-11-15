@@ -2,3 +2,5 @@ name = Cybercourse tweaks
 description = Tweaks to CyberCourse site.
 package = CyberCourse
 core = 7.x
+
+scripts[] = includes/attainment_modals.js

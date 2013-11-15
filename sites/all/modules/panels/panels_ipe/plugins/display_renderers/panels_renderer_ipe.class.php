@@ -137,8 +137,12 @@ class panels_renderer_ipe extends panels_renderer_editor {
   function render_pane_content(&$pane) {
     $content = parent::render_pane_content($pane);
     // Ensure that empty panes have some content.
-    if (empty($content) || empty($content->content)) {
-      // Get the administrative title.
+//    if (empty($content) || empty($content->content)) {
+    //KRM patch 15 at https://drupal.org/files/panels-n1632898-15.patch
+    if (empty($content) || !is_object($content) || empty($content->content)) {
+        if (!is_object($content)) {
+          $content = new StdClass();
+        }      // Get the administrative title.
       $content_type = ctools_get_content_type($pane->type);
       $title = ctools_content_admin_title($content_type, $pane->subtype, $pane->configuration, $this->display->context);
 

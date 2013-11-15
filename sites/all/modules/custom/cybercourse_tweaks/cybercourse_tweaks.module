@@ -1,6 +1,9 @@
 <?php
 
 
+require_once drupal_get_path('module', 'cybercourse_tweaks') 
+    . '/includes/attainment_modals.php';
+
 /**
  * Implements hook_form_FORM_alter().
  * Adds instructiond to the book rearrange form.

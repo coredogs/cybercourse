@@ -1,38 +1,15 @@
 <?php
 
 /**
- * Preprocess variables for region.tpl.php
- *
- * @see region.tpl.php
- */
-function cybercourse_preprocess_region(&$variables, $hook) {
-//  if ($variables['region'] == 'content') {
-//    $variables['theme_hook_suggestions'][] = 'region__no_wrapper';
-//  }
-  if ($variables['region'] == "sidebar_first") {
-    //Remove well class from sidebar region.
-    foreach ( $variables['classes_array'] as $index => $value ) {
-      if ( $value == 'well' ) {
-        unset( $variables['classes_array'][$index] );
-        break;
-      }
-    }
-  }
-}
-
-/**
  * Preprocess variables for block.tpl.php
  *
  * @see block.tpl.php
  */
 function cybercourse_preprocess_block(&$variables, $hook) {
-  $variables['classes_array'][] = 'well well-small';
-  // Use a bare template for the page's main content.
-//  KRM: Don't run stuff from parent theme again?
-//  if ($variables['block_html_id'] == 'block-system-main') {
-//    $variables['theme_hook_suggestions'][] = 'block__no_wrapper';
-//  }
-//  $variables['title_attributes_array']['class'][] = 'block-title';
+  //Make all blocks have small wells, except for the main content.
+  if ($variables['block_html_id'] != 'block-system-main') {
+    $variables['classes_array'][] = 'well well-small';
+  }
 }
 
 /**
@@ -47,8 +24,11 @@ function cybercourse_breadcrumb($variables) {
     //KRM - copy into new array, excpet for Home link.
     $breadcrumb = array();
     foreach ($old_breadcrumb as $key => $value) {
-      if ( stristr($value, '>Home<') === FALSE ) {
-        $breadcrumb[] = $value;
+      //Test strings only.
+      if ( is_string($value) ) {
+        if ( stristr($value, '>Home<') === FALSE ) {
+          $breadcrumb[] = $value;
+        }
       }
     }
     //Maybe none left.
@@ -60,7 +40,8 @@ function cybercourse_breadcrumb($variables) {
       $count = sizeof($breadcrumb) - 1;
       foreach ($breadcrumb as $key => $value) {
         if ($count != $key) {
-          $breadcrumbs .= '<li>' . $value . '<span class="divider">/</span></li>';
+          $breadcrumbs .= '<li>' . $value 
+              . '<span class="divider">/</span></li>';
         }
         else {
           $breadcrumbs .= '<li>' . $value . '</li>';

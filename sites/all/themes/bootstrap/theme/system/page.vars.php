@@ -18,7 +18,7 @@ function bootstrap_preprocess_page(&$variables) {
     $variables['content_column_class'] = ' class="col-sm-9"';
   }
   else {
-    $variables['content_column_class'] = NULL;
+    $variables['content_column_class'] = ' class="col-sm-12"';
   }
 
   // Primary nav.
@@ -39,4 +39,27 @@ function bootstrap_preprocess_page(&$variables) {
     $variables['secondary_nav']['#theme_wrappers'] = array('menu_tree__secondary');
   }
 
+  $variables['navbar_classes_array'] = array('navbar');
+
+  if (theme_get_setting('bootstrap_navbar_position') !== '') {
+    $variables['navbar_classes_array'][] = 'navbar-' . theme_get_setting('bootstrap_navbar_position');
+  }
+  else {
+    $variables['navbar_classes_array'][] = 'container';
+  }
+  if (theme_get_setting('bootstrap_navbar_inverse')) {
+    $variables['navbar_classes_array'][] = 'navbar-inverse';
+  }
+  else {
+    $variables['navbar_classes_array'][] = 'navbar-default';
+  }
+}
+
+/**
+ * Implements hook_process_page().
+ *
+ * @see page.tpl.php
+ */
+function bootstrap_process_page(&$variables) {
+  $variables['navbar_classes'] = implode(' ', $variables['navbar_classes_array']);
 }

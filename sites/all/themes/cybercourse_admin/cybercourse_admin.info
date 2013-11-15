@@ -1,0 +1,21 @@
+name = CyberCourse admin
+description = Admin theme based on Seven.
+base theme = seven
+package = Core
+version = VERSION
+core = 7.x
+version = "7.1"
+stylesheets[screen][] = reset.css
+stylesheets[screen][] = style.css
+
+stylesheets[screen][] = custom.css
+stylesheets[screen][] = views.css
+
+settings[shortcut_module_link] = 1
+regions[content] = Content
+regions[help] = Help
+regions[page_top] = Page top
+regions[page_bottom] = Page bottom
+regions[sidebar_first] = First sidebar
+regions_hidden[] = sidebar_first
+

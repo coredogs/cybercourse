@@ -212,6 +212,16 @@ function swim_mt_peek() {
   if ( !user_access('peek content') ) {
     return MENU_ACCESS_DENIED;
   }
+  //Suppress the admin menu.
+  if ( module_exists('admin_menu') ) {
+    module_invoke('admin_menu', 'suppress');
+  }
+  //Return some MT content. The theme system will wrap this in stuff that
+  //the theme usually wraps content in.
+  return '<div id="cyco-mt-content-container"/>';
+  
+  
+  
   //Grab the front page, and send it to the client.
   $front_url = variable_get('site_frontpage', 'node');
   $front_url = trim($front_url, '/');
@@ -221,6 +231,28 @@ function swim_mt_peek() {
   $renderable = node_view($node, 'full');
   return $renderable;
 }
+
+/**
+ * Return the theme to use for popup windows, by inspecting the 
+ * destination.
+ */
+function swim_custom_theme() {
+  if ( current_path() == 'swim-mt-peek' ) {
+    return 'cybercourse_mt';
+  }
+}
+
+/**
+ * When inserting an exercise into a page, use a special template that
+ * strips most of the content away.
+ * @param string $vars
+ */
+//function insert_exercise_preprocess_node(&$vars) {
+//  if ($vars['node']->type == 'exercise' && $vars['view_mode'] == 'exercise_insert') {
+//    $vars['theme_hook_suggestions'][] = 'node__exercise__exercise_insert';
+//  }
+//}
+
 
 /**
 * Implements hook_filter_info().

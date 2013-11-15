@@ -1,0 +1,5 @@
+name = T
+description = CTools modal thing
+package = Custom
+core = 7.x
+scripts[] = t.js

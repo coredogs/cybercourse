@@ -27,6 +27,37 @@ from docutils.utils.code_analyzer import Lexer, LexerError, NumberLines
 #    def set_can_swear(self, can_swear_in):
 #      self.can_swear = ( can_swear_in == 'can_swear' )
 #
+
+#class Exercise(Directive):
+#    has_content = False
+#    required_arguments = 1
+
+#    def run(self):
+#        result = '<p>Insert exercise ' + self.arguments[0] + '</p>'
+#        return [nodes.raw('', result, format='html')]
+
+
+#class Pseudent(Directive):
+#    has_content = True
+#    required_arguments = 1
+
+#    def run(self):
+#        # Raise an error if the directive does not have contents.
+#        self.assert_has_content()
+#        text = '\n'.join(self.content)
+#        text ='[[[pseudent ' + self.arguments[0] + '|||' + text + ']]]'
+#        # Create node, to be populated by `nested_parse`.
+#        contents_node = self.node_class(rawsource=text)
+#        # Parse the directive contents.
+#        self.state.nested_parse(self.content, self.content_offset,
+#                                contents_node)
+#        return [contents_node]
+
+#Register the new directives.
+#directives.register_directive('exercise', Exercise)
+#directives.register_directive('pseudent', Pseudent)
+
+
 ##Create a new directive
 #class Swear(Directive):
 #

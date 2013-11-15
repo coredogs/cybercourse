@@ -1,0 +1,8 @@
+name = CyberCourse MT
+description = Makes MT CyberCourse pages for the SWIM preview system.
+base theme = cybercourse
+package = Core
+version = VERSION
+core = 7.x
+version = "7.1"
+regions[content] = Content

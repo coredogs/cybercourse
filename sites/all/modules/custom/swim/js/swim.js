@@ -67,10 +67,11 @@
 //      swimWaitForLoad();
     }, //End attach.
     continueInit: function() {
-//      console.log("continue num bodies: " +  $("#swim-peek-device").contents().children("html").children("body").length);
-//      console.log("continue num documents: " +  $("#swim-peek-device").contents().children("html").children("body").find(".document").length);
-      //Prepare the iframe content. Remove content that isn't needed.
-      this.templateBodyHtml = this.prepareIframeContent();
+      //Make a clone of the HTML to use as a template.
+      this.templateBodyHtml 
+        = $("#swim-peek-device").contents().children("html").children("body")
+          .clone();
+              //this.prepareIframeContent();
       //Prep the dialog.
       $( "#swim-peek-outer" )
         .dialog({
@@ -100,44 +101,15 @@
       //Turn on the CKEditor peek button, so show all is ready.
       CKEDITOR.instances['edit-body-und-0-value'].commands.peek.enable();
     }, //End continueInit.
-    prepareIframeContent : function() {
-      //The iframe has a page loaded. Remove all the content on the page 
-      //that is not needed to show the preview, e.g., sidebars. 
-      //This is theme-dependent. I don't know how to make it generic, to
-      //work with any theme.
-//      var iframeContent = $("#swim-peek-device").contents();
-      var bodyTemplate = $("#swim-peek-device").contents().children("html").children("body");
-//      console.log("prep num documents: " +  $("#swim-peek-device").contents().children("html").children("body").find(".document").length);
-//      alert($("#swim-peek-device").contents().children("html").children("body").html());
-//      alert($("#swim-peek-device").contents().children("html").children("body").find("#skip-link").length);
-//      alert($("#swim-peek-device").contents().children("html").children("body").find("#skip-link").html());
-//      console.log('body doc: ' + bodyTemplate.find(".document").length);
-      bodyTemplate.find("#skip-link").remove();
-      bodyTemplate.find("#navbar").remove();
-      bodyTemplate.find("#page-header").remove();
-      bodyTemplate.find(".main-container .row-fluid aside").remove();
-      bodyTemplate.find(".main-container article header").remove();
-      bodyTemplate.find("#toc").remove();
-      bodyTemplate.find("footer").remove();
-      bodyTemplate.find("#admin-menu").remove();
-      //All that's left is the content. Kill everything inside the document.
-      bodyTemplate.find(".document").children().remove();
-      //When previewing, will add the new content inside the document class element.
-      
-//      $body.removeClass("admin-menu").css("padding", 0).css("margin", 0);
-      //Kill the left sidebar.
-//      var leftSidebar = $(iframeContent).find(".region-sidebar-first").parent();
-//      leftSidebar.remove();
-      //Change the main content's span9 to a span12, since the sidebar
-      //iz morte.
-      bodyTemplate
-          .find(".row-fluid")
-          .find("section.span9")
-          .removeClass("span9")
-          .addClass("span12");
-      return bodyTemplate.html();
-      //$("#swim-peek-device").contents().children("html").children("body").first().html( body1.html() );
-    }, //end prepareIframeContent
+//    prepareIframeContent : function() {
+//      //The iframe has a page loaded. Remove all the content on the page 
+//      //that is not needed to show the preview, e.g., sidebars. 
+//      //This is theme-dependent. I don't know how to make it generic, to
+//      //work with any theme.
+////      var iframeContent = $("#swim-peek-device").contents();
+//      var bodyTemplate = $("#swim-peek-device").contents().children("html").children("body");
+//      return bodyTemplate.html();
+//    }, //end prepareIframeContent
     
       /**
        * Watch the plugin's peek button.
@@ -179,9 +151,6 @@
       //Position edges of device below toolbar.
       var toolbarHeight = $("#swim-peek-toolbar").outerHeight();
       $("#swim-peek-device").css("top", toolbarHeight );
-//      iframe.contents().find("body").prepend(obscurer);
-//      var iframeContentContainer 
-//          = iframe.contents().find(".field-name-body");
       //Set up the peek to mimic the device.
       $( "#swim-peek-device" ).css("width", "").css("height", "");
       $( "#swim-peek-device" )
@@ -231,10 +200,15 @@
       $.ajaxMarkup(markup, format, function(result, success, request) {
         if ( success ) {
           //Restore body template content.
+          //Get the template code.
+          var templateCode = swimBehavior.templateBodyHtml.clone();
+          //Erase contents of the MT container, if any.
+          templateCode = $(templateCode).find("#cyco-mt-content-container").first().html('');
+          //Insert the MT template code into the preview iframe.
           $("#swim-peek-device").contents().find("body").first()
-              .html( swimBehavior.templateBodyHtml );
+              .html( templateCode );
           //Insert new content.
-          $("#swim-peek-device").contents().find("body").find(".document")
+          $("#swim-peek-device").contents().find("body").find("#cyco-mt-content-container")
               .append(result);
           //Get ref to the markup in the iframe.
 //          var iframeContentContainer 
