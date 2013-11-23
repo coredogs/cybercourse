@@ -1,0 +1,5 @@
+name = reStructuredText help
+description = Creates a CKEditor button that pops up help for ReST.
+package = CyberCourse
+dependencies[] = ckeditor
+core = 7.x

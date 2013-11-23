@@ -19,6 +19,7 @@ stylesheets[all][] = css/style.css
 stylesheets[all][] = css/less_style.less
 stylesheets[all][] = css/admin_menu_fixes.css
 stylesheets[all][] = css/views.css
+stylesheets[all][] = css/overrides.css
 
 ;scripts[] = js/init.js
 

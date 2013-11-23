@@ -1,0 +1,101 @@
+<?php
+/*
+ * Path to the ReST help content.
+ */
+define('REST_HELP_PATH', 'rest-help');
+
+/*
+ * Use this as first arg in URL to get a plain themed version
+ * of the content. E.g., rest-help-plain
+ */
+define('PLAIN_FLAG', '-plain');
+
+/**
+ * Implements hook_init().
+ */
+function rest_help_init() {
+  global $baseUrl;
+  $settings = array(
+    'helpUrl' => $baseUrl . REST_HELP_PATH,
+    'plainFlag' => PLAIN_FLAG,
+    'windowTitle' => 'reStructuredText Help',
+  );
+  drupal_add_js(
+      array('restHelp' => $settings),
+      'setting'
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function rest_help_menu() {
+  $item = array(
+    'page callback' => '_rest_help_get_content',
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items = array();
+  $items[REST_HELP_PATH] = $item;
+  $items[REST_HELP_PATH . PLAIN_FLAG] = $item;
+  return $items;
+}
+
+function rest_help_ckeditor_plugin() {
+  return array(
+    'rest_help' => array(
+        // Plugin name.
+        'name' => 'rest_help',
+        // Plugin description - it will be displayed in the plugins management section of the profile settings.
+        'desc' => t('Creates a CKEditor button that pops up help for ReST.'),
+        // The full path to the CKEditor plugin directory, trailing slash included.
+        'path' => drupal_get_path('module', 'rest_help') . '/plugin/',
+    )
+  );
+}
+
+function _rest_help_get_content() {
+  $output = '';
+  //Suppress the admin menu.
+  if ( module_exists('admin_menu') ) {
+    module_invoke('admin_menu', 'suppress');
+  }
+  //Grab the data from the ReST help page.
+  $system_path = drupal_lookup_path('source', REST_HELP_PATH);
+  if ( $system_path === FALSE ) {
+    $message = 'Error: reStructuredText help page not found.';
+    watchdog('rest_help', $message);
+    $output = $message;
+  }
+  else {
+    $node = menu_get_object("node", 1, $system_path);
+    if ( ! $node->status ) {
+      $message = 'Error: reStructuredText help page not published.';
+      watchdog('rest_help', $message);
+      $output = $message;
+    }
+    else {
+      $output = node_view($node, 'full');
+    }
+  }
+  return $output;
+}
+
+/**
+ * Return the theme to use for popup windows, by inspecting the 
+ * destination.
+ */
+function rest_help_custom_theme() {
+//  $system_path_help_page = drupal_lookup_path('source', REST_HELP_PATH);
+  if ( current_path() == REST_HELP_PATH . PLAIN_FLAG ) {
+    //Is the argument 'plain' on the end of the URL?
+//    if ( arg(0) == PLAIN_FLAG) {
+      //Suppress the admin menu.
+      if ( module_exists('admin_menu') ) {
+        module_invoke('admin_menu', 'suppress');
+      }
+      return 'cybercourse_mt';
+//    }
+  }
+}

@@ -4,58 +4,56 @@ from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.roles import set_classes
 from docutils.utils.code_analyzer import Lexer, LexerError, NumberLines
 
-#class Pseudent(BasePseudoSection):
-#
-#    node_class = nodes.sidebar
-#
-#    option_spec = BasePseudoSection.option_spec.copy()
-#    option_spec['subtitle'] = directives.unchanged_required
-#
-#    def run(self):
-#        if isinstance(self.state_machine.node, nodes.sidebar):
-#            raise self.error('The "%s" directive may not be used within a '
-#                             'sidebar element.' % self.name)
-#        return BasePseudoSection.run(self)
-#
-##Register the new directive.
-#directives.register_directive('pseudent', Pseudent)
+class Exercise(Directive):
+    """
+    reStructuredText directive to show code listings with google-code-prettify
+    """
+    has_content = False
+    required_arguments = 1
 
-##Class representing a CyCo user with certain permissions.
-#class CyCoUser:
-#    #Permission
-#    can_swear = False
-#    def set_can_swear(self, can_swear_in):
-#      self.can_swear = ( can_swear_in == 'can_swear' )
-#
-
-#class Exercise(Directive):
-#    has_content = False
-#    required_arguments = 1
-
-#    def run(self):
-#        result = '<p>Insert exercise ' + self.arguments[0] + '</p>'
-#        return [nodes.raw('', result, format='html')]
+    def run(self):
+        # Put in pattern that is replaced in Drupal by a custom filter.
+        # Can apply permissions checks and other things on the
+        # server side.
+        result = '[[[cycoexercise ' + self.arguments[0] + ']]]\n'
+        raw_node = nodes.raw('', result, format='html')
+        return [raw_node]
 
 
-#class Pseudent(Directive):
-#    has_content = True
-#    required_arguments = 1
+class Pseudent(Directive):
+    has_content = True
+    required_arguments = 1
+    #
+    node_class = nodes.decoration
 
-#    def run(self):
-#        # Raise an error if the directive does not have contents.
-#        self.assert_has_content()
-#        text = '\n'.join(self.content)
-#        text ='[[[pseudent ' + self.arguments[0] + '|||' + text + ']]]'
-#        # Create node, to be populated by `nested_parse`.
-#        contents_node = self.node_class(rawsource=text)
-#        # Parse the directive contents.
-#        self.state.nested_parse(self.content, self.content_offset,
-#                                contents_node)
-#        return [contents_node]
+    def run(self):
+        # Raise an error if the directive does not have contents.
+        self.assert_has_content()
+        text = '\n'.join(self.content)
+        # Make a node with the content
+        content_node = self.node_class(rawsource=text)
+        # Parse the directive contents into the new node.
+        self.state.nested_parse(
+            self.content,
+            self.content_offset,
+            content_node
+        )
+        # Create a new node with the prefix marker text for
+        # Drupal custom filter to find.
+        # Can apply permissions checks and other things on the
+        # server side.
+        prefix_text = '[[[cycopseudent ' + self.arguments[0] + '|||\n'
+        prefix_node = nodes.raw('', prefix_text, format='html')
+        # Create a new node with the postfix marker text for
+        # Cyco to find.
+        postfix_text = ']]]\n'
+        postfix_node = nodes.raw('', postfix_text, format='html')
+        # Return the nodes in sequence.
+        return [prefix_node, content_node, postfix_node]
 
 #Register the new directives.
-#directives.register_directive('exercise', Exercise)
-#directives.register_directive('pseudent', Pseudent)
+directives.register_directive('exercise', Exercise)
+directives.register_directive('pseudent', Pseudent)
 
 
 ##Create a new directive
@@ -74,13 +72,6 @@ from docutils.utils.code_analyzer import Lexer, LexerError, NumberLines
 #
 ##Register the new directive.
 #directives.register_directive('swear', Swear)
-#
-##Create a user.
-#cyco_user = CyCoUser()
-#
-##Read user permisssions from PHP.
-#can_swear = input()
-#cyco_user.set_can_swear(can_swear)
 
 #Read the content to translate.
 data_in = ''

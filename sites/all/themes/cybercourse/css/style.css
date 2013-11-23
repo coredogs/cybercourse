@@ -2,6 +2,14 @@
 @import url("book.css");
 @import url("control-panel.css");
 
+/* Without this, there is a horiz scroll bar. The standard value is -15px. */
+
+.row {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+
 body, body h1, body h2, body h3, body h4, body h5, body h6 {
   line-height: 1.5em;
 }
@@ -193,3 +201,37 @@ header nav > ul.pull-right > li a {
   margin-top: 20px;
 }
 
+/* Make small wells have less padding. */
+
+.well-sm {
+  padding: 0.5em;
+}
+
+/* Sidebar blocks look a little strange. Same for when they're in panels. */
+
+div.region-sidebar-first section.block {
+  margin-left: 0.5em;
+}
+
+h3.block-title,
+.panel-pane .pane-title {
+  margin: 0;
+}
+
+ul.cycobb {
+  margin-bottom: 0.5em;
+}
+
+/* To make the modules page work. */
+/* Undo evil from module filter. */
+#module-filter-squeeze {
+    background-color: inherit;
+    border-color: inherit;
+}
+table.package tr.enabling {
+    background-color: #DDFFDD;
+}
+/* From admin module (core)  */
+div.admin-requirements, div.admin-required {
+    color: inherit;
+}

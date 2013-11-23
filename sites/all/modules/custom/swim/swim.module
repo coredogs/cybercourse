@@ -219,17 +219,6 @@ function swim_mt_peek() {
   //Return some MT content. The theme system will wrap this in stuff that
   //the theme usually wraps content in.
   return '<div id="cyco-mt-content-container"/>';
-  
-  
-  
-  //Grab the front page, and send it to the client.
-  $front_url = variable_get('site_frontpage', 'node');
-  $front_url = trim($front_url, '/');
-  $front = explode('/', $front_url);
-  $front_nid = $front[1];
-  $node = node_load($front_nid);
-  $renderable = node_view($node, 'full');
-  return $renderable;
 }
 
 /**

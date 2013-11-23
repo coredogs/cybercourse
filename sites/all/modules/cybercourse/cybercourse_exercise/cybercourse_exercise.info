@@ -1,0 +1,5 @@
+name = CyberCourse exercise
+description = The CyberCourse exercise system.
+package = CyberCourse
+core = 7.x
+version = 7.1

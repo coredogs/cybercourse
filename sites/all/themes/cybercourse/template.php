@@ -8,7 +8,7 @@
 function cybercourse_preprocess_block(&$variables, $hook) {
   //Make all blocks have small wells, except for the main content.
   if ($variables['block_html_id'] != 'block-system-main') {
-    $variables['classes_array'][] = 'well well-small';
+    $variables['classes_array'][] = 'well well-sm';
   }
 }
 

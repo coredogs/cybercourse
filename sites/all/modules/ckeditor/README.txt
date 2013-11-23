@@ -59,7 +59,11 @@ and create a "ckeditor" or "ckfinder" directory inside.
 
 The CKEditor module will automatically recognize the proper path to the editor and the file browser.
 
-All installation and configuration instructions in this README file assume that you use the first option and place the CKEditor and CKFinder files in the "sites/all/modules/ckeditor/" directory. If you want to use the "sites/all/libraries/" directory, you will need to adjust the paths given in the instructions accordingly.
+All installation and configuration instructions in this README file assume
+that you use the first option and place the CKEditor and CKFinder files in 
+the "sites/all/modules/ckeditor/" directory. If you want to use 
+the "sites/all/libraries/" directory, you will need to adjust the paths 
+given in the instructions accordingly.
 
 Installation / Configuration
 ----------------------------
@@ -207,33 +211,48 @@ CKFinder is an Ajax-based file manager created by CKEditor developers: http://ck
 
 Managing Plugins
 ----------------
-If you want to manage CKEditor plugins for a profile, go to the "Administration panel > Configuration > Content Authoring > CKEditor" section. This section lets you choose plugins relevant for each CKEditor profile from a list.
-In order to activate a plugin, go to the "Editor appearance > Plugins" section and select the checkbox next to a required plugin name.
+If you want to manage CKEditor plugins for a profile, go to the 
+"Administration panel > Configuration > Content Authoring > CKEditor" section. 
+This section lets you choose plugins relevant for each CKEditor profile from a list.
+In order to activate a plugin, go to the "Editor appearance > Plugins" section 
+and select the checkbox next to a required plugin name.
 
-If a plugin contains toolbar buttons, you will need to drag and drop them to an appropriate toolbar position by using the toolbar wizard. If this is the case, the button should be added to the CKEditor toolbar by using the method described below:
+If a plugin contains toolbar buttons, you will need to drag and drop them to 
+an appropriate toolbar position by using the toolbar wizard. If this is the 
+case, the button should be added to the CKEditor toolbar by using the 
+method described below:
 - Enter the "Editor appearance > Toolbar" section.
-- Check whether the plugin button that you want to use is present in the "Used buttons" sections. If not, find it in the "All buttons" section and drag and drop to the toolbar configuration from the "Used buttons" section.
+- Check whether the plugin button that you want to use is present in the 
+"Used buttons" sections. If not, find it in the "All buttons" section and 
+drag and drop to the toolbar configuration from the "Used buttons" section.
 
-Alternatively, if you turned off the toolbar wizard and prefer to enter the toolbar configuration manually, you will need to add the plugin button by yourself by appending it to your toolbar definition code.
+Alternatively, if you turned off the toolbar wizard and prefer to enter the 
+toolbar configuration manually, you will need to add the plugin button by 
+yourself by appending it to your toolbar definition code.
 
 Please note that some plugins require installing additional modules to work correctly.
 
 Installing Additional Plugins
 -----------------------------
-The installation process is based on placing the plugin folder in the "plugins" directory of the CKEditor module (usually "sites/all/modules/ckeditor").
-The plugin folder should contain at least the plugin.js file that is responsible for the plugin logic.
-The plugin description will be displayed in the "Administration panel" if it is added to the plugin.js file by using the following special comment:
+The installation process is based on placing the plugin folder in the 
+"plugins" directory of the CKEditor module (usually "sites/all/modules/ckeditor").
+The plugin folder should contain at least the plugin.js file that is 
+responsible for the plugin logic.
+
+The plugin description will be displayed in the "Administration panel" 
+if it is added to the plugin.js file by using the following special comment:
 /**
  * @file Plugin description
  */
-Hint: The "Administration panel" automatically detects the toolbar buttons available in the plugin and adds them to the toolbar wizard.
+Hint: The "Administration panel" automatically detects the toolbar buttons 
+available in the plugin and adds them to the toolbar wizard.
 
 A plugin can be enabled by using the same method as described above - see the "Managing Plugins" section.
 
 Integrating a Plugin with the CKEditor Module (for Plugin Developers)
 ---------------------------------------------------------------------
-Integrating your application with the CKEditor module by adding a plugin works through a special hook.
-An example of the hook is shown below:
+Integrating your application with the CKEditor module by adding a plugin works 
+through a special hook. An example of the hook is shown below:
 
 function MODULENAME_ckeditor_plugin() {
   return array(
@@ -255,11 +274,15 @@ function MODULENAME_ckeditor_plugin() {
 }
 Please note that MODULENAME in the code above is the name of the module.
 
-After the hook is used the plugin will automatically appear on the plugin list for each CKEditor profile where you will be able to enable it as described in the "Managing Plugins" section.
+After the hook is used the plugin will automatically appear on the plugin list 
+for each CKEditor profile where you will be able to enable it as described in 
+the "Managing Plugins" section.
 
 Setting up Security Filters
 ---------------------------
-The CKEditor security system protects you from executing malicious code that is already in your database. In plain textareas database content is harmless because it is not executed, but a WYSIWYG editor interprets HTML like a Web browser and thus the content needs to be filtered before it is loaded.
+The CKEditor security system protects you from executing malicious code that 
+is already in your database. In plain textareas database content is harmless 
+because it is not executed, but a WYSIWYG editor interprets HTML like a Web browser and thus the content needs to be filtered before it is loaded.
 
 In order to configure the security filters, go to the "Administration panel > Configuration > Content Authoring > CKEditor" section. Enter the profile configuration and go to the "Security" section.
 

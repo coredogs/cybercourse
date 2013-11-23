@@ -1,0 +1,19 @@
+<?php
+function ckplugtest_ckeditor_plugin() {
+  return array(
+        'plugin_name' => array(
+            // Plugin name.
+            'name' => 'ckplugtest',
+            // Plugin description - it will be displayed in the plugins management section of the profile settings.
+            'desc' => t('ckplugtest add a dog'),
+            // The full path to the CKEditor plugin directory, trailing slash included.
+            'path' => drupal_get_path('module', 'ckplugtest') . '/plugin/',
+            // Plugin buttons definition (optional).
+//            'buttons' => array(
+//              'InsertDog' => array('label' => 'Button label', 
+////                'icon' => drupal_get_path('module', 'ckplugtest') . '/plugin/icons/ckplugtest.png'),
+//                'icon' => 'icons/ckplugtest.png'),
+//            )
+        )
+    );
+}

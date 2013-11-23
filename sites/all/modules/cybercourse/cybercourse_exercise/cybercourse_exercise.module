@@ -1,0 +1,187 @@
+<?php
+
+/*
+ * Implements hook_init.
+ * 
+ * Insert JS files to make a popup.
+ */
+function cybercourse_exercise_init() {
+  global $base_url;
+  drupal_add_js(
+      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
+        . '/js/popup/jquery.popupwindow.js'
+  );
+  drupal_add_js(
+      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise') 
+        . '/js/cybercourse_exercise.js'
+  );
+}
+
+/**
+ * Implements hook_menu.
+ */
+function cybercourse_exercise_menu() {
+  $items = array();
+  //A page that just closes the window it is in.
+  $items['cybercourse-exercise-close-popup'] = array(
+    'title' => 'Done',
+    'page callback' => '_cybercourse_exercise_close_popup',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;  
+}
+
+/**
+ * Called in hook_menu, to close current browser window (a popup).
+ */
+function _cybercourse_exercise_close_popup() {
+  global $base_url;
+  $path = $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise') 
+      . '/close_popup.js';
+  drupal_add_js( $path );
+  return '<h1>Done</h1>'; //Need to rerun something here.
+}
+
+/**
+ * Implementation of hook_filter_info().
+ */
+function cybercourse_exercise_filter_info() {
+  //Define a filter that can replace a reference to an exercise in page with the
+  //exercise content.
+  $filters['cybercourse_exercise_insert'] = array(
+    'title' => t('Insert CyberCourse exercise'),
+    'description' => t('[[[cycoexercise (node_id)]]], to insert the exercise with given NID'),
+    'process callback' => 'cybercourse_exercise_filter_node_insert_process',
+    'tips callback'  => 'cybercourse_exercise_filter_node_embed_tips',
+    'cache' => FALSE,
+  );
+  return $filters;
+}
+
+/**
+ * Process callback for hook_filter. Finds [[[cycoexercise (node_id)]]]
+ * and passes match data onto function that will do the insertion.
+ */
+function cybercourse_exercise_filter_node_insert_process(
+    $text, $filter, $format, $langcode, $cache, $cache_id) {
+  return preg_replace_callback('/\[\[\[\s*cycoexercise\s*(\d+)\s*\]\]\]/',
+      //[[[, optional whitespace, cycoexercise, optional whitespace, 
+      //exercise number, optional whitespace, ]]]
+      '_cybercourse_exercise_make_replacements', $text);
+}
+
+/**
+ * Tips callback for hook_filter
+ */
+function cybercourse_exercise_filter_node_embed_tips($filter, $format, $long) {
+  return t('[[[cycoexercise 123]]] - Insert an exercise.');
+}
+
+/**
+ * Generates the HTML for the exercise.
+ */ 
+function _cybercourse_exercise_make_replacements($matches) {
+  $exercise_nid = $matches[1];
+  $exercise_node = node_load($exercise_nid);
+  //Make sure that this is the right type of node.
+  if (   $exercise_node == FALSE 
+      || !node_access('view', $exercise_node) 
+      || !$exercise_node->status
+      || $exercise_node->type != 'exercise') {
+    $message = t('Invalid exercise id: @id', array('@id' => $exercise_nid) );
+    drupal_set_message($message);
+    watchdog('cybercourse_exercise', $message);
+    return '<p>' . $message . '</p>';
+  }
+  else {
+    //Work out what to link to. Submission add or edit?
+    //Find submission node with uid of logged in user, and exercise reference
+    //to $exercise_node.
+    global $base_url;
+    global $user;
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'node')
+      ->entityCondition('bundle', 'exercise_submission')
+      ->propertyCondition('status', 1)
+      ->fieldCondition('field_exercise', 'target_id', $exercise_nid, '=')
+      ->propertyCondition('uid', $user->uid);
+    $result = $query->execute();
+    if (isset($result['node'])) {
+      //There is already a submission for this exercise for this user.
+      //Show an edit link.
+      $submissions_nids = array_keys($result['node']);
+      if ( sizeof($submissions_nids) != 1 ) {
+        throw new Exception('Too many submission ids: <pre>' 
+            . print_r($submissions_nids, TRUE) . '</pre>'); 
+      }
+      $url = $base_url . '/node/' . $submissions_nids[0] . '/edit';
+    }
+    else {
+      //No submission yet. Show an add link.
+      $url = $base_url . '/node/add/exercise-submission';
+    }
+    //Add exercise id for use by Entity reference prepopulate module.
+    $url .= '?field_exercise=' . $exercise_nid;
+    //Add destination after submission that will close the window.
+    $url .= '&destination=cybercourse-exercise-close-popup';
+    $link = l( t('Work on it'), $url, 
+        array('attributes' =>
+          array(
+            'title' => 'Work on exercise',
+            'rel' => 'scrollbars:1',
+            'class' => array( 'popupwindow', 'exercise-work-on-it-link' ),
+          )
+        )
+    );
+    //Add the Work On It link to the exercise to be rendered.
+//    $exercise_node->body['und'][0]['value'] = 
+//        $exercise_node->body['und'][0]['value'] . $link;
+    //Prep the exer for viewing, with a custom view mode.
+    $view = node_view($exercise_node, 'cybercourse_exercise_insert', NULL);
+    $view['body'][0]['#markup'] .= $link;
+        
+    $render = drupal_render($view);
+    return $render;
+  } 
+} 
+
+/**
+ * Return the theme to use for popup windows, by inspecting the 
+ * destination.
+ */
+function cybercourse_exercise_custom_theme() {
+  if ( ( isset($_GET['destination']) 
+         && $_GET['destination'] == 'cybercourse-exercise-close-popup' )
+       ||
+       current_path() == 'cybercourse-exercise-close-popup'
+      ) {
+    return 'cybercourse_mt';
+  }
+}
+
+/**
+ * When inserting an exercise into a page, use a special template that
+ * strips most of the content away.
+ * @param string $vars
+ */
+function cybercourse_exercise_preprocess_node(&$vars) {
+  if (   $vars['node']->type == 'exercise' 
+      && $vars['view_mode'] == 'cybercourse_exercise_insert' ) {
+    $vars['theme_hook_suggestions'][] = 'node__exercise__cybercourse_exercise_insert';
+  }
+}
+
+/**
+* Implements hook_entity_info_alter().
+ * 
+ * Define a view mode for inserting exercises in regular content.
+*/
+function cybercourse_exercise_entity_info_alter(&$entity_info) {
+  $entity_info['node']['view modes']['cybercourse_exercise_insert'] = array(
+    'label' => t('Insert Cybercourse exercise'),
+    'custom settings' => TRUE,
+  );
+}
+
+

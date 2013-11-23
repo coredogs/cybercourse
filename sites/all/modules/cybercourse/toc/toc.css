@@ -1,0 +1,35 @@
+/* Styles for the table of contents module. */
+
+/*#toc {
+  border: 1px solid #DDDDDD;
+  background-color: #f4f4f4;
+  margin: 0 0 2em 0;
+  padding: 2em;
+  border-radius: 10px; 
+  -moz-border-radius: 5px; 
+  -webkit-border-radius: 10px; 
+}*/
+
+#label {
+  font-weight: bold;
+}
+
+#cybercourse_toc p {
+}
+
+#toc p.toc_h1 {
+  margin-left: 0;
+}
+
+#toc p.toc_h2 {
+  margin-left: 2em;
+}
+
+#toc p.toc_h3 {
+  margin-left: 4em;
+}
+
+#toc p.toc_h4 {
+  margin-left: 6em;
+}
+

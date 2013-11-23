@@ -1,21 +1,22 @@
 name = CyberCourse admin
-description = Admin theme based on Seven.
-base theme = seven
-package = Core
-version = VERSION
+description = A Rubik Sub-theme.
 core = 7.x
+base theme = rubik
 version = "7.1"
-stylesheets[screen][] = reset.css
-stylesheets[screen][] = style.css
 
-stylesheets[screen][] = custom.css
-stylesheets[screen][] = views.css
-
-settings[shortcut_module_link] = 1
 regions[content] = Content
 regions[help] = Help
 regions[page_top] = Page top
 regions[page_bottom] = Page bottom
-regions[sidebar_first] = First sidebar
-regions_hidden[] = sidebar_first
 
+;scripts[] = js/rubik.js
+;stylesheets[screen][] = core.css
+;stylesheets[screen][] = icons.css
+;stylesheets[screen][] = style.css
+
+stylesheets[screen][] = css/custom.css
+
+;stylesheets[print][] = print.css
+
+; Support shortcut module links
+;settings[shortcut_module_link] = 1

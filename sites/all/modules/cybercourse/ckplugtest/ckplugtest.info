@@ -1,0 +1,4 @@
+name = ckplugtest
+description = Test custom plugin config.
+package = CyberCourse
+core = 7.x
