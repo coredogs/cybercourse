@@ -16,9 +16,17 @@ CKEDITOR.plugins.add('pseudent', {
 //        );
 //      }
     );
+    var cssLink = document.createElement("link") 
+    cssLink.href = //Drupal.settings.pseudents.base_url
+        //Drupal.settings.basePath 
+        Drupal.settings.pseudents.poseStylesheet; 
+    cssLink.rel = "stylesheet"; 
+    cssLink.type = "text/css";
+    jQuery("body").append(cssLink);
+    
     
     editor.ui.addButton( 'Pseudent', {
-        label: 'THING!!!!',
+        label: 'Insert a pseudent',
         command: 'insertPseudent',
         state: CKEDITOR.TRISTATE_ENABLED,
         icon : this.path + 'pseudent.png'

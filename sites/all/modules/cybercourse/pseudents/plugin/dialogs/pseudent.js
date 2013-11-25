@@ -1,79 +1,53 @@
 CKEDITOR.dialog.add( 'pseudentDialog', function ( editor ) {
+    Drupal.settings.pseudents.currentSelection = '';
     return {
-        title: 'Add a dog',
+        title: 'Add a pseudent',
         minWidth: 400,
         minHeight: 200,
-
         contents: [
             {
-                id: 'tab-dog',
-                label: 'Dog settings',
-                elements: [
-                  {
-                      type: 'text',
-                      id: 'dog_name',
-                      label: 'Name',
-                      validate: CKEDITOR.dialog.validate.notEmpty( "Name field cannot be empty" )
-                  },
-                  {
-                      type: 'text',
-                      id: 'legs',
-                      label: 'Legs',
-                      validate: CKEDITOR.dialog.validate.notEmpty( "Legs field cannot be empty" )
-                  }
-                ]
-            },
-            {
-              id: 'tab-other',
-              label: 'Other stuff',
-              elements: [
-                {
-                  type: 'vbox',
-                  align: 'right',
-                  width: '200px',
-                  children: [
-                      {
-                          type: 'text',
-                          id: 'age',
-                          label: 'Age'
-                      },
-                      {
-                          type: 'text',
-                          id: 'sex',
-                          label: 'Sex'
-                      },
-                      {
-                          type: 'text',
-                          id: 'nationality',
-                          label: 'Nationality'
-                      }
-                  ]
-                }
-              ]
-            },
-            {
-              id: 'tab-exercises',
-              label: 'Exercises',
+              id: 'tab-pseudents',
+              label: 'Pseudents',
               elements: [
                 {
                   type: 'html',
-                  html: '<h1>FART</h1>',
-                  onClick: function() {
-                    alert('Phhht');
-                  }
+                  html: '<p>Choose the pseudent you want to add.</p>' 
+                          + Drupal.settings.pseudents.posePreviews
                 }
               ]
               
             }
         ],
+        onShow: function() {
+          //Clear the selection.
+          Drupal.settings.pseudents.currentSelection = "";
+          jQuery("table#pseudent-choose-table tr").removeClass("sdelected");
+          if ( ! jQuery("table#pseudent-choose-table tr").hasClass("processed") ) {
+            jQuery("table#pseudent-choose-table tr").addClass("processed")
+              .click(function(event) {
+                //Clicked on a pose.
+                var target = event.target;
+                if ( Drupal.settings.pseudents.currentSelection ) {
+                  //Remove prior selection look.
+                  jQuery('#pseudent-' + Drupal.settings.pseudents.currentSelection)
+                          .removeClass('selected');
+                }
+                //Save new selection.
+                var row = jQuery(target).closest("tr");
+                Drupal.settings.pseudents.currentSelection 
+                  = parseInt( row.data("pseudent-nid") );
+                row.addClass('selected');
+              });
+          }
+        },
         onOk: function() {
-            var dialog = this;
-            var dog = editor.document.createElement( 'span' );
-            dog.setText( 
-              dialog.getValueOf( 'tab-dog', 'dog_name' ) 
-              + ' with ' + dialog.getValueOf( 'tab-dog', 'legs' ) + ' legs'
-            );
-            editor.insertElement( dog );
+          if ( Drupal.settings.pseudents.currentSelection ) {
+            var pseudent =
+              ".. pseudent::" + Drupal.settings.pseudents.currentSelection
+              + "\n\n    What?\n\n";
+            editor.insertText( pseudent );
+            this.hide();
+          }
         }
       }
     });

@@ -1,0 +1,44 @@
+<?php
+
+function authornote_permission() {
+  return array(
+    'view author note' => array(
+      'title' => t('View author notes'),
+      'description' => t('Allows users to see author notes added to a page.'),
+    ),
+    'change author note' => array(
+      'title' => t('Change author notes'),
+      'description' => t('Allows users to add, edit, and delete author notes.'),
+    ),
+  );
+}
+
+function authornote_init() {
+  //Load CSS to show notes when viewing pages.
+  drupal_add_css(drupal_get_path('module', 'authornote') . '/css/authornote.css' );
+  //Add a setting to tell plugin where to find the CSS when editing.
+  global $base_url;
+  $settings = array(
+    'stylesheet' => 
+       $base_url . drupal_get_path('module', 'authornote') . '/css/authornote.css',
+  );
+  drupal_add_js(
+      array('authornote' => $settings),
+      'setting'
+  );
+  
+}
+
+function authornote_ckeditor_plugin() {
+  drupal_set_message('boar');
+  return array(
+    'authornote' => array(
+      // Plugin name.
+      'name' => 'authornote',
+      // Plugin description - it will be displayed in the plugins management section of the profile settings.
+      'desc' => t('Plugin to add author notes to pages'),
+      // The full path to the CKEditor plugin directory, trailing slash included.
+      'path' => drupal_get_path('module', 'authornote') . '/plugin/',
+    )
+  );
+}

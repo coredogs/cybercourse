@@ -14,7 +14,8 @@ regions[page_bottom] = Page bottom
 ;stylesheets[screen][] = icons.css
 ;stylesheets[screen][] = style.css
 
-stylesheets[screen][] = css/custom.css
+stylesheets[all][] = css/custom.css
+stylesheets[all][] = css/views.css
 
 ;stylesheets[print][] = print.css
 

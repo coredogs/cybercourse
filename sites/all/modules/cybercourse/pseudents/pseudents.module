@@ -8,6 +8,13 @@ define('POSES_PREVIW_DIRTY_FLAG_VAR', 'pseudents_poses_preview_dirty');
  */
 define('POSES_PREVIEW_DATA_VAR', 'pseudents_poses_preview_data');
 
+
+function pseudents_init() {
+  drupal_add_css(
+    drupal_get_path('module', 'pseudents') . '/css/pseudents.css'
+  );
+}
+
 /**
  * Implements hook_help().
  */
@@ -184,12 +191,16 @@ function _pseudents_compute_char_html( $query_result ) {
 function pseudents_get_editor_previews() {
   $pseudents_preview_dirty = variable_get(POSES_PREVIW_DIRTY_FLAG_VAR, TRUE);
   if ( $pseudents_preview_dirty ) {
-    _pseudents_generate_ck_select_data();
+    _pseudents_generate_ck_pseudent_table();
   }
   return variable_get(POSES_PREVIEW_DATA_VAR, 'none');
 }
 
-function _pseudents_generate_ck_select_data() {
+/**
+ * Generate HTML for a table of pseudent poses to use in a CKEditor dialog.
+ * The result is cached. 
+ */
+function _pseudents_generate_ck_pseudent_table() {
   //Fetch pseudent pose data.
   $query = new EntityFieldQuery;
   $query
@@ -198,12 +209,20 @@ function _pseudents_generate_ck_select_data() {
     ->propertyCondition('status', 1)
     ->fieldOrderBy('field_token', 'value');
   $query_result = $query->execute();
-  //Fetch the pseudent names.
-  $pseudent_pose_previews = array();
+  //Create the pseudent HTML.
+  $table_html = '';
   if ( isset($query_result['node']) ) {
+    $table_html = 
+          '<table id="pseudent-choose-table">'
+        .   '<tr id="header-row">'
+        .     '<th>Thumbnail</th>'
+        .     '<th>Token</th>'
+        .     '<th>Notes (summary)</th>'
+        .   '</tr>';
     foreach ( $query_result['node'] as $nid => $value ) {
       $node = node_load($nid);
       $token = $node->field_token[LANGUAGE_NONE][0]['safe_value'];
+      $notes = $node->body[LANGUAGE_NONE][0]['summary'];
       //Caption is not a required field.
       if ( isset($node->field_caption[LANGUAGE_NONE][0]['safe_value']) ) {
         $caption = $node->field_caption[LANGUAGE_NONE][0]['safe_value'];
@@ -212,36 +231,94 @@ function _pseudents_generate_ck_select_data() {
         $caption = '';
       }
       $uri = $node->field_image[LANGUAGE_NONE][0]['uri'];
-      $usable_url = file_create_url( $uri );
-      $preview_html = 
-          '<div class="pseudents_ck_preview">'
-          . '<div class="pseudents_ck_preview_image">'
-          .   '<img src="' . $usable_url . '" alt="' . $caption . '">'
-          .   '<div class="pseudents_ck_preview_caption">'
+      $absolute_url = file_create_url( $uri );
+      //Convert to local URL.
+      //This will only work for Drupals in the root of sub/domain?
+      $url = parse_url($absolute_url);
+      $usable_url = $url['path'];
+      $table_html .= 
+            '<tr id="pseudent-' . $nid . '" data-pseudent-nid=' . $nid . '">'
+          .   '<td class="pseudent-image">'
+          .     '<img src="' . $usable_url . '" alt="' . $caption . '"><br>'
           .     $caption
-          .   '</div>'
-          .  '</div>'
-          .  '<div class="pseudents_ck_preview_token">'
-          .     'Token:<br>' . $token . '<br><br>'
-          .  '</div>'
-          .'</div>'
+          .   '</td>'
+          .   '<td class="pseudent-token">'
+          .     $token
+          .   '</td>'
+          .   '<td class="pseudent-notes">'
+          .     $notes
+          .   '</td>'
+          . '</tr>'
         ;
-      $pseudent_pose_previews[] = array(
-        'token' => $token,
-        'caption' => $caption,
-        'html' => $preview_html,
-      );
     }
   }
-  if ( sizeof($pseudent_pose_previews) == 0 ) {
+  $table_html .= '</table>';
+  if ( $table_html == '' ) {
     variable_set(POSES_PREVIEW_DATA_VAR, 'none');
   }
   else {
-    variable_set( POSES_PREVIEW_DATA_VAR, $pseudent_pose_previews );
+    variable_set( POSES_PREVIEW_DATA_VAR, $table_html );
   }
   variable_set(POSES_PREVIW_DIRTY_FLAG_VAR, FALSE);
 }
 
+
+//function _pseudents_generate_ck_select_data() {
+//  //Fetch pseudent pose data.
+//  $query = new EntityFieldQuery;
+//  $query
+//    ->entityCondition('entity_type', 'node')
+//    ->entityCondition('bundle', 'pseudent_pose')
+//    ->propertyCondition('status', 1)
+//    ->fieldOrderBy('field_token', 'value');
+//  $query_result = $query->execute();
+//  //Fetch the pseudent names.
+//  $pseudent_pose_previews = array();
+//  if ( isset($query_result['node']) ) {
+//    foreach ( $query_result['node'] as $nid => $value ) {
+//      $node = node_load($nid);
+//      $token = $node->field_token[LANGUAGE_NONE][0]['safe_value'];
+//      //Caption is not a required field.
+//      if ( isset($node->field_caption[LANGUAGE_NONE][0]['safe_value']) ) {
+//        $caption = $node->field_caption[LANGUAGE_NONE][0]['safe_value'];
+//      }
+//      else {
+//        $caption = '';
+//      }
+//      $uri = $node->field_image[LANGUAGE_NONE][0]['uri'];
+//      $usable_url = file_create_url( $uri );
+//      $preview_html = 
+//          '<div class="pseudents_ck_preview">'
+//          . '<div class="pseudents_ck_preview_image">'
+//          .   '<img src="' . $usable_url . '" alt="' . $caption . '">'
+//          .   '<div class="pseudents_ck_preview_caption">'
+//          .     $caption
+//          .   '</div>'
+//          .  '</div>'
+//          .  '<div class="pseudents_ck_preview_token">'
+//          .     'Token:<br>' . $token . '<br><br>'
+//          .  '</div>'
+//          .'</div>'
+//        ;
+//      $pseudent_pose_previews[] = array(
+//        'token' => $token,
+//        'caption' => $caption,
+//        'html' => $preview_html,
+//      );
+//    }
+//  }
+//  if ( sizeof($pseudent_pose_previews) == 0 ) {
+//    variable_set(POSES_PREVIEW_DATA_VAR, 'none');
+//  }
+//  else {
+//    variable_set( POSES_PREVIEW_DATA_VAR, $pseudent_pose_previews );
+//  }
+//  variable_set(POSES_PREVIW_DIRTY_FLAG_VAR, FALSE);
+//}
+
+/*
+ * Set 'cache is dirty' flag when poses change.
+ */
 function pseudents_node_update( $node ) {
   _pseudents_set_dirty_flag( $node );
 }
@@ -279,10 +356,9 @@ function _pseudents_load_client_side_stuff() {
   drupal_add_css(drupal_get_path('module', 'pseudents') . '/css/pseudents.css' );
   global $base_url;
   $settings = array(
-    'base_url' => $base_url,
-    'pose_previews' => pseudents_get_editor_previews(),
-    'pose_stylesheet' => 
-        drupal_get_path('module', 'pseudents') . '/css/pseudents.css',
+    'posePreviews' => pseudents_get_editor_previews(),
+    'poseStylesheet' => 
+       $base_url . drupal_get_path('module', 'pseudents') . '/css/pseudents.css',
   );
   drupal_add_js(
       array('pseudents' => $settings),

@@ -1,0 +1,8 @@
+/*
+Override standard ReST stylesheet.
+*/
+
+h1.title {
+  text-align: left;
+}
+

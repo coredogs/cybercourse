@@ -1,0 +1,6 @@
+name = Author note
+description = Lets authors add hidden notes inside pages.
+package = CyberCourse
+core = 7.x
+dependencies[] = ckeditor
+stylesheets[all][] = css/authornote.css

@@ -2,6 +2,46 @@
 Styles for the pseudents module.
 */
 
+table#pseudent-choose-table th,
+table#pseudent-choose-table td {
+  padding: 0.5em;
+  vertical-align: middle;
+}
+
+table#pseudent-choose-table tr {
+  background-color: #eee;
+}
+
+table#pseudent-choose-table tr:hover {
+  cursor: pointer;
+  background-color: #ddd;
+}
+
+table#pseudent-choose-table tr.selected {
+  background-color: #ffffe0;
+}
+
+
+table#pseudent-choose-table th {
+  text-align: center;
+  font-weight: bold;
+  background-color: white;
+}
+
+table#pseudent-choose-table td.pseudent-token {
+  text-align: center;
+}
+
+table#pseudent-choose-table td.pseudent-image {
+  text-align: center;
+}
+
+table#pseudent-choose-table td.pseudent-image img {
+  width: 8em;
+}
+
+
+
 /* For the admin table. */
 .admin-char table {
   width: 0;

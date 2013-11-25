@@ -12,7 +12,8 @@ CKEDITOR.editorConfig = function(config) {
   });
   config.basicEntities = true; //Entity encode <, >.
   config.disableNativeSpellChecker = false;
-  config.removePlugins = 'tabletools,contextmenu';
+  //Kill context menu. Remove other things that depend on context menu.
+  config.removePlugins = 'liststyle,tabletools,contextmenu';
   //Size the summary editor.
   if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
     CKEDITOR.instances['edit-body-und-0-summary'].config.height = "8em";
