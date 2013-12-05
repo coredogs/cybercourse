@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Implemenmts hook_help().
+ */
+function authornote_help() {
+  return '<p>Hep me!</p>';
+}
+
+/**
+ * Implements hook_permission().
+ */
 function authornote_permission() {
   return array(
     'view author note' => array(
@@ -13,32 +23,193 @@ function authornote_permission() {
   );
 }
 
+/**
+ * Implements hook_init().
+ */
 function authornote_init() {
-  //Load CSS to show notes when viewing pages.
-  drupal_add_css(drupal_get_path('module', 'authornote') . '/css/authornote.css' );
-  //Add a setting to tell plugin where to find the CSS when editing.
-  global $base_url;
-  $settings = array(
-    'stylesheet' => 
-       $base_url . drupal_get_path('module', 'authornote') . '/css/authornote.css',
-  );
-  drupal_add_js(
-      array('authornote' => $settings),
-      'setting'
-  );
-  
+  if ( user_access('view author note') ) {
+    //Load CSS to show notes when viewing pages.
+    drupal_add_css(drupal_get_path('module', 'authornote') . '/css/authornote.css' );
+  }
+  if ( user_access('change author note') ) {
+    //Add a setting to tell plugin where to find the CSS when editing.
+    global $base_url;
+    $settings = array(
+      'stylesheet' => 
+         $base_url . '/' . drupal_get_path('module', 'authornote') . '/css/authornote.css',
+    );
+    drupal_add_js(
+        array('authornote' => $settings),
+        'setting'
+    );
+  }  
 }
 
+/**
+ * Implements hook_ckeditor_plugin().
+ */
 function authornote_ckeditor_plugin() {
-  drupal_set_message('boar');
   return array(
     'authornote' => array(
       // Plugin name.
       'name' => 'authornote',
       // Plugin description - it will be displayed in the plugins management section of the profile settings.
-      'desc' => t('Plugin to add author notes to pages'),
+      'desc' => t('SWIM: Plugin to add author notes to pages'),
       // The full path to the CKEditor plugin directory, trailing slash included.
       'path' => drupal_get_path('module', 'authornote') . '/plugin/',
     )
   );
+}
+
+/**
+ * Implements hook_edithtml_2_directive().
+ * 
+ * Translate authornote editHTML in $content to its 
+ * authornote directive equivalent. 
+ * 
+ *   <div class="authornote">
+ *       <h2 class="authornote-title">Title</h2>
+ *       <div class="authornote-content"><p>Content...</p></div>
+ *   </div>
+ * 
+ * See SWIM docs for more.
+ */
+//function authornote_edithtml_2_directive_alter( &$content ) { //, &$type) {
+//  //Pattern to find the img tags. Need the ? to make the match lazy, not greedy.
+/*  $pattern = '/<img.*?>/im'; */
+//  $pattern = '/rrrrrrrrrrr/im';
+//  $content = preg_replace_callback(
+//      $pattern, 
+//      function ($matches) {
+//        //Got an image tag.
+//        //Parse it with QueryPath
+//        $file = htmlqp($matches[0], 'img')->attr('src');
+//        $alt = htmlqp($matches[0], 'img')->attr('alt');
+//        $width = htmlqp($matches[0], 'img')->attr('width');
+//        $height = htmlqp($matches[0], 'img')->attr('height');
+//        $scale = htmlqp($matches[0], 'img')->attr('scale');
+//        $target = htmlqp($matches[0], 'img')->attr('target');
+//        $class = htmlqp($matches[0], 'img')->attr('class');
+//        $name = htmlqp($matches[0], 'img')->attr('name');
+//        $options = $alt || $width || $height || $scale 
+//            || $target || $class || $name;
+//        $directive = '.. image:: ' . $file;
+//        if ( $options ) {
+//          $directive .= "\n";
+//          if ( $alt ) {
+//            $directive .= '    :alt: ' . $alt . "\n";
+//          }
+//          if ( $width ) {
+//            $directive .= '    :width: ' . $width . "\n";
+//          }
+//          if ( $height ) {
+//            $directive .= '    :height: ' . $height . "\n";
+//          }
+//          if ( $scale ) {
+//            $directive .= '    :scale: ' . $scale . "\n";
+//          }
+//          if ( $target ) {
+//            $directive .= '    :target: ' . $target . "\n";
+//          }
+//          if ( $class ) {
+//            $directive .= '    :class: ' . $class . "\n";
+//          }
+//          if ( $name ) {
+//            $directive .= '    :name: ' . $name . "\n";
+//          }
+//        }
+//        return $directive;
+//      },
+//      $content
+//  );
+//  
+//  
+//  return $content;
+//}
+
+
+/**
+ * Implements hook_cycomarkup_2_viewhtml().
+ * 
+ * Translate authornote CyCo markup in $content to its 
+ * viewHTML equivalent. 
+ * 
+ * [[[cycoauthornote title|||note]]]
+ * 
+ * See SWIM docs for more.
+ */
+function authornote_cycomarkup_2_viewhtml_alter(&$content) {
+  $d = 0;
+  $regex = 
+      '/\[\[\[cycoauthornote\s*(.*?)\|\|\|(.*?)\]\]\]/is';
+  //? is for lazy match.
+      //s option so it can contain new line chars.
+  $content
+    = preg_replace_callback($regex, '_authornote_make_view_replacements', $content);
+}
+
+function _authornote_make_view_replacements($matches) {
+  $title = $matches[1];
+  $content = $matches[2];
+  $html =  '<div class="authornote">'
+          .  '<h2 class="authornote-title">' . $title . '</h2>'
+          .  '<div class="authornote-content"><p>' . $content . '</p></div>'
+          .  '</div>';
+  return $html;
+}
+
+
+function authornote_node_view($node, $view_mode, $langcode) {
+  $content = 4;
+  $f=5;
+  $node->content['#post_render'][] = '_authornote_node_postrender';
+}
+
+function _authornote_node_postrender( $elements ) {
+  if ( ! user_access('view author note') ) {
+  $regex = 
+      '/\<div class\=\"authornote\"\>\s*'
+    .   '\<h2 class\=\"authornote\-title\"\>(.*?)\<\/h2\>\s*'
+    .   '\<div class\=\"authornote\-content\"\>\s*\<p\>(.*?)\<\/p\>\s*'
+    .   '\<\/div\>\s*'
+    . '\<\/div\>/is';
+    //? forl azy eval.
+    //s option to include new lines.
+  $elements
+    = preg_replace_callback($regex, 
+        function( $matches ) {
+          return '';
+        }, 
+        $elements);
+
+  }
+  return $elements;
+    
+}
+
+/**
+ * Implements hook_edithtml_2_directive_alter().
+ * @param string $content Content to change.
+ */
+function authornote_edithtml_2_directive_alter( &$content ) {
+  $r = 0;
+  $regex = 
+      '/\<div class\=\"authornote\"\>\s*'
+    .   '\<h2 class\=\"authornote\-title\"\>(.*?)\<\/h2\>\s*'
+    .   '\<div class\=\"authornote\-content\"\>\s*\<p\>(.*?)\<\/p\>\s*'
+    .   '\<\/div\>\s*'
+    . '\<\/div\>/is';
+    //? forl azy eval.
+    //s option to include new lines.
+  $content
+    = preg_replace_callback($regex, '_authornote_make_replacements', $content);
+}
+
+function _authornote_make_replacements($matches) {
+  $title = $matches[1];
+  $content = $matches[2];
+  $replacement = 
+      '.. authornote:: ' . $title . "\n\n"
+    . '    ' . $content . "\n\n";
+  return $replacement;
 }

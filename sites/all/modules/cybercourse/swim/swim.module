@@ -3,6 +3,7 @@
  * @todo Create SWIM text format at install.
  */
 
+
 /**
  * Implements hook_help().
  */
@@ -17,23 +18,12 @@ function swim_help($path, $arg) {
 }
 
 /**
- * Implementation of hook_perm().
- */
-function swim_permission() {
-  return 
-    array(
-      'peek content' => array(
-        'title' => t('Peek at content'),
-        'description' => t('See what content will look like on a device.')
-      ),
-    );
-}
-
-/**
  * Implements hook_menu().
  */
 function swim_menu() {
   $items = array();
+  //Return a page with no content, but all the stylesheets and other 
+  //themeing stuff in place. Used for previews.
   $items['swim-mt-peek'] = array(
     'page callback' => 'swim_mt_peek',
     'access callback' => 'user_access',
@@ -44,6 +34,37 @@ function swim_menu() {
 }
 
 /**
+ * Implementation of hook_perm().
+ */
+function swim_permission() {
+  return array(
+    'switch to plain' => array(
+      'title' => t('Can switch to plain text'),
+      'description' => t('See a "Switch to plain text editor" link.')
+    ),
+  );
+}
+
+/**
+ * Implements hook_ckeditor_plugin(). 
+ * 
+ * Tell Drupal's CK module where the peek plugin is.
+ */
+function swim_ckeditor_plugin() {
+  global $base_url;
+  return array(
+    'peek' => array(
+      // Plugin name.
+      'name' => 'peek',
+      // Plugin description - it will be displayed in the plugins management section of the profile settings.
+      'desc' => t('SWIM: Plugin to preview content on various devices.'),
+      // The full path to the CKEditor plugin directory, trailing slash included.
+      'path' => drupal_get_path('module', 'swim') . '/plugin/',
+    )
+  );
+}
+
+/**
  * Implements hook_form_alter().
  */
 function swim_form_alter(&$form, &$form_state, $form_id) {
@@ -51,160 +72,178 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
   //having the SWIM format? Cache the results of the check 
   //so don't run check again on this page call.
   //Not sure if this is the right approach.
-  if ( stristr($form_id, 'node_form') !== FALSE ) {
-    //Is the SWIM format being used?
-    $swimInUse = TRUE; //_swim_check_swim_used( $form['#node'] );
-    if (    $swimInUse 
-         && user_access('peek content') 
-         //&& user_access('use characters in content')
-        ) {
-      // todo: improve, separate access checks.
-      if (module_invoke('ajax_markup', 'on')) {
+  try {
+    global $base_url;
+    if ( stristr($form_id, 'node_form') !== FALSE ) {
+      //Is the SWIM format being used?
+      $body_format_name = $form['body'][LANGUAGE_NONE][0]['#format'];
+      $new_node = ! isset( $form['#entity']->nid );
+      if ( $body_format_name == 'swim' || $new_node ) {
+        //Need Ajax markup module to work.
+        if ( ! module_invoke('ajax_markup', 'on') ) {
+          throw new Exception(t('SWIM: Ajax markup module must be on. '
+              . 'Please contact your site administrator.'));
+        }
+        //Copy content from field_body_ck to body. 
+        //See SWIM docs for details.
+        if ( ! $new_node ) {
+          $form['body'][LANGUAGE_NONE][0]['#default_value'] 
+              = $form['#node']->field_body_ck[LANGUAGE_NONE][0]['value'];
+          $form['body'][LANGUAGE_NONE][0]['summary']['#default_value']
+              = $form['#node']->field_body_ck[LANGUAGE_NONE][0]['summary'];
+        }
+        //Set up call to submit function.
+        $form['#submit'][] = '_swim_form_submit';
+        //Set up UI stuff.
         drupal_add_library('system', 'ui.dialog');
         //Load JS for doing peeks.
         drupal_add_js( drupal_get_path('module', 'swim') .'/js/swim.js' );
         drupal_add_css(drupal_get_path('module', 'swim') . '/css/swim.css' );
-        //Load JS to hide things.
+        //Load JS to remove 'Switch to plain text' link, depending on permissions.
         //Load late, so the link to hide has been built.
-        drupal_add_js(
-            drupal_get_path('module', 'swim') .'/js/swim_hide_things.js',
-          array(
-            'group' => JS_THEME,
-            'weight' => 20,
-          )
-        );
+        if ( ! user_access('switch to plain') ) {
+          drupal_add_js(
+              drupal_get_path('module', 'swim') . '/js/swim_kill_plain_switch.js',
+            array(
+              'group' => JS_THEME,
+              'weight' => 20,
+            )
+          );
+        } //end ! user_access('switch to plain')
         //Send some settings to JS.
         global $base_url;
-        $body_format_name = $form['body'][LANGUAGE_NONE][0]['#format'];
         $settings = array(
           'base_url' => $base_url,
-          'format_name' => $body_format_name,
+          'format_name' => 'swim',
+          'editing_stylesheet' => 
+            $base_url . '/' . drupal_get_path('module', 'swim') . '/css/swim_editing.css',
+          'icon_path' =>
+            $base_url . '/' . drupal_get_path('module', 'swim') . '/plugin/icons/',
         );
         drupal_add_js(
             array('swim' => $settings),
             'setting'
         );
-        //Put files CK needs in the right places.
-        swim_copy_ckeditor_components();
-      } //Can use Ajax markup module.
-    } //Using SWIM text format.
-  } //This is a node form.
+        //This is how one calls JS code to run once Submit button is clicked.
+        //$form['#attributes'] = array('OnSubmit' => 'alert("Thing");');
+      } //Using SWIM text format.
+    } //This is a node form.
+  }
+ catch (Exception $e) {
+    drupal_set_message($e->getMessage(), 'error');
+    watchdog('SWIM', $e->getMessage());   
+ }
 }
 
 /**
- * Make sure that the files CK needs are available in the right places.
+ * Called when a form is submitted. Prep content for DB.
  */
-function swim_copy_ckeditor_components() {
-  //Make sure that the peek plugin and the right CK config file are available.
-  //Check whether the peek plugin is in the CKEditor module's plugin set. 
-  $dest_parent = DRUPAL_ROOT . '/' . drupal_get_path('module', 'ckeditor') . '/plugins';
-  $dest_dir = $dest_parent . '/peek';
-  if ( ! file_exists($dest_dir) ) {
-    //Oeek plugin needs to be copied to the right place.
-    if ( ! is_writable($dest_parent) ) { 
-      drupal_set_message(
-            'SWIM: Cannot write peek plugin to CKEditor module\'s plugin directory. '
-          . 'Please check the module\'s help.'
-      );
-    }
-    else {
-      //Copy the peek plugin dir.
-      $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/peek';
-      swim_recurse_copy($source, $dest_dir);
-      //Assume we also need to copy the ckeditor config file as well.
-      //Put it in the CKEditor module dir. This will become a global setting,
-      //meaning that non-SWIM configs cannot be used w/o fucking things up.      
-      $dest = DRUPAL_ROOT . '/' . drupal_get_path('module', 'ckeditor') 
-          . '/ckeditor.config.js';
-      //Does the file already exist?
-      if ( file_exists( $dest ) ) {
-        //Rename the file.
-        $original_file = $dest . '.original';
-        if ( ! file_exists( $original_file ) ) {
-          if ( ! is_writable($dest) ) { 
-            drupal_set_message(
-                  'SWIM: Cannot rename CKEditor module\'s existing config file. '
-                . 'Please check the module\'s help.'
-            );
-          }
-          else {
-            rename($dest, $original_file);
-          }
-        } //Original file not renamed yet.
-      }
-      //Copy
-      if ( ! is_writable($dest) ) { 
-        drupal_set_message(
-              'SWIM: Cannot copy new CKEditor config file. '
-            . 'Please check the module\'s help.'
-        );
-      }
-      $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/ckeditor.config.js';
-      copy($source, $dest);
-    }
-  }
-  //Check that the ckeditor.config.js file exists.
-  //This code is run independently of whether the peek plugin exsits.
-  //For cases where an admin removed ckeditor.config.js manually,
-  //w/o removing the peek files.
-  $dest = DRUPAL_ROOT . '/' . drupal_get_path('module', 'ckeditor') 
-      . '/ckeditor.config.js';
-  //Does the file already exist?
-  if ( ! file_exists( $dest ) ) {
-      //Copy
-      if ( ! is_writable($dest) ) { 
-        drupal_set_message(
-              'SWIM: Cannot copy new CKEditor config file. '
-            . 'Please check the module\'s help.'
-        );
-      }
-      $source = DRUPAL_ROOT . '/' . drupal_get_path('module', 'swim') . '/ckeditor_custom/ckeditor.config.js';
-      copy($source, $dest);
-  }    
+function _swim_form_submit($form, &$form_state) {
+  //See SWIM docs for details.
+  $body_value = $form_state['values']['body'][LANGUAGE_NONE][0]['value'];
+  $body_summary = $form_state['values']['body'][LANGUAGE_NONE][0]['summary'];
+  //Copy content from body to field_body_ck. 
+  $form_state['values']['field_body_ck'][LANGUAGE_NONE][0]['value']
+    = $body_value;
+  $form_state['values']['field_body_ck'][LANGUAGE_NONE][0]['summary']
+    = $body_summary;
+  //Convert to pure ReST.
+  //First, the <br>s.
+  swim_remove_brs( $body_value );
+  swim_remove_brs( $body_summary );
+  //Replace &nbsp; with real spaces.
+  $body_value = str_replace('&nbsp;', ' ', $body_value);
+  $body_summary = str_replace('&nbsp;', ' ', $body_summary);
+  //Replace &#39; with real quotes.
+  $body_value = str_replace('&#39;', '\'', $body_value);
+  $body_summary = str_replace('&#39;', '\'', $body_summary);
+  //Handle numeric codes correctly.
+  // See http://www.php.net/manual/en/function.html-entity-decode.php#47371
+  $body_value = preg_replace('/&#(\d+);/me',"chr(\\1)",$body_value); #decimal notation
+  $body_value = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$body_value);  #hex notation
+  $body_summary = preg_replace('/&#(\d+);/me',"chr(\\1)",$body_summary); #decimal notation
+  $body_summary = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$body_summary);  #hex notation
+  //HTML entities to their real characters.
+  $body_value = html_entity_decode( $body_value );
+  $body_summary = html_entity_decode( $body_summary );
+  //Special chars - particularly #39; -> '.
+  $body_value = htmlspecialchars_decode( $body_value );
+  $body_summary = htmlspecialchars_decode( $body_summary );
+  //Replace image HTML tags with directives.
+  swim_img_2_directive( $body_value );
+  swim_img_2_directive( $body_summary );
+  //Trigger other module's translators.
+//  $type = 'value';
+  drupal_alter( 'edithtml_2_directive', $body_value); //, $type );
+//  $type = 'summary';
+  drupal_alter('edithtml_2_directive', $body_summary); //, $type );
+  //Put processed values (ReST now) back into body field.
+  $form_state['values']['body'][LANGUAGE_NONE][0]['value'] = $body_value;
+  $form_state['values']['body'][LANGUAGE_NONE][0]['summary'] = $body_summary;
 }
 
 /**
- * BROKEH
- * Check whether a node is using the SWIM text format.
- * @param stdClass $node Node
- * @return boolean TRUE if it is, else FALSE.
+ * Remove <br>s from $content. 
+ * @param type $content Content to remove <br>s from.
  */
-function _swim_check_swim_used( $node ) {
-//  $formats = filter_formats();
-  $format = filter_format_load('swim');
-  if (!filter_access($format)) {
-    return FALSE;
-  }
-  $fields = field_info_instances('node', $node->type);
-  foreach( $fields as $field_name => $field_info ) {
-    
-  }
-  
-    $instance = field_info_instance('node', $field_name, 'release');
-  if (empty($instance['settings']['text_processing'])) {
-    return FALSE;
-  }
-  return TRUE;
-  
-  //Iterate over properties.
-  foreach ($node as $property => $value) {
-    if ( is_array($value) && isset( $value[LANGUAGE_NONE][0] ) ) {
-      foreach ( $value[LANGUAGE_NONE] as $field_value_info ) {
-        if ( isset( $field_value_info['format'] ) ) {
-          if ( $field_value_info['format'] == 'swim' ) {
-            return TRUE;
+function swim_remove_brs( &$content ) {
+  $content = preg_replace('/\<\s*br\s*\/?\s*\>/i', '', $content);
+}
+
+
+function swim_img_2_directive( &$content ) {
+  //Pattern to find the img tags. Need the ? to make the match lazy, not greedy.
+  $pattern = '/<img.*?>/im';
+  $content = preg_replace_callback(
+      $pattern, 
+      function ($matches) {
+        //Got an image tag.
+        //Parse it with QueryPath
+        $file = htmlqp($matches[0], 'img')->attr('src');
+        $alt = htmlqp($matches[0], 'img')->attr('alt');
+        $width = htmlqp($matches[0], 'img')->attr('width');
+        $height = htmlqp($matches[0], 'img')->attr('height');
+        $scale = htmlqp($matches[0], 'img')->attr('scale');
+        $target = htmlqp($matches[0], 'img')->attr('target');
+        $class = htmlqp($matches[0], 'img')->attr('class');
+        $name = htmlqp($matches[0], 'img')->attr('name');
+        $options = $alt || $width || $height || $scale 
+            || $target || $class || $name;
+        $directive = '.. image:: ' . $file;
+        if ( $options ) {
+          $directive .= "\n";
+          if ( $alt ) {
+            $directive .= '    :alt: ' . $alt . "\n";
+          }
+          if ( $width ) {
+            $directive .= '    :width: ' . $width . "\n";
+          }
+          if ( $height ) {
+            $directive .= '    :height: ' . $height . "\n";
+          }
+          if ( $scale ) {
+            $directive .= '    :scale: ' . $scale . "\n";
+          }
+          if ( $target ) {
+            $directive .= '    :target: ' . $target . "\n";
+          }
+          if ( $class ) {
+            $directive .= '    :class: ' . $class . "\n";
+          }
+          if ( $name ) {
+            $directive .= '    :name: ' . $name . "\n";
           }
         }
-        
-      } //End iterate over values of field.
-    }
-  } //End iterate over properties.
-  return FALSE;
+        return $directive;
+      },
+      $content
+  );
 }
+
 
 /**
  * Return a page with the right media queries and such, and a place to 
- * put markup.
+ * put markup. MT otherwise.
  * @return array Output - renderable array.
  */
 function swim_mt_peek() {
@@ -232,18 +271,6 @@ function swim_custom_theme() {
 }
 
 /**
- * When inserting an exercise into a page, use a special template that
- * strips most of the content away.
- * @param string $vars
- */
-//function insert_exercise_preprocess_node(&$vars) {
-//  if ($vars['node']->type == 'exercise' && $vars['view_mode'] == 'exercise_insert') {
-//    $vars['theme_hook_suggestions'][] = 'node__exercise__exercise_insert';
-//  }
-//}
-
-
-/**
 * Implements hook_filter_info().
 */
 function swim_filter_info() {
@@ -256,45 +283,20 @@ function swim_filter_info() {
 }
 
 /**
- * SWIM text formatter.
+ * SWIM text formatter. Translates pure ReST into viewHTML. See SWIM docs
+ * for more.
  * @param string $text SWIM text to translate.
- * @param type $filter
- * @param type $format
- * @param type $langcode
- * @return string Result.
  */
 function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und') {
-  //Content is stored with user-typed chars (like <) as entities. This means that
-  //HTML can be typed by the user. The database stores the coded entities, 
-  //along with CK's HTML (<br>s and such).  We need to convert the < and > entities
-  //back into their native characters so ReST can do the right things with them.
-  //Doesn't handle spaces correctly.
-  $text = str_replace('&nbsp;', ' ', $text);
-  //Change <br>s into nothing. The \ns after the brs are enough.
-  $text = preg_replace('/\<\s*br\s*\/?\s*\>/i', '', $text);
-  //Strip tags except for images, which are added by the insert module.
-  //HTML the user has entered with be HTML encoded (e.g., &gt;), so won't
-  //be affected.
-  //Strip tags so that HTML tags that are accidentally added (through
-  //pasting) don't cause ReST errors.
-  $text = strip_tags($text, '<img>'); 
-    //Except for img. <img> is not types by
-    //user, but inserted by the insert module.
-  $text = html_entity_decode($text);
-  //Handle numeric codes correctly.
-  // See http://www.php.net/manual/en/function.html-entity-decode.php#47371
-  $text = preg_replace('/&#(\d+);/me',"chr(\\1)",$text); #decimal notation
-  $text = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$text);  #hex notation
-  //Place raw directive around <img>s. <img>s are inserted by CK. 
-  $text = swim_wrap_imgs( $text );
+  //Run content through ReST translator. Returns mixed ReST and CyCo markup.
   // descriptor array
   $desc = array(
       0 => array('pipe', 'r'), // 0 is STDIN for process
       1 => array('pipe', 'w'), // 1 is STDOUT for process
       2 => array('pipe', 'w') // 2 is STDERR for process - IS THIS RIGHT?
   );
-  //Can't remember where this code was adapted from. Some human.
-  // command to invoke markup engine
+  //Can't remember where this code was adapted from. Some human did it.
+  //Command to invoke markup engine
   $py_path = DRUPAL_ROOT . '/' 
       . drupal_get_path('module', 'swim') .'/python/convert_rest.py';
   $command =  'python ' . $py_path;
@@ -307,6 +309,9 @@ function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und'
   // all done! Clean up
   fclose($pipes[1]);
   proc_close($p);
+  //Translate the CyCo directives markup into HTML
+  //Trigger other module's translators.
+  drupal_alter( 'cycomarkup_2_viewhtml', $html );
   return $html;
 }
 
@@ -442,20 +447,4 @@ Level 3<br>
 . 'different devices.') . '
 </p>';
   return $help;
-}
-
-//See http://php.net/manual/en/function.copy.php
-function swim_recurse_copy($src, $dst) {
-  $dir = opendir($src);
-  @mkdir($dst);
-  while (false !== ( $file = readdir($dir))) {
-    if (( $file != '.' ) && ( $file != '..' )) {
-      if (is_dir($src . '/' . $file)) {
-        swim_recurse_copy($src . '/' . $file, $dst . '/' . $file);
-      } else {
-        copy($src . '/' . $file, $dst . '/' . $file);
-      }
-    }
-  }
-  closedir($dir);
 }

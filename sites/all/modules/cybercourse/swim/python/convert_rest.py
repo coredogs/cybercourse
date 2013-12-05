@@ -4,6 +4,42 @@ from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.roles import set_classes
 from docutils.utils.code_analyzer import Lexer, LexerError, NumberLines
 
+class Authornote(Directive):
+    """
+    Render author notes.
+    """
+    has_content = True
+    required_arguments = 1
+    final_argument_whitespace = True
+    node_class = nodes.decoration
+    def run(self):
+        # Raise an error if the directive does not have contents.
+        #self.assert_has_content()
+        text = '\n'.join(self.content)
+        # Make a node with the content
+        content_node = self.node_class(rawsource=text)
+        # Parse the directive contents into the new node.
+        self.state.nested_parse(
+            self.content,
+            self.content_offset,
+            content_node
+        )
+        # Create a new node with the prefix marker text for
+        # Drupal custom filter to find.
+        # Can apply permissions checks and other things on the
+        # server side.
+        prefix_text = '[[[cycoauthornote ' + self.arguments[0] + '|||\n'
+        prefix_node = nodes.raw('', prefix_text, format='html')
+        # Create a new node with the postfix marker text for
+        # Cyco to find.
+        postfix_text = ']]]\n'
+        postfix_node = nodes.raw('', postfix_text, format='html')
+        # Return the nodes in sequence.
+        return [prefix_node, content_node, postfix_node]
+
+
+
+
 class Exercise(Directive):
     """
     reStructuredText directive to show code listings with google-code-prettify
@@ -28,7 +64,7 @@ class Pseudent(Directive):
 
     def run(self):
         # Raise an error if the directive does not have contents.
-        self.assert_has_content()
+        #self.assert_has_content()
         text = '\n'.join(self.content)
         # Make a node with the content
         content_node = self.node_class(rawsource=text)
@@ -54,6 +90,7 @@ class Pseudent(Directive):
 #Register the new directives.
 directives.register_directive('exercise', Exercise)
 directives.register_directive('pseudent', Pseudent)
+directives.register_directive('authornote', Authornote)
 
 
 ##Create a new directive
@@ -74,10 +111,18 @@ directives.register_directive('pseudent', Pseudent)
 #directives.register_directive('swear', Swear)
 
 #Read the content to translate.
-data_in = ''
-for line in sys.stdin:
-    data_in += line
+testing = False
+if testing:
+    f = open('in3.txt')
+    content = f.readlines()
+    f.close()
+    data_in = ''.join(content)
+else:
+    data_in = ''
+    for line in sys.stdin:
+        data_in += line
 
 #Parse some content.
+#thing = core.publish_parts(data_in, writer_name='html')
 doc = core.publish_parts(data_in, writer_name='html')['html_body']
 print (doc)

@@ -1,6 +1,5 @@
-
-
 (function ($) {
+  
   var swimDoneOnce = false;
   Drupal.behaviors.swim = {
     swimSetup: function () {
@@ -13,8 +12,7 @@
       //Compute the URL for the iframe that simulates the device.
       var iframeSrc = Drupal.settings.swim.base_url + "/swim-mt-peek";      
       //Make peek toolbar.
-      var iconPath = Drupal.settings.swim.base_url 
-          + "/sites/all/modules/ckeditor/plugins/peek/icons/";
+      var iconPath = Drupal.settings.swim.icon_path;
       var toolbarHtml
       = "<div id='swim-peek-toolbar' class='cke_top'>"
       +   "<span class='cke_toolgroup' role='presentation'>"
@@ -98,8 +96,15 @@
       //Init toolbar display.
       this.selectedPeek = "phone";
       this.showSelectedButton();
-      //Turn on the CKEditor peek button, so show all is ready.
-      CKEDITOR.instances['edit-body-und-0-value'].commands.peek.enable();
+      $.each(CKEDITOR.instances, function(index, instance) {
+        //Turn on the CKEditor peek button, so show all is ready.
+        instance.commands.peek.enable();
+        //Add styles for editing with CK.
+        instance.document.appendStyleSheet(Drupal.settings.swim.editing_stylesheet);
+      });
+//      CKEDITOR.instances['edit-body-und-0-value'].commands.peek.enable();
+      //Add styles for editing with CK.
+//      CKEDITOR.instances['edit-body-und-0-value'].document.appendStyleSheet(Drupal.settings.swim.editing_stylesheet);
     }, //End continueInit.
 //    prepareIframeContent : function() {
 //      //The iframe has a page loaded. Remove all the content on the page 

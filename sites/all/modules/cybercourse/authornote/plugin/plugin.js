@@ -3,7 +3,6 @@
  */
 
 (function() {
-
 CKEDITOR.plugins.add('authornote', {
   requires: 'widget',
   icons: 'authornote',
@@ -31,11 +30,9 @@ CKEDITOR.plugins.add('authornote', {
       }
     });
     //Add stylesheet.
-    var cssLink = document.createElement("link") 
-    cssLink.href = Drupal.settings.authornote.stylesheet; 
-    cssLink.rel = "stylesheet"; 
-    cssLink.type = "text/css";
-    jQuery("body").append(cssLink);
+    editor.on("instanceReady", function() {
+      this.document.appendStyleSheet( Drupal.settings.authornote.stylesheet );
+    });
     //Add toolbar button.
     editor.ui.addButton('AuthorNote', {
       label: 'Insert an author note',

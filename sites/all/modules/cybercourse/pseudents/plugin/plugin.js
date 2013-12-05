@@ -10,20 +10,12 @@ CKEDITOR.plugins.add('pseudent', {
     CKEDITOR.dialog.add( 'pseudentDialog', this.path + 'dialogs/pseudent.js' );    
     editor.addCommand('insertPseudent', 
       new CKEDITOR.dialogCommand( 'pseudentDialog' )
-//      exec: function(editor) {
-//        CKEDITOR.currentInstance.insertText(
-//          'DOG!!'
-//        );
-//      }
     );
-    var cssLink = document.createElement("link") 
-    cssLink.href = //Drupal.settings.pseudents.base_url
-        //Drupal.settings.basePath 
-        Drupal.settings.pseudents.poseStylesheet; 
-    cssLink.rel = "stylesheet"; 
-    cssLink.type = "text/css";
-    jQuery("body").append(cssLink);
     
+    //Add stylesheet.
+    editor.on("instanceReady", function() {
+      this.document.appendStyleSheet( Drupal.settings.pseudents.poseStylesheet );
+    });
     
     editor.ui.addButton( 'Pseudent', {
         label: 'Insert a pseudent',

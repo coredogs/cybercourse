@@ -38,7 +38,7 @@ function pseudents_ckeditor_plugin() {
       // Plugin name.
       'name' => 'pseudent',
       // Plugin description - it will be displayed in the plugins management section of the profile settings.
-      'desc' => t('Insert a pseudent into content.'),
+      'desc' => t('Cyco: Insert a pseudent into content.'),
       // The full path to the CKEditor plugin directory, trailing slash included.
       'path' => drupal_get_path('module', 'pseudents') . '/plugin/',
     )
