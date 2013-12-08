@@ -169,14 +169,14 @@ function _swim_form_submit($form, &$form_state) {
   //Special chars - particularly #39; -> '.
   $body_value = htmlspecialchars_decode( $body_value );
   $body_summary = htmlspecialchars_decode( $body_summary );
+  //Trigger other module's translators.
+  drupal_alter( 'edithtml_2_directive', $body_value); //, $type );
+  drupal_alter('edithtml_2_directive', $body_summary); //, $type );
   //Replace image HTML tags with directives.
+  //  These must be after other module's hooks are called, so that other 
+  //  modules have processes the images they own.
   swim_img_2_directive( $body_value );
   swim_img_2_directive( $body_summary );
-  //Trigger other module's translators.
-//  $type = 'value';
-  drupal_alter( 'edithtml_2_directive', $body_value); //, $type );
-//  $type = 'summary';
-  drupal_alter('edithtml_2_directive', $body_summary); //, $type );
   //Put processed values (ReST now) back into body field.
   $form_state['values']['body'][LANGUAGE_NONE][0]['value'] = $body_value;
   $form_state['values']['body'][LANGUAGE_NONE][0]['summary'] = $body_summary;

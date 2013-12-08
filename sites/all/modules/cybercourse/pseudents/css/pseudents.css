@@ -2,44 +2,36 @@
 Styles for the pseudents module.
 */
 
-table#pseudent-choose-table th,
+/*table#pseudent-choose-table th,*/
 table#pseudent-choose-table td {
   padding: 0.5em;
   vertical-align: middle;
-}
-
-table#pseudent-choose-table tr {
   background-color: #eee;
+  vertical-align: top;
+  text-align: center;
+  border: 1px solid #888;
 }
 
-table#pseudent-choose-table tr:hover {
+table#pseudent-choose-table td .pseudent-preview-title {
+  font-size: 130%;
+}
+
+table#pseudent-choose-table td img {
+  max-width: 80px;
+}
+
+/*table#pseudent-choose-table tr {
+  background-color: #eee;
+}*/
+
+table#pseudent-choose-table td:hover {
   cursor: pointer;
   background-color: #ddd;
 }
 
-table#pseudent-choose-table tr.selected {
+table#pseudent-choose-table td.selected {
   background-color: #ffffe0;
 }
-
-
-table#pseudent-choose-table th {
-  text-align: center;
-  font-weight: bold;
-  background-color: white;
-}
-
-table#pseudent-choose-table td.pseudent-token {
-  text-align: center;
-}
-
-table#pseudent-choose-table td.pseudent-image {
-  text-align: center;
-}
-
-table#pseudent-choose-table td.pseudent-image img {
-  width: 8em;
-}
-
 
 
 /* For the admin table. */
@@ -52,7 +44,7 @@ table#pseudent-choose-table td.pseudent-image img {
 }
 
 /* Char container */
-.cyco_pseudent {
+.pseudent {
   clear: both;
   border: 1px solid #e3e3e3;
   border-radius: 4px;
@@ -65,40 +57,32 @@ table#pseudent-choose-table td.pseudent-image img {
 }
 
 /* Photo/caption container */
-.cyco_pseudent_figure {
+.pseudent-image-container {
   float: left;
   text-align: center;
   margin-right: 1.5em;
 }
 
 /* Caption for photo */
-.cyco_pseudent_figcaption {
+.pseudent-image-caption {
   margin-top: 0.5em;
 }
 
-.cke_combo_text {
-  width: auto !important;
+.pseudent-content {
+  float: left;
 }
 
-.pseudents_ck_preview {
-  border-bottom: 2px #CCCCCC solid;
+
+/*table#pseudent-choose-table .pseudent-title,
+table#pseudent-choose-table .pseudent-image {
+  border-color: #888;
+  border-style: solid;
 }
 
-.pseudents_ck_preview_image {
-  display: inline-block;
-  text-align: center;
-  margin-right: 1em;
+table#pseudent-choose-table .pseudent-title {
+  border-width: 1px 0 1px 1px;
 }
 
-.pseudents_ck_preview_image img {
-  max-width: 6em;
-}
-
-.pseudents_ck_preview_caption {
-  
-}
-
-.pseudents_ck_preview_token {
-  display: inline-block;
-}
-
+table#pseudent-choose-table .pseudent-image {
+  border-width: 1px 1px 1px 0;
+}*/
