@@ -84,13 +84,22 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
           throw new Exception(t('SWIM: Ajax markup module must be on. '
               . 'Please contact your site administrator.'));
         }
+        //If field_body_ck is null, put something in it.
+        //  This happens on existing nodes when bocy CK was just defined.
+        //  It should not happen, other than during development.
+        if ( ! isset( $form['#node']->field_body_ck[LANGUAGE_NONE][0]['value'] ) ) {
+          $form['#node']->field_body_ck[LANGUAGE_NONE][0]['value'] = '';
+          $form['#node']->field_body_ck[LANGUAGE_NONE][0]['summary'] = '';
+        }
         //Copy content from field_body_ck to body. 
         //See SWIM docs for details.
         if ( ! $new_node ) {
           $form['body'][LANGUAGE_NONE][0]['#default_value'] 
               = $form['#node']->field_body_ck[LANGUAGE_NONE][0]['value'];
-          $form['body'][LANGUAGE_NONE][0]['summary']['#default_value']
-              = $form['#node']->field_body_ck[LANGUAGE_NONE][0]['summary'];
+          if ( isset( $form['#node']->field_body_ck[LANGUAGE_NONE][0]['summary'] ) ) {
+            $form['body'][LANGUAGE_NONE][0]['summary']['#default_value']
+                = $form['#node']->field_body_ck[LANGUAGE_NONE][0]['summary'];
+          }
         }
         //Set up call to submit function.
         $form['#submit'][] = '_swim_form_submit';
@@ -141,45 +150,68 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
 function _swim_form_submit($form, &$form_state) {
   //See SWIM docs for details.
   $body_value = $form_state['values']['body'][LANGUAGE_NONE][0]['value'];
-  $body_summary = $form_state['values']['body'][LANGUAGE_NONE][0]['summary'];
+  $body_summary = '';
+  if ( isset( $form_state['values']['body'][LANGUAGE_NONE][0]['summary'] ) ) {
+    $body_summary = $form_state['values']['body'][LANGUAGE_NONE][0]['summary'];
+  }
   //Copy content from body to field_body_ck. 
   $form_state['values']['field_body_ck'][LANGUAGE_NONE][0]['value']
     = $body_value;
-  $form_state['values']['field_body_ck'][LANGUAGE_NONE][0]['summary']
-    = $body_summary;
+  if ( isset( $form_state['values']['field_body_ck'][LANGUAGE_NONE][0]['summary'] ) ) {
+    $form_state['values']['field_body_ck'][LANGUAGE_NONE][0]['summary']
+      = $body_summary;
+  }
   //Convert to pure ReST.
   //First, the <br>s.
   swim_remove_brs( $body_value );
-  swim_remove_brs( $body_summary );
+  if ( $body_summary ) {
+    swim_remove_brs( $body_summary );
+  }
   //Replace &nbsp; with real spaces.
   $body_value = str_replace('&nbsp;', ' ', $body_value);
-  $body_summary = str_replace('&nbsp;', ' ', $body_summary);
+  if ( $body_summary ) {
+    $body_summary = str_replace('&nbsp;', ' ', $body_summary);
+  }
   //Replace &#39; with real quotes.
   $body_value = str_replace('&#39;', '\'', $body_value);
-  $body_summary = str_replace('&#39;', '\'', $body_summary);
+  if ( $body_summary ) {
+    $body_summary = str_replace('&#39;', '\'', $body_summary);
+  }
   //Handle numeric codes correctly.
   // See http://www.php.net/manual/en/function.html-entity-decode.php#47371
   $body_value = preg_replace('/&#(\d+);/me',"chr(\\1)",$body_value); #decimal notation
   $body_value = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$body_value);  #hex notation
-  $body_summary = preg_replace('/&#(\d+);/me',"chr(\\1)",$body_summary); #decimal notation
-  $body_summary = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$body_summary);  #hex notation
+  if ( $body_summary ) {
+    $body_summary = preg_replace('/&#(\d+);/me',"chr(\\1)",$body_summary); #decimal notation
+    $body_summary = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$body_summary);  #hex notation
+  }
   //HTML entities to their real characters.
   $body_value = html_entity_decode( $body_value );
-  $body_summary = html_entity_decode( $body_summary );
+  if ( $body_summary ) {
+    $body_summary = html_entity_decode( $body_summary );
+  }
   //Special chars - particularly #39; -> '.
   $body_value = htmlspecialchars_decode( $body_value );
-  $body_summary = htmlspecialchars_decode( $body_summary );
+  if ( $body_summary ) {
+    $body_summary = htmlspecialchars_decode( $body_summary );
+  }
   //Trigger other module's translators.
   drupal_alter( 'edithtml_2_directive', $body_value); //, $type );
-  drupal_alter('edithtml_2_directive', $body_summary); //, $type );
+  if ( $body_summary ) {
+    drupal_alter('edithtml_2_directive', $body_summary); //, $type );
+  }
   //Replace image HTML tags with directives.
   //  These must be after other module's hooks are called, so that other 
   //  modules have processes the images they own.
   swim_img_2_directive( $body_value );
-  swim_img_2_directive( $body_summary );
+  if ( $body_summary ) {
+    swim_img_2_directive( $body_summary );
+  }
   //Put processed values (ReST now) back into body field.
   $form_state['values']['body'][LANGUAGE_NONE][0]['value'] = $body_value;
-  $form_state['values']['body'][LANGUAGE_NONE][0]['summary'] = $body_summary;
+  if ( $body_summary ) {
+    $form_state['values']['body'][LANGUAGE_NONE][0]['summary'] = $body_summary;
+  }
 }
 
 /**

@@ -1,0 +1,6 @@
+name = Collapse summary
+description = Always collapse summary on text-with-summary fields.
+package = CyberCourse
+core = 7.x
+version = 7.1
+dependencies[] = text

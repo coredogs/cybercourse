@@ -76,6 +76,9 @@ function cybercourse_menu_tree__secondary(&$variables) {
 
 function cybercourse_menu_link(array $variables) {
   $element = $variables['element'];
+  //KRM: Add the menu name to the element.
+  $element['#attributes']['class'][] = $element['#original_link']['menu_name'];
+  
   $sub_menu = '';
   
   if ($element['#below']) {

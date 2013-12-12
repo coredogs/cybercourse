@@ -54,24 +54,24 @@ function pseudents_permission() {
       'title' => t('Administer pseudents'),
       'description' => t('Create, delete, and update pseudents.')
     ),
-    'use pseudents in content' => array(
-      'title' => t('Use pseudents in content'),
-      'description' => t('Insert pseudent token in content.')
-    ),
+//    'use pseudents in content' => array(
+//      'title' => t('Use pseudents in content'),
+//      'description' => t('Insert pseudent token in content.')
+//    ),
   );
 }
 
 /**
 * Implements hook_filter_info().
 */
-function pseudents_filter_info() {
-  $filters['filter_pseudents'] = array(
-    'title' => t('Pseudents'),
-    'description' => t('Replace pseudent tokens'),
-    'process callback' => 'pseudents_process_filter',
-  );
-  return $filters;
-}
+//function pseudents_filter_info() {
+//  $filters['filter_pseudents'] = array(
+//    'title' => t('Pseudents'),
+//    'description' => t('Replace pseudent tags'),
+//    'process callback' => 'pseudents_process_filter',
+//  );
+//  return $filters;
+//}
 
 /**
  * Replace pseudent tokens with HTML.
@@ -81,111 +81,111 @@ function pseudents_filter_info() {
  * @param type $langcode
  * @return type
  */
-function pseudents_process_filter($text, $filter, $format = 'pseudents', $langcode = 'und') {
-  //Find all the pseudents on the page that are referred to.
-  $regex_matches = array();
-  $regex_match_count = preg_match_all("/\[\s*pseudent\s*\:\s*(.*?)\s*\]/i", 
-      $text, $regex_matches);
-  if ( $regex_match_count > 0 ) {
-    //Look up data for those pseudents.
-    $token_list = '';
-    foreach( $regex_matches[1] as $key => $match ) {
-      if ( $key > 0 ) {
-        $token_list .= ', ';
-      }
-      $token_list .= '\'' . check_plain($match) . '\'';
-    }
-    $sql = '
-        select field_token_value, field_caption_value, 
-          field_image_alt, field_image_width, field_image_height,
-          field_image_fid, file_managed.uri as uri
-        from field_data_field_token 
-          left join field_data_field_caption on 
-            field_data_field_token.entity_id 
-            = field_data_field_caption.entity_id
-          left join field_data_field_image on 
-            field_data_field_token.entity_id
-            = field_data_field_image.entity_id
-          inner join file_managed on file_managed.fid = field_image_fid
-          inner join node on field_data_field_token.entity_id
-            = node.nid
-        where 
-          node.status = 1
-          and field_data_field_token.bundle = \'pseudent_pose\'
-          and field_token_value in ( ' . $token_list . ' )
-    ';
-    $query_result = db_query($sql); //, array( ':token_list' => $token_list ));
-    if ( $query_result->rowCount() > 0 ) {
-      //Make an array of substitutions.
-      //Each entry has two parts:
-      //1. Token spec found in content.
-      //2. Complete HTML for it.
-      $substitutions = array();
-      foreach ( $regex_matches[1] as $regex_key => $regex_match ) {
-        //Find the token in the query result array.
-        $html = '';
-        foreach ( $query_result as $row ) {
-          //Must have a URI.
-          if ( $row->uri ) {
-            if ( $regex_match == $row->field_token_value ) {
-              //Compute the HTML.
-              $html = _pseudents_compute_char_html( $row );
-              //Add to substitutions array.
-              $substitutions[] = array(
-                'matched' => $regex_matches[0][$regex_key],
-                  //Note: this is the entire matched text, not the token.
-                'replacement' => $html,
-              );
-              break;
-            } //End if match
-          } //End there is a URI.
-        } //Loop across query results.
-      } //Loop across matches.
-      //Apply the substitutions.
-      foreach ( $substitutions as $substitution ) {
-        $text = str_replace(
-            $substitution['matched'], 
-            $substitution['replacement'], 
-            $text
-        );
-      }
-      //Count the closing tags.
-      $pattern = '/\[\s*\/\s*pseudent\s*\]/i';
-        //{, white space, /, white space, 'pseudent', white space, }
-      $closing_matches = array();
-      $closing_tag_count = preg_match_all($pattern, $text, $closing_matches);
-      if ( $closing_tag_count != $regex_match_count ) {
-        drupal_set_message(
-            'Please check for a missing or incorrect pseudent closing tag.', 
-            'warning'
-        );
-      }
-      //Replace the close tags.
-      $text = preg_replace($pattern, '</div>', $text);
-      //Store result in node object.
-    } //End there were query results.
-  } //End there were regex matches.
-  return $text;
-}
+//function pseudents_process_filter($text, $filter, $format = 'pseudents', $langcode = 'und') {
+//  //Find all the pseudents on the page that are referred to.
+//  $regex_matches = array();
+//  $regex_match_count = preg_match_all("/\[\s*pseudent\s*\:\s*(.*?)\s*\]/i", 
+//      $text, $regex_matches);
+//  if ( $regex_match_count > 0 ) {
+//    //Look up data for those pseudents.
+//    $token_list = '';
+//    foreach( $regex_matches[1] as $key => $match ) {
+//      if ( $key > 0 ) {
+//        $token_list .= ', ';
+//      }
+//      $token_list .= '\'' . check_plain($match) . '\'';
+//    }
+//    $sql = '
+//        select field_token_value, field_caption_value, 
+//          field_image_alt, field_image_width, field_image_height,
+//          field_image_fid, file_managed.uri as uri
+//        from field_data_field_token 
+//          left join field_data_field_caption on 
+//            field_data_field_token.entity_id 
+//            = field_data_field_caption.entity_id
+//          left join field_data_field_image on 
+//            field_data_field_token.entity_id
+//            = field_data_field_image.entity_id
+//          inner join file_managed on file_managed.fid = field_image_fid
+//          inner join node on field_data_field_token.entity_id
+//            = node.nid
+//        where 
+//          node.status = 1
+//          and field_data_field_token.bundle = \'pseudent_pose\'
+//          and field_token_value in ( ' . $token_list . ' )
+//    ';
+//    $query_result = db_query($sql); //, array( ':token_list' => $token_list ));
+//    if ( $query_result->rowCount() > 0 ) {
+//      //Make an array of substitutions.
+//      //Each entry has two parts:
+//      //1. Token spec found in content.
+//      //2. Complete HTML for it.
+//      $substitutions = array();
+//      foreach ( $regex_matches[1] as $regex_key => $regex_match ) {
+//        //Find the token in the query result array.
+//        $html = '';
+//        foreach ( $query_result as $row ) {
+//          //Must have a URI.
+//          if ( $row->uri ) {
+//            if ( $regex_match == $row->field_token_value ) {
+//              //Compute the HTML.
+//              $html = _pseudents_compute_char_html( $row );
+//              //Add to substitutions array.
+//              $substitutions[] = array(
+//                'matched' => $regex_matches[0][$regex_key],
+//                  //Note: this is the entire matched text, not the token.
+//                'replacement' => $html,
+//              );
+//              break;
+//            } //End if match
+//          } //End there is a URI.
+//        } //Loop across query results.
+//      } //Loop across matches.
+//      //Apply the substitutions.
+//      foreach ( $substitutions as $substitution ) {
+//        $text = str_replace(
+//            $substitution['matched'], 
+//            $substitution['replacement'], 
+//            $text
+//        );
+//      }
+//      //Count the closing tags.
+//      $pattern = '/\[\s*\/\s*pseudent\s*\]/i';
+//        //{, white space, /, white space, 'pseudent', white space, }
+//      $closing_matches = array();
+//      $closing_tag_count = preg_match_all($pattern, $text, $closing_matches);
+//      if ( $closing_tag_count != $regex_match_count ) {
+//        drupal_set_message(
+//            'Please check for a missing or incorrect pseudent closing tag.', 
+//            'warning'
+//        );
+//      }
+//      //Replace the close tags.
+//      $text = preg_replace($pattern, '</div>', $text);
+//      //Store result in node object.
+//    } //End there were query results.
+//  } //End there were regex matches.
+//  return $text;
+//}
 
 /*
  * Create HTML for a pseudent.
  */
-function _pseudents_compute_char_html( $query_result ) {
-  $html = 
-'<div class="cyco_pseudent" markdown="1">'
-  . '<div class="cyco_pseudent_figure">'
-  .   '<img src="' . file_create_url( $query_result->uri ) . '" '
-  .     'alt="' . t( $query_result->field_image_alt ) . '"  '
-  .     'height="' . check_plain( $query_result->field_image_height ) . '" '
-  .     'width="' . check_plain( $query_result->field_image_width ) . '" '
-  .   '>' 
-  .   '<div class="cyco_pseudent_figcaption">' 
-  .     t($query_result->field_caption_value) 
-  .   '</div>'
-  . '</div>';
-  return $html;
-}
+//function _pseudents_compute_char_html( $query_result ) {
+//  $html = 
+//'<div class="cyco_pseudent" markdown="1">'
+//  . '<div class="cyco_pseudent_figure">'
+//  .   '<img src="' . file_create_url( $query_result->uri ) . '" '
+//  .     'alt="' . t( $query_result->field_image_alt ) . '"  '
+//  .     'height="' . check_plain( $query_result->field_image_height ) . '" '
+//  .     'width="' . check_plain( $query_result->field_image_width ) . '" '
+//  .   '>' 
+//  .   '<div class="cyco_pseudent_figcaption">' 
+//  .     t($query_result->field_caption_value) 
+//  .   '</div>'
+//  . '</div>';
+//  return $html;
+//}
 
 
 function pseudents_get_editor_previews() {
@@ -207,7 +207,8 @@ function _pseudents_generate_ck_pseudent_table() {
     ->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'pseudent_pose')
     ->propertyCondition('status', 1)
-    ->fieldOrderBy('field_token', 'value');
+    ->propertyOrderBy('title');
+//    ->fieldOrderBy('field_token', 'value');
   $query_result = $query->execute();
   //Create the pseudent HTML.
   $pseudents = array();
@@ -215,7 +216,7 @@ function _pseudents_generate_ck_pseudent_table() {
     foreach ( $query_result['node'] as $nid => $value ) {
       $node = node_load($nid);
       $title = $node->title;
-      $token = $node->field_token[LANGUAGE_NONE][0]['safe_value'];
+//      $token = $node->field_token[LANGUAGE_NONE][0]['safe_value'];
       $notes = $node->body[LANGUAGE_NONE][0]['summary'];
       //Caption is not a required field.
       if ( isset($node->field_caption[LANGUAGE_NONE][0]['safe_value']) ) {
@@ -358,52 +359,52 @@ function _pseudents_load_client_side_stuff() {
 /**
  * Implements hook_form_alter().
  */
-function pseudents_form_pseudent_pose_node_form_alter( &$form, &$form_state ) {
-  $form['#validate'][] = '_pseudent_validate_pose_form';
-}
+//function pseudents_form_pseudent_pose_node_form_alter( &$form, &$form_state ) {
+//  $form['#validate'][] = '_pseudent_validate_pose_form';
+//}
 
 /**
  * Validate the pose data.
  */
-function _pseudent_validate_pose_form( &$form, &$form_state ) {
-  $token 
-      = $form_state['values']['field_token'][LANGUAGE_NONE][0]['value'];
-  // Verify that the token contains no disallowed pseudents.
-  if ( preg_match('/[^a-z0-9_]/', $token) ) {
-    form_set_error(
-        'field_token', 
-        t(  'Sorry, the token can contain only lowercase letters, numbers, '
-          . 'and underscores (_). E.g., "alia_hi".'
-        )
-    );
-    return;
-  }
-  //Check that the token in unique.
-  //Find nodes using that token.
-  $query = new EntityFieldQuery();
-  $query
-    ->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'pseudent_pose')
-    ->fieldCondition('field_token', 'value', $token);
-  $result = $query->execute();
-  if ( isset( $result['node'] ) ) {
-    //There is at least one node using the token.
-    if ( sizeof($result['node']) > 1 ) {
-      throw new Exception('pseudents module: duplicate tokens!');
-    }
-    list($nid) = array_keys($result['node']);
-    //Error if it is some other node.
-    if ( $form['#node']->nid != $nid ) {
-      form_set_error(
-          'field_token', 
-          t(   'Sorry, the value "' . $token . '" is already in use. Tokens must ' 
-             .  'be unique, e.g., "' . $token . '2".'
-           )
-      );
-      return;
-    }
-  } // End token in use.
-}
+//function _pseudent_validate_pose_form( &$form, &$form_state ) {
+//  $token 
+//      = $form_state['values']['field_token'][LANGUAGE_NONE][0]['value'];
+//  // Verify that the token contains no disallowed pseudents.
+//  if ( preg_match('/[^a-z0-9_]/', $token) ) {
+//    form_set_error(
+//        'field_token', 
+//        t(  'Sorry, the token can contain only lowercase letters, numbers, '
+//          . 'and underscores (_). E.g., "alia_hi".'
+//        )
+//    );
+//    return;
+//  }
+//  //Check that the token in unique.
+//  //Find nodes using that token.
+//  $query = new EntityFieldQuery();
+//  $query
+//    ->entityCondition('entity_type', 'node')
+//    ->entityCondition('bundle', 'pseudent_pose')
+//    ->fieldCondition('field_token', 'value', $token);
+//  $result = $query->execute();
+//  if ( isset( $result['node'] ) ) {
+//    //There is at least one node using the token.
+//    if ( sizeof($result['node']) > 1 ) {
+//      throw new Exception('pseudents module: duplicate tokens!');
+//    }
+//    list($nid) = array_keys($result['node']);
+//    //Error if it is some other node.
+//    if ( $form['#node']->nid != $nid ) {
+//      form_set_error(
+//          'field_token', 
+//          t(   'Sorry, the value "' . $token . '" is already in use. Tokens must ' 
+//             .  'be unique, e.g., "' . $token . '2".'
+//           )
+//      );
+//      return;
+//    }
+//  } // End token in use.
+//}
 
 
 /**
@@ -450,7 +451,7 @@ function pseudents_cycomarkup_2_viewhtml_alter(&$content) {
   $d = 0;
 //  [[[cycopseudent 365||| Nothing.]]]
   $regex = 
-      '/\[\[\[cycopseudent\s*(.*?)\|\|\|(.*?)\]\]\]/is';
+      '/\[\[\[cycopseudent\s*(\d*?)\|\|\|(.*?)\]\]\]/is';
   //? is for lazy match.
       //s option so it can contain new line chars.
   $content
@@ -465,7 +466,7 @@ function _pseudents_make_view_replacements($matches) {
   if ( !$node ) {
     $message = '_pseudents_make_view_replacements: bad nid: ' . $nid;
     watchdog('pseudents', $message);
-    throw new Exception('_pseudents_make_view_replacements');
+    throw new Exception($message);
   }
   $caption = '';
   if (sizeof( $node->field_caption ) > 0 ) {
@@ -500,4 +501,18 @@ function _pseudents_uri_2_path( $uri ) {
   $url = parse_url($absolute_url);
   $usable_url = $url['path'];
   return $usable_url;
+}
+
+
+function pseudents_node_view($node, $view_mode, $langcode) {
+  $t=5;
+  if ( $node->type == 'pseudent_pose' ){
+    if ( $view_mode == 'full' ) {
+      $r=4;
+          $node->content['pseudent_pose_link'] = array(
+              '#markup' => l('Back to pseudent list', 'pseudent-poses'),
+              '#weight' => ( $node->content['body']['#weight'] + 1 ) //BOOKTOPNAV_NAV_BAR_WEIGHT,
+          );
+    }
+  }
 }

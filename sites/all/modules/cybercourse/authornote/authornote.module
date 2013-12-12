@@ -3,8 +3,16 @@
 /**
  * Implemenmts hook_help().
  */
-function authornote_help() {
-  return '<p>Hep me!</p>';
+function authornote_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#authorhelp':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Lets authors add notes to SWIM content. The notes ' 
+          + 'are only visible to users who have permission.') . '</p>';
+      $output .= '<p>' . t('Author notes is part of the CyberCourse project.')
+          . '</p>';
+      return $output;
+  }
 }
 
 /**

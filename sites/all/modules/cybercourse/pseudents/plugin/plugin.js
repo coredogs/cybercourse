@@ -40,17 +40,17 @@ CKEDITOR.plugins.add('pseudent', {
         //Init a widget.
         //Find the pseudent id for the widget. Extract it from a 
         //property of the img.
-        var image = jQuery(this.element.$).find('.pseudent-image');
-        if ( image ) {
-          //An attr of the image has the id of the pseudent.
-          var pseudentId = image.attr("data-pseudent-id");
-          //Was there already a selected pseudent?
-          if ( pseudentId && ! isNaN(pseudentId) ) {
-            //Store the id as widget data.
-            this.pseudentId = pseudentId;
-            this.initialPseudentId = pseudentId;
-          }
-        }
+//        var image = jQuery(this.element.$).find('.pseudent-image');
+//        if ( image ) {
+//          //An attr of the image has the id of the pseudent.
+//          var pseudentId = image.attr("data-pseudent-id");
+//          //Was there already a selected pseudent?
+//          if ( pseudentId && ! isNaN(pseudentId) ) {
+//            //Store the id as widget data.
+//            this.pseudentId = pseudentId;
+//            this.initialPseudentId = pseudentId;
+//          }
+//        }
       },
       updateImage: function( newPseudentId ) {
         if ( newPseudentId && newPseudentId != this.initialPseudentId ) {

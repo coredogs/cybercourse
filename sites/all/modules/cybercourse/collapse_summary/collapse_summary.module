@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * Implement hook_init().
+ */
+function collapse_summary_init() {
+  drupal_add_js(
+      drupal_get_path('module', 'collapse_summary') . '/collapse_summary.js'
+  );
+  drupal_add_css(
+      drupal_get_path('module', 'collapse_summary') . '/collapse_summary.css'
+  );
+}
+
+/**
+ * Implements hook_help().
+ */
+function collapse_summary_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#collapse_summary':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t(
+          'For text-with-summary widgets, the summary is always collapsed. '
+        . 'An indicator shows whether there is content in the summary.'
+      ) . '</p>';
+      return $output;
+  }
+}

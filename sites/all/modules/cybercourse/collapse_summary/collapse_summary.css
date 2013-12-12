@@ -1,0 +1,7 @@
+/*
+Styles for collapse_summary module.
+*/
+.collapse-summary-indicator {
+  float: right;
+  font-size: 90%;
+}

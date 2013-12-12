@@ -1,5 +1,27 @@
+li.user-menu {
+  display: inline-block;
+  margin: 0.5em;
+}
 
-/* 
-    Created on : Nov 22, 2013, 9:43:17 AM
-    Author     : mathieso
-*/
+li.user-menu a {
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+    border: solid 1px #aaa;
+    -webkit-box-shadow:  0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 2px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow:  0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 2px rgba(0, 0, 0, 0.2);
+    box-shadow:  0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 2px rgba(0, 0, 0, 0.2);
+    background: #ddd;
+    color: #111;
+    padding: 0.4em 0.6em;
+    text-decoration: none;
+}
+
+#block-system-user-menu {
+  float: right;
+}
+
+/* First link on control panel menu.  */
+ul.jquerymenu span.first {
+  margin-top: 6px !important;
+}

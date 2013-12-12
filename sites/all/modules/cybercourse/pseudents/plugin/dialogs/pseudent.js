@@ -11,6 +11,7 @@
  */
 CKEDITOR.dialog.add( 'pseudentDialog', function ( editor ) {
     Drupal.settings.pseudents.currentSelection = '';
+    var theDialog = this;
     return {
         cancel: function() {
           alert('cat');
@@ -29,10 +30,18 @@ CKEDITOR.dialog.add( 'pseudentDialog', function ( editor ) {
                   type: 'html',
                   html: makeChoosePseudentHtml(Drupal.settings.pseudents.posePreviews),
                   setup: function( widget ) {
-//                    this.html = makeChooseHtml
                     //Clear all selection classes.
                     jQuery("table#pseudent-choose-table td")
                             .removeClass("selected");
+                    //Find the selected item, if there is one.
+                    widget.pseudentId = "";
+                    widget.initialPseudentId = "";
+                    if ( jQuery(widget.element.$).find(".pseudent-image") ) {
+                      if ( jQuery(widget.element.$).find(".pseudent-image").attr("data-pseudent-id") ) {
+                        widget.pseudentId = jQuery(widget.element.$).find(".pseudent-image").attr("data-pseudent-id");
+                        widget.initialPseudentId = widget.pseudentId;
+                      }
+                    }
                     //Show current item as selected, if there is a current item.
                     //  The pseudentId is part of the DOM id of the table cell
                     //  containing data about a pseudent.
@@ -44,7 +53,7 @@ CKEDITOR.dialog.add( 'pseudentDialog', function ( editor ) {
                     if ( ! jQuery("table#pseudent-choose-table td")
                            .hasClass("processed") ) {
                       jQuery("table#pseudent-choose-table td")
-                        .addClass("processed")
+//                        .addClass("processed")
                         .click(function(event) {
                           //Clicked on a pose.
                           var target = event.target;
@@ -59,14 +68,19 @@ CKEDITOR.dialog.add( 'pseudentDialog', function ( editor ) {
                               = parseInt( cell.attr("data-pseudent-nid") );
                           widget.pseudentId = psendentId;
                           cell.addClass('selected');
+                        })
+                        .dblclick(function(event) {
+                          //Click on the target image.
+                          event.target.click();
+                          //Click on the OK button.
+                          var dlg = CKEDITOR.dialog.getCurrent();
+                          var okBtn = dlg.getButton('ok');
+                          okBtn.click();
                         });
                     }
                   },
                   commit: function( widget ) {
                     widget.updateImage( widget.pseudentId );
-                  },
-                  cancel: function() {
-                    alert('dog');
                   }
                 }
               ]

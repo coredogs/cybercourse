@@ -37,3 +37,13 @@
   display: block;
   float: right;
 }
+
+/* Glyph icons. */
+.block-cybercourse-book-blocks .glyphicon {
+  color: #999;
+}
+
+.block-cybercourse-book-blocks .glyphicon-stop {
+  font-size: 80%;
+}
+

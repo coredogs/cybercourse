@@ -14,5 +14,4 @@ regions[footer] = Footer
 regions_hidden[] = sidebar_first
 
 stylesheets[all][] = css/custom.css
-;stylesheets[all][] = css/views.css
 

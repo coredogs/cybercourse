@@ -82,32 +82,6 @@ li.expanded.author-menu-parent ul {
   padding: 0.7em;
 }
 
- /*Hide stuff from the image picker. Make it simpler.*/ 
-/*#imgp .imgp_help,
-#imgp .messages,
-#imgp .form-item-thumb-1,
-#imgp .form-item-scale-1 {
-  display: none;
-}
-
-#imagepicker-image-form .imgp_img_options,
-#imagepicker-image-form .form-type-checkbox {
-  display: none;
-}
-
-#filepicker .messages,
-#filepicker .filep_help {
-  display: none;
-}
-
-#imagepicker, 
-#filepicker {
-  border: 1px solid #e3e3e3;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
-  border-radius: 3px;
-  padding-top: 0.5em;
-}*/
-
 /* Space out editing form elements. */
 .field-name-field-show-toc, #edit-body-file-upload {
   margin-top: 2em;
@@ -141,23 +115,6 @@ li.expanded.author-menu-parent ul {
   vertical-align: top;
 }
 
-/*
-.btn-default.button-spacing,
-.btn-primary.button-spacing,
-.btn-danger.button-spacing {
-  margin-left: 1em;
-  margin-top: 1em;  
-}
-.btn-primary.button-spacing a,
-.btn-danger.button-spacing a {
-  color: white;
-}
-
-.btn-default.button-spacing a {
-  color: black;
-}
-*/
-
 /* Panels random stuff. */
 
 .panel-pane .more-link {
@@ -170,16 +127,33 @@ li.expanded.author-menu-parent ul {
 }
 
 /* Header user menu. */
-header nav > ul.pull-right > li {
+/*header nav > ul.pull-right > li {
   display: inline-block;
-}
-
+}*/
 header nav > ul.pull-right > li a {
-  padding: 15px;
-  color: #444;
-  background-color: #EEE;
+  /*padding: 15px;*/
+/*  color: #444;
+  background-color: #EEE;*/
 }
 
+li.user-menu {
+  display: inline-block;
+  margin: 0.5em;
+}
+
+li.user-menu a {
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+    /*border: solid 1px #20538D;*/
+    -webkit-box-shadow:  0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 2px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow:  0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 2px rgba(0, 0, 0, 0.2);
+    box-shadow:  0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 2px rgba(0, 0, 0, 0.2);
+    background: #ddd;
+    color: #111;
+    padding: 0.4em 0.6em;
+    text-decoration: none;
+}
 
 #block-menu-menu-footer-menu {
   margin-bottom: 0;
