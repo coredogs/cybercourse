@@ -100,12 +100,6 @@ li.expanded.author-menu-parent ul {
   margin-right: 2em;  
 }
 
-/* Book nav page up - shrink a little so it fits. */
-.book-navigation .page-up {
-  margin: 0 4%;
-  width: 3%;
-}
-
 /* Some views stuff */
 .view-recent-content-changes .views-row {
   border-top: 1px solid #DDDDDD;

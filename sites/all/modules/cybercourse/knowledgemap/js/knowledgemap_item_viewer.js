@@ -38,6 +38,10 @@
       var nid = domId.split("-").pop();
       //Get user's attention - flash the small item in the map.
       var itemDisplay = kmNamespace.km_rep.km_items[nid].display;
+      //Exit if already animating.
+      if ( itemDisplay.is(':animated') ) {
+        return;
+      }
       var originalColor = itemDisplay.css("color");
       var originalBackgroundColor = itemDisplay.css("background-color");
       var state1 = {
@@ -85,6 +89,7 @@
     if ( kmNamespace.$connectionToolbar ) {
       kmNamespace.$connectionToolbar.hide();
     }
+    this.dialog.dialog("widget").find(".ui-dialog-titlebar-close").focus();
   }
 
   $.KmItemViewer.prototype.updateDialogDisplayFields = function() {
@@ -151,7 +156,7 @@
     //Same for delete button, but it's simpler to create.
     var $deleteLink = this.makeDeleteLink( kmItemNid );
     //Create the toolbar.
-    var $toolbar = $("<div class='btn-group'>");
+    var $toolbar = $("<div class='km-action-group'>");
     $toolbar.append($editLink);
     $toolbar.append($deleteLink);
     $editLink.show();
@@ -199,7 +204,6 @@
           throw new Exception( "Request failed: " + textStatus );
         },
       });
-      evnt.stopPropagation();
     });
     //jQuery('#' + dialogDomId + " footer").append( $deleteLink );
   }
@@ -221,7 +225,7 @@
     $newLink
         .attr("href", href)
         .removeClass('km-item-edit-link-original')
-        .addClass('km-item-edit-link km-item-action-link btn');
+        .addClass('km-item-edit-link km-item-action-link cyco-button');
     //var $this = $(this);
     //Copied from ctools modal.js. Registers the new link with the modal logic.
     $newLink.click(Drupal.CTools.Modal.clickAjaxLink);
@@ -249,7 +253,7 @@
           "<a id='km-item-delete-link-" + kmItemNid + "' "
         +     "data-nid='" + kmItemNid + "' "
         +     "href='javascript:void(0)'" //Click code does the server call.
-        +     "class='km-item-action-link btn' "
+        +     "class='km-item-action-link cyco-button' "
         +     "title='Premanently delete this item.'>"
         +   "Delete"
         + "</a>";

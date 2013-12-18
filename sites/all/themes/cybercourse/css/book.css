@@ -19,22 +19,31 @@
   text-align: center;
   padding: 0.5em;
 }
+
+.book-navigation .page-links .page-previous i {
+  margin-right: 0.5em;
+}
+
+.book-navigation .page-links .page-next i {
+  margin-left: 0.5em;
+}
+
 .book-navigation .page-previous {
-  text-align: left;
+/*  text-align: left;
   width: 42%;
-  display: block;
+  display: block;*/
   float: left; /* LTR */
 }
 .book-navigation .page-up {
-  margin: 0 5%;
+/*  margin: 0 5%;
   width: 4%;
   display: block;
-  float: left; /* LTR */
+  float: left;  LTR */
 }
 .book-navigation .page-next {
-  text-align: right;
+/*  text-align: right;
   width: 42%;
-  display: block;
+  display: block;*/
   float: right;
 }
 
@@ -47,3 +56,7 @@
   font-size: 80%;
 }
 
+.block-cybercourse-book-blocks li i.glyphicon-minus-sign,
+.block-cybercourse-book-blocks li i.glyphicon-plus-sign {
+  cursor: pointer;
+}

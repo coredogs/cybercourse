@@ -28,11 +28,11 @@ function knowledgemap_init() {
  */
 function knowledgemap_menu() {
   //Return HTML for the add form.
-  $items['get-add-form-content-ajax'] = array(
-    'page callback' => 'knowledgemap_get_add_form_content',
-    'access callback' => 'knowledgemap_menu_access',
-    'type' => MENU_CALLBACK,
-  );
+//  $items['get-add-form-content-ajax'] = array(
+//    'page callback' => 'knowledgemap_get_add_form_content',
+//    'access callback' => 'knowledgemap_menu_access',
+//    'type' => MENU_CALLBACK,
+//  );
   //Add a new item. Passing in the coords of the mouse click, and the 
   //nid of the KM that will own the new item.
   $items['add-km-item-ajax'] = array(
@@ -817,112 +817,112 @@ function knowledgemap_delete_item() {
 /**
  * Return the content for making the add form. AJAX call.
  */
-function knowledgemap_get_add_form_content() {
-  $html = '
-<div id="km-add-new-item-container">
-<p>Please enter a name for the knowledge item, and pick its type.</p>
-
-<div data-collapse id="km-add-item-help">
-  <p><span>Help</span></p>
-  <div class="km-help-content">
-      <p>The name should be just a few words, like "Taking photographs" or
-        "Depth of field." </p>
-
-      <p>Item types are either knowledge elements, or experiences.</p>
-
-      <ul>
-        <li>
-          Knowledge elements are things students learn. There are two
-          types of knowledge elements:
-          <ul>
-            <li>Skills. Things that students learn how to do. E.g., 
-            "Taking photographs."</li>
-            <li>Concepts. Ideas students learn, e.g., "Depth of field."</li>
-          </ul>
-        </li>
-        <li>
-          Experiences are things students do to help them learn. There are four
-          types of knowledge elements:
-          <ul>
-            <li>Explanations. Didactic content to read or watch. 
-              E.g., "Taking good photos."
-            </li>
-            <li>
-              Examples. Samples of concepts or skills. Can be stories. 
-              E.g., "Good and bad photos," "Paula shoots a picnic."
-            </li>
-            <li>
-              Exercises. Things that students do.
-              E.g., "Pick the best photo."
-            </li>
-            <li>
-              Patterns. Common ways of doing things.
-              E.g., "Photographing social events."
-            </li>
-            <li>
-              Other. Other experiences.
-              E.g., field trips.
-            </li>
-          </ul>
-        </li>
-      </ul>
-  </div>
-</div>
-
-    <form id="km-add-new-item-form">
-      <div class="km-input-field-container">
-        <label for="km-item-name">Name</label>
-        <div class="km-input-field-inner-container">
-          <input type="text" id="km-item-name" spellcheck 
-                 placeholder="E.g., Taking photographs" required autofocus
-                 title="Name of this item, e.g., Taking photographs"
-                 size="30" />
-          <p class="km-input-field-hint">
-            Name of this item, e.g., Taking photographs.
-          </p>
-        </div>
-      </div>
-      <div class="km-input-field-container">
-        <label for="km-item-type">Type</label>
-        <div class="km-input-field-inner-container">
-          <select id="km-item-type" title="What type of item is this?">
-            <option value="not selected" selected="selected">- Choose one -</option>
-            <optgroup label="Knowledge item">
-              <option value="skill">Skill</option>
-              <option value="concept">Concept</option>
-            </optgroup>
-            <optgroup label="Experience">
-              <option value="explanation">Explanation</option>
-              <option value="example">Example</option>
-              <option value="exercise">Exercise</option>
-              <option value="pattern">Pattern</option>
-              <option value="other">Other</option>
-            </optgroup>
-          </select>
-          <p class="km-input-field-hint">
-            Item type, e.g., Skill.
-          </p>
-          <input type="hidden" name="coord_x" id="coord_x">
-          <input type="hidden" name="coord_y" id="coord_y">
-        </div>
-      </div>
-    </form>
-';
-  try {
-    drupal_json_output( array( 
-        'status' => 'success',
-        'form' => $html,
-    ));
-    drupal_exit();  
-  } catch (Exception $e) {
-    $message = knowledgemap_log_exception($e);
-    drupal_json_output( array( 
-        'status' => 'error',
-        'message' => 'knowledgemap_get_add_form_content' . $message,
-    ));
-    drupal_exit();
-  }
-}
+//function knowledgemap_get_add_form_content() {
+//  $html = '<h1>DOGZ</h1>
+//<div id="km-add-new-item-container">
+//<p>Please enter a name for the knowledge item, and pick its type.</p>
+//
+//<div data-collapse id="km-add-item-help">
+//  <p><span>Help</span></p>
+//  <div class="km-help-content">
+//      <p>The name should be just a few words, like "Taking photographs" or
+//        "Depth of field." </p>
+//
+//      <p>Item types are either knowledge elements, or experiences.</p>
+//
+//      <ul>
+//        <li>
+//          Knowledge elements are things students learn. There are two
+//          types of knowledge elements:
+//          <ul>
+//            <li>Skills. Things that students learn how to do. E.g., 
+//            "Taking photographs."</li>
+//            <li>Concepts. Ideas students learn, e.g., "Depth of field."</li>
+//          </ul>
+//        </li>
+//        <li>
+//          Experiences are things students do to help them learn. There are four
+//          types of knowledge elements:
+//          <ul>
+//            <li>Explanations. Didactic content to read or watch. 
+//              E.g., "Taking good photos."
+//            </li>
+//            <li>
+//              Examples. Samples of concepts or skills. Can be stories. 
+//              E.g., "Good and bad photos," "Paula shoots a picnic."
+//            </li>
+//            <li>
+//              Exercises. Things that students do.
+//              E.g., "Pick the best photo."
+//            </li>
+//            <li>
+//              Patterns. Common ways of doing things.
+//              E.g., "Photographing social events."
+//            </li>
+//            <li>
+//              Other. Other experiences.
+//              E.g., field trips.
+//            </li>
+//          </ul>
+//        </li>
+//      </ul>
+//  </div>
+//</div>
+//
+//    <form id="km-add-new-item-form">
+//      <div class="km-input-field-container">
+//        <label for="km-item-name">Name</label>
+//        <div class="km-input-field-inner-container">
+//          <input type="text" id="km-item-name" spellcheck 
+//                 placeholder="E.g., Taking photographs" required autofocus
+//                 title="Name of this item, e.g., Taking photographs"
+//                 size="30" />
+//          <p class="km-input-field-hint">
+//            Name of this item, e.g., Taking photographs.
+//          </p>
+//        </div>
+//      </div>
+//      <div class="km-input-field-container">
+//        <label for="km-item-type">Type</label>
+//        <div class="km-input-field-inner-container">
+//          <select id="km-item-type" title="What type of item is this?">
+//            <option value="not selected" selected="selected">- Choose one -</option>
+//            <optgroup label="Knowledge item">
+//              <option value="skill">Skill</option>
+//              <option value="concept">Concept</option>
+//            </optgroup>
+//            <optgroup label="Experience">
+//              <option value="explanation">Explanation</option>
+//              <option value="example">Example</option>
+//              <option value="exercise">Exercise</option>
+//              <option value="pattern">Pattern</option>
+//              <option value="other">Other</option>
+//            </optgroup>
+//          </select>
+//          <p class="km-input-field-hint">
+//            Item type, e.g., Skill.
+//          </p>
+//          <input type="hidden" name="coord_x" id="coord_x">
+//          <input type="hidden" name="coord_y" id="coord_y">
+//        </div>
+//      </div>
+//    </form>
+//';
+//  try {
+//    drupal_json_output( array( 
+//        'status' => 'success',
+//        'form' => $html,
+//    ));
+//    drupal_exit();  
+//  } catch (Exception $e) {
+//    $message = knowledgemap_log_exception($e);
+//    drupal_json_output( array( 
+//        'status' => 'error',
+//        'message' => 'knowledgemap_get_add_form_content' . $message,
+//    ));
+//    drupal_exit();
+//  }
+//}
 
 /**
  * Implements hook_field_formattter_info().

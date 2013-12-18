@@ -123,8 +123,9 @@
   /*box-shadow:0px 0px 10px 4px rgba(30, 144, 255, 0.5);*/
 }
 
-.knowledgemap-toolbar .btn {
-  margin: 0.5em;
+/* Top tools */
+.km-toolbar {
+  padding: 0;
 }
 
 /*.knowledgemap-toolbar .knowledgemap-toolbar-link {
@@ -173,11 +174,38 @@
 
 .km-toolbar {
   background: #f8f8f8;
-  padding: 0.5em;
+  padding: 0.2em;
 }
 
 .km-toolbar a {
   /*margin-right: 1em;*/
+}
+
+.km-toolbar input[type="checkbox"] {
+  margin-left: 1em;
+}
+
+.km-toolbar label {
+  margin-left: 0.5em;
+  font-weight: normal;
+  display: inline;
+}
+
+.km-toolbar .km-action-group {
+  display: inline-block;
+  margin-right: 2em;
+}
+
+#km-item-show-details {
+  margin: 0;
+}
+
+#add-km-item,
+#cancel-km-add,
+#show-km-knowledge,
+#show-km-experiences {
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
 .adding-state {
@@ -192,6 +220,15 @@
 
 .km-item-edit-link-original {
   /*display: none;*/
+}
+
+.km-item-edit-link {
+  margin: 0.5em;
+}
+
+.km-action-group {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 
 .km-item footer {
@@ -217,16 +254,26 @@
 }
 
 /* For the create new item form. */
-.km-input-field-container{
+.km-input-field-container {
   margin-top: 2em;
   margin-bottom: 2em;
-  
 }
 
 .km-input-field-hint {
   font-size: 80%;
   margin-top: 0;
   margin-bottom: 0;
+}
+
+#km-add-new-item-form #km-item-name,
+#km-add-new-item-form #km-item-type,
+#km-add-new-item-form #km-item-importance {
+  border: 1px solid #e0e0e0;
+  font: normal 500 1em/1em "Open Sans", Arial, sans-serif;
+  margin: 1px;
+  max-width: 100%;
+  padding: 5px;
+  
 }
 
 /* Viewer dialog */

@@ -30,6 +30,7 @@ try {
         this.itemTypeClassNames += typeName + " ";
       }
       var drawing_id = settings.knowledgemap.drawing_dom_id;
+      this.drawing_id = drawing_id;
       this.$drawing_area = $('#' + drawing_id);
       this.$drawing_area.resizable({ handles: "s" });
       this.$itemToolbar = {}; //Make it later.
@@ -48,6 +49,8 @@ try {
       }
       //Add a toolbar to the drawing.
       this.createTopToolbar();
+      //Remember its height for coord adjustments.
+      this.toolbarHeight = $("#" + drawing_id + " > .km-toolbar").height();
       this.addMethodsToDrawingArea();
 //      this.scrollbarHeight = scrollbarSize[1];
       //Convenience var for JS namespace for this module. Everything gets
@@ -72,19 +75,20 @@ try {
     createTopToolbar: function() {
       var toolbarHtml = 
             "<div class='km-toolbar'>";
+      toolbarHtml += 
+              "<div class='km-action-group'>"
+          +     "<input type='checkbox' checked='checked' id='show-km-knowledge'>"
+          +       "<label for='show-km-knowledge'>Knowledge</label>"
+          +     "<input type='checkbox' checked='checked' id='show-km-experiences'>"
+          +       "<label for='show-km-experiences'>Experiences</label>"
+          +   "</div>";
       if ( this.mode == "edit" ) {
         toolbarHtml +=
-              "<div class='btn-group'>"
-          +     "<a id='add-km-item' class='btn' data-toggle='a' href='javascript:void(0)'>Add item</a>"
-          +     "<a id='cancel-km-add' class='btn' href='javascript:void(0)'>Cancel</a>"
+              "<div class='km-action-group'>"
+          +     "<input type='button' id='add-km-item' value='Add item' class='form-submit'>"
+          +     "<input type='button' id='cancel-km-add' value='Cancel' class='form-submit'>"
           +   "</div>";
       }
-      toolbarHtml += 
-              "<div class='btn-group'>"
-          +     "<a id='show-km-knowledge' class='btn' href='javascript:void(0)'>Knowledge</a>"
-          +     "<a id='show-km-experiences' class='btn' href='javascript:void(0)'>Experiences</a>"
-          +   "</div>"
-          + "</div>";
       this.$drawing_area.prepend( toolbarHtml );
       if ( this.mode == "edit" ) {
         //Hide the cancel button.
@@ -103,7 +107,7 @@ try {
             return;
           }
           //Move into adding state.
-          $("#add-km-item").button("toggle");
+          $("#add-km-item").attr("disabled", "disabled");
           $("#cancel-km-add").removeAttr("disabled");
           kmNamespace.$drawing_area.addClass("adding-state");
           kmNamespace.$drawing_area.state = "add";
@@ -120,8 +124,8 @@ try {
     createFloatingToolbars: function() {
       var itemToolbar = $(
           "<div id='km-item-toolbar' class='knowledgemap-toolbar'>"
-        +   "<div id='km-item-show-details' "
-        +        "class='btn'>Details</div>"
+        +   "<input type='button' class='form-submit' id='km-item-show-details' "
+        +        "value='Show details'>"
         + "</div>"
       );
       this.$drawing_area.append(itemToolbar);
@@ -147,12 +151,12 @@ try {
           +   "<div class='km-connection-from-to'>"
           +     "To: <span id='km-connection-to'/>"
           +   "</div>"
-          +   "<div id='km-connection-reinforcing' "
-          +        "class='btn'>Switch to reinforcing</div>"
-          +   "<div id='km-connection-required' "
-          +        "class='btn'>Switch to required</div>"
-          +   "<div id='km-connection-delete' "
-          +        "class='btn'>Delete</div>"
+          +   "<button id='km-connection-reinforcing' class='cyco-button' "
+          +        ">Switch to reinforcing</button>"
+          +   "<button id='km-connection-required' class='cyco-button' "
+          +        ">Switch to required</button>"
+          +   "<button id='km-connection-delete' class='cyco-button' "
+          +        ">Delete</button>"
           + "</div>"
         );
         this.$drawing_area.append(connectionToolbar);
@@ -163,14 +167,20 @@ try {
         $("#km-connection-reinforcing").click(function(evnt) {
           //Switch from required to reinforcing.
           kmNamespace.switchConnectionRequired( "reinforcing" );
+          evnt.stopPropagation();
+          evnt.preventDefault()
         });
         $("#km-connection-required").click(function(evnt) {
           //Switch from reinforcing to required.
           kmNamespace.switchConnectionRequired( "required" );
+          evnt.stopPropagation();
+          evnt.preventDefault()
         });
         $("#km-connection-delete").click(function(evnt) {
           //Delete a connection.
           kmNamespace.deleteConnection( );
+          evnt.stopPropagation();
+          evnt.preventDefault()
         });
       }
     },  //End Drupal.behaviors.knowledgemap.createFloatingToolbars
@@ -183,6 +193,7 @@ try {
       if ( ! confirm("Are you sure you want to change the connection type?") ) {
         return;
       }
+      this.$connectionToolbar.hide();
       //Change the type of the selected connection.
       //Change the km data rep.
       var connectionRid = this.selectedConnection.rid;
@@ -272,8 +283,8 @@ try {
       this.$drawing_area.showKnowledgeLayer = true;
       this.$drawing_area.showExperiencesLayer = true;
       //Set the "Show knowledge" buttons down initially.
-      $("#show-km-knowledge").button("toggle");
-      $("#show-km-experiences").button("toggle");
+//      $("#show-km-knowledge").prop('checked', true);
+//      $("#show-km-experiences").prop('checked', true);
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
       var kmNamespace = this;
@@ -283,9 +294,11 @@ try {
             //Should never happen.
             throw new Exception("Error: $drawing_area.click add: not in edit mode.");
           }
-          kmNamespace.addNewItem(evnt.pageX, evnt.pageY);
+          var x_to_store = kmNamespace.getEventCoordX(evnt);
+          var y_to_store = kmNamespace.getEventCoordY(evnt);
+          kmNamespace.addNewItem(x_to_store, y_to_store);
           evnt.stopPropagation();
-        }
+          evnt.preventDefault();        }
         else {
           //Clear selection if there is any.
           kmNamespace.clearSelection();
@@ -314,32 +327,45 @@ try {
         kmNamespace.$drawing_area.state = "normal";
         kmNamespace.$drawing_area.removeClass("adding-state");
         $("#cancel-km-add").attr("disabled", "disabled");
-        $("#add-km-item").button("toggle");
+        $("#add-km-item").removeAttr("disabled");
         $(".sendback").remove();
       };// end $drawing_area.exitAddMode
       //Set up the Show Knowledge Layer button.
       $("#show-km-knowledge").click(function(evnt){
-        $("#show-km-knowledge").button("toggle");
+//        console.log("clicky");
+//        $("#show-km-knowledge").prop('checked',
+//          ! $("#show-km-knowledge").prop('checked')
+//        );
         kmNamespace.$drawing_area.showKnowledgeLayer
-            = ! kmNamespace.$drawing_area.showKnowledgeLayer;
+            = $("#show-km-knowledge").is(':checked');
+//            = ! kmNamespace.$drawing_area.showKnowledgeLayer;
         kmNamespace.showCorrectItems();
       }); //End click show knowledge.
       //Set up the Show Experiences Layer button.
       $("#show-km-experiences").click(function(evnt){
-        $("#show-km-experiences").button("toggle");
+//        $("#show-km-experiences").prop('checked',
+//          ! $("#show-km-experiences").prop('checked')
+//        );
         kmNamespace.$drawing_area.showExperiencesLayer
-            = ! kmNamespace.$drawing_area.showExperiencesLayer;
+            = $("#show-km-experiences").is(':checked');
+//            = ! kmNamespace.$drawing_area.showExperiencesLayer;
         kmNamespace.showCorrectItems();
       }); //End click show experiences.
     }, //End Drupal.behaviors.knowledgemap.addMethodsToDrawingArea'
     showCorrectItems : function() {
+      var i;
+      var knowledgeItems = $(".km-item").filter(".skill, .concept");
+      var experienceItems = $(".km-item")
+          .filter(".explanation, .example, .exercise, .pattern, .other");
       var connections = jsPlumb.getConnections();
       if (    this.$drawing_area.showKnowledgeLayer 
            && this.$drawing_area.showExperiencesLayer
          )
         {
           //Show everything.
-          for(var i in connections) {
+          knowledgeItems.show();
+          experienceItems.show();
+          for(i in connections) {
             connections[i].setVisible(true);
           }
         }
@@ -347,7 +373,9 @@ try {
                 && ! this.$drawing_area.showExperiencesLayer
          )
         {
-        //Hide everything.
+          //Hide everything.
+          knowledgeItems.hide();
+          experienceItems.hide();
           for(i in connections) {
             connections[i].setVisible(false);
           }
@@ -356,77 +384,28 @@ try {
                 && ! this.$drawing_area.showExperiencesLayer
          )
         {
-        //Show knowledge, hide experiences.
+          //Show knowledge, hide experiences.
+          knowledgeItems.show();
+          experienceItems.hide();
           for(i in connections) {
-            if ( connections[i].getParameter("knowledge") )
-              connections[i].setVisible(true);
-          }
-          for(i in connections) {
-            if ( connections[i].getParameter("experience") )
-              connections[i].setVisible(false);
+            connections[i].setVisible(
+                ! connections[i].getParameter("experience")
+            );
           }
         }
       else if (    ! this.$drawing_area.showKnowledgeLayer 
                 &&   this.$drawing_area.showExperiencesLayer
          )
         {
-        //Show knowledge, hide experiences.
+          //Hide knowledge, show experiences.
+          knowledgeItems.hide();
+          experienceItems.show();
           for(i in connections) {
-            if ( connections[i].getParameter("km-connection-experience") )
-              connections[i].setVisible(true);
-          }
-          for(i in connections) {
-            if ( connections[i].getParameter("km-connection-knowledge") )
-              connections[i].setVisible(false);
+            connections[i].setVisible(
+                ! connections[i].getParameter("knowledge")
+            );
           }
         }
-      return;
-      
-      
-      var knowledgeItems = $(".km-item").filter(".skill, .concept");
-      var experienceItems = $(".km-item")
-          .filter(".explanation, .example, .exercise, .pattern, .other");
-      var knowledgeConnections = $(".km-connection-knowledge");
-      var experienceConnections = $(".km-connection-experience");
-      if (    this.$drawing_area.showKnowledgeLayer 
-           && this.$drawing_area.showExperiencesLayer
-         )
-        {
-        //Show everything.
-        knowledgeItems.show();
-        experienceItems.show();
-        knowledgeConnections.show();
-        experienceConnections.show();
-      }
-      else if (    ! this.$drawing_area.showKnowledgeLayer 
-                && ! this.$drawing_area.showExperiencesLayer
-         )
-        {
-        //Hide everything.
-        knowledgeItems.hide();
-        experienceItems.hide();
-        knowledgeConnections.hide();
-        experienceConnections.hide();
-      }
-      else if (      this.$drawing_area.showKnowledgeLayer 
-                && ! this.$drawing_area.showExperiencesLayer
-         )
-        {
-        knowledgeItems.show();
-        experienceItems.hide();
-        knowledgeConnections.show();
-        experienceConnections.hide();
-      }
-      else if (    ! this.$drawing_area.showKnowledgeLayer 
-                &&   this.$drawing_area.showExperiencesLayer
-         )
-        {
-        //Hide everything.
-        knowledgeItems.hide();
-        experienceItems.show();
-        experienceConnections.show();
-        knowledgeConnections.hide();
-      }
     },//End Drupal.behaviors.knowledgemap.showCorrectItems
     adjustDrawingHeight : function() {
       //Adjust resize range, since max height may have changed.
@@ -660,10 +639,7 @@ try {
           .removeClass( this.itemTypeClassNames )
           .addClass(itemData.item_type);
       //Set position.
-      $itemDisplay.css({
-        "left": parseInt(itemData.coord_x),
-        "top": parseInt(itemData.coord_y)
-      });
+      this.setItemPosition( $itemDisplay, itemData.coord_x, itemData.coord_y);
     }, //End Drupal.behaviors.knowledgemap.updateItemDisplay
     itemClicked : function ( evnt ) {
       //Start Drupal.behaviors.knowledgemap.itemClicked
@@ -703,6 +679,10 @@ try {
         itemViewer.dialog.dialog("moveToTop");
         //Get user's attention.
         var $dialog = $(itemViewer.dialog.dialog("widget").children(".ui-dialog-content"));
+        //Exit if already animating.
+        if ( $dialog.is(':animated') ) {
+          return;
+        }
         var originalColor = $dialog.css("color");
         var originalBackgroundColor = $dialog.css("background-color");
         var state1 = {
@@ -848,10 +828,10 @@ try {
       //Make parameters from rid and classes.
       var parameters = {};
       parameters.rid = connData.rid;
-      if ( $.inArray("km-connection-knowledge", connCategoryClasses) ) {
+      if ( $.inArray("km-connection-knowledge", connCategoryClasses) != -1 ) {
         parameters.knowledge = true;
       }
-      if ( $.inArray("km-connection-experience", connCategoryClasses) ) {
+      if ( $.inArray("km-connection-experience", connCategoryClasses) != -1 ) {
         parameters.experience = true;
       }
       var connection = jsPlumb.connect({
@@ -1000,8 +980,8 @@ try {
       //Kill the selection.
       this.clearSelection();
       //Adjust X and Y to make them relative to the drawing area.
-      coord_x -= this.$drawing_area.position().left;
-      coord_y -= this.$drawing_area.position().top;
+//      coord_x -= this.$drawing_area.position().left;
+//      coord_y -= this.$drawing_area.position().top;
       $('#add-new-title').val('');
       $('#add-new-type').val('');
       $("#coord_x").val(coord_x);
@@ -1036,7 +1016,7 @@ try {
         .dialog({
           autoOpen: false,
           dialogClass: "no-close",
-          height: 540,
+          height: 570,
           width: 700,
           modal: true,
           title: "Add new item",
@@ -1125,8 +1105,14 @@ try {
         msg += " Please select a type.";
       }
       if ( itemImportance ) {
-        if ( itemImportance < 1 || itemImportance > 10 ) {
-          msg += " Please set importance between 1 and 10, or leave blank."
+        if ( isNaN( itemImportance ) ) {
+          msg += " Importance must be a number between 1 and 10.";
+        }
+        else if ( itemImportance != parseInt( itemImportance ) ) {
+          msg += " Importance must be an integer (whole number) between 1 and 10.";
+        }
+        else if ( itemImportance < 1 || itemImportance > 10 ) {
+          msg += " Please set importance between 1 and 10, or leave it blank."
         }
       }
       return msg;
@@ -1160,10 +1146,10 @@ try {
         var classes = connCategoryClasses.join(" ");
         connection.addClass(classes);
         //Add classes as parameters as well.
-        if ( $.inArray("km-connection-knowledge", connCategoryClasses) ) {
+        if ( $.inArray("km-connection-knowledge", connCategoryClasses) != -1 ) {
           connection.setParameter("knowledge", true);
         }
-        if ( $.inArray("km-connection-experience", connCategoryClasses) ) {
+        if ( $.inArray("km-connection-experience", connCategoryClasses) != -1 ) {
           connection.setParameter("experience", true);
         }
         //Convenience var for JS namespace for this module. Everything gets
@@ -1320,6 +1306,37 @@ try {
       }
       return this.kmItemViewers[ itemData.nid ];
     }, //End Drupal.behaviors.knowledgemap.getKmItemViewer
+    getEventCoordX : function ( evnt ) {
+      //Get the X of an event relative to the drawing area.
+      if ( $(evnt.target).attr('id') == this.drawing_id ) {
+        //Clicked on drawing area, e.g., add new item.
+        return evnt.offsetX; 
+      }
+      else {
+        return $(evnt.target).position().left;
+      }
+    },
+    getEventCoordY : function ( evnt ) {
+      //Get the Y of an event relative to the drawing area.
+      if ( $(evnt.target).attr('id') == this.drawing_id ) {
+        //Clicked on drawing area, e.g., add new item.
+        return evnt.offsetY - this.toolbarHeight; 
+      }
+      else {
+        return $(evnt.target).position().top - this.toolbarHeight;
+      }
+    },
+    setItemPosition : function( $item, x, y ) {
+      //Position an item in the drawing area.
+      var offset_y = parseFloat(y) + parseFloat(this.toolbarHeight);
+      $item.offset({ top: offset_y, left: x });
+//      position(
+//          { at: "left+" + x + " top+" + offset_y, 
+//            of: "#" + this.drawing_id, 
+//            my: "left top"
+//          }
+//      );
+    },
     saveNewPosition : function ( evnt, ui ) {
       //Start Drupal.behaviors.knowledgemap.saveNewPosition
       if ( this != Drupal.behaviors.knowledgemap ) {
@@ -1330,8 +1347,8 @@ try {
         throw new Exception("Error: saveNewPosition: not in edit mode.");
       }
       //Save the new position of an item.
-      var coord_x = ui.position.left;
-      var coord_y = ui.position.top;
+      var coord_x = this.getEventCoordX(evnt);
+      var coord_y = this.getEventCoordY(evnt);
       var domId = evnt.target.id;
       var kmItemNid = domId.replace("km-item-", "")
       $.ajax({
@@ -1425,7 +1442,7 @@ try {
       //HTML for the Add form.
       var html = 
 '<div id="km-add-new-item-container">' +
-'<p>Please enter a name for the knowledge item, and pick its type.</p>' +
+'<p>Please enter a name for the item, and pick its type.</p>' +
 '<div id="km-add-item-help">' +
 '  <p><span>Help</span></p>' +
 '  <div class="km-help-content">' +
@@ -1468,6 +1485,9 @@ try {
 '          </ul>' +
 '        </li>' +
 '      </ul>' +
+'      <p>Importance is the importance of the item to course outcomes. ' +
+'         Enter a whole number from 1 to 10, inclusive. ' +
+'         You can leave it empty, if you want.</p>' +
 '  </div>' +
 '</div>' +
 '<form id="km-add-new-item-form">' +

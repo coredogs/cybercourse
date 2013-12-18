@@ -45,15 +45,15 @@
     <div class="page-links clearfix">
       <?php if ($prev_url): ?>
         <span class="page-previous">
-          <a href="<?php print $prev_url; ?>" class="btn btn-default" title="<?php print t('Go to previous page'); ?>"><i class="icon-arrow-left"></i><?php print $prev_title; ?></a>
+          <a href="<?php print $prev_url; ?>" class="btn btn-default" title="<?php print t('Go to previous page'); ?>"><i class="glyphicon glyphicon-arrow-left"></i><?php print $prev_title; ?></a>
         </span>
       <?php endif; ?>
       <?php if ($parent_url): ?>
-        <a href="<?php print $parent_url; ?>" class="page-up btn btn-default" title="<?php print t('Go to parent page'); ?>"><i class="icon-arrow-up"></i></a>
+        <a href="<?php print $parent_url; ?>" class="page-up btn btn-default" title="<?php print t('Go to parent page'); ?>"><i class="glyphicon glyphicon-arrow-up"></i></a>
       <?php endif; ?>
       <?php if ($next_url): ?>
         <span class="page-next">
-          <a href="<?php print $next_url; ?>" class="btn btn-default" title="<?php print t('Go to next page'); ?>"><?php print $next_title; ?><i class="icon-arrow-right"></i></a>
+          <a href="<?php print $next_url; ?>" class="btn btn-default" title="<?php print t('Go to next page'); ?>"><?php print $next_title; ?><i class="glyphicon glyphicon-arrow-right"></i></a>
         </span>
       <?php endif; ?>
     </div>
