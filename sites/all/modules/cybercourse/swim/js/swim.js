@@ -2,13 +2,35 @@
   
   var swimDoneOnce = false;
   Drupal.behaviors.swim = {
-    swimSetup: function () {
+    attach: function() {
+      //Setup code to run after CKEDITOR instances have been created.
+      CKEDITOR.on("instanceReady", function(evnt) {
+        var editor = evnt.editor;
+        editor.document.appendStyleSheet( Drupal.settings.swim.editing_stylesheet );
+        //Size the summary editor.
+        if ( editor.name == 'edit-body-und-0-summary' ) {
+          editor.config.height = "8em";
+        }
+        if ( editor.name == 'edit-body-und-0-value' ) {
+          //Size the main editor.
+          editor.config.height = "30em";
+          //Start up Swim init.
+          Drupal.behaviors.swim.swimSetup();
+        }
+      });
+    },
+    swimSetup: function () {    
       if ( swimDoneOnce ) {
+        return;
+      }
+      swimDoneOnce = true;
+      if ( ! CKEDITOR.instances['edit-body-und-0-value'].commands.peek ) {
+        //Skip the rest if there is no peek command. The command is only
+        //created if the user has Drupal's permission to peek.
         return;
       }
       //Disable peek button until ready.
       CKEDITOR.instances['edit-body-und-0-value'].commands.peek.disable();
-      swimDoneOnce = true;
       //Compute the URL for the iframe that simulates the device.
       var iframeSrc = Drupal.settings.swim.base_url + "/swim-mt-peek";      
       //Make peek toolbar.
@@ -167,8 +189,8 @@
       var dialogTitleHeight = $(".ui-dialog-titlebar").outerHeight();
       if ( this.selectedPeek == 'desktop') {
         //Base size of dialog on what sizing the user has done. 
-        var h = $("#cke_2_contents").innerHeight();
-        var w = $(document).innerWidth() * 0.75;
+        var h = $(window).height() * 0.75;
+        var w = $(window).width() * 0.75;
         $( "#swim-peek-device" ).css("height", h).css("width", w);
         $( "#swim-peek-outer" )
             .dialog( "option", "width", w + 40 )
@@ -200,30 +222,35 @@
       //Get content from server.
       var editor = CKEDITOR.instances["edit-body-und-0-value"];
       var markup = editor.getData();
-      var format = Drupal.settings.swim.format_name;
       var swimBehavior = this; //Convenience for closures.
-      $.ajaxMarkup(markup, format, function(result, success, request) {
-        if ( success ) {
-          //Restore body template content.
-          //Get the template code.
-          var templateCode = swimBehavior.templateBodyHtml.clone();
-          //Erase contents of the MT container, if any.
-          templateCode = $(templateCode).find("#cyco-mt-content-container").first().html('');
-          //Insert the MT template code into the preview iframe.
-          $("#swim-peek-device").contents().find("body").first()
-              .html( templateCode );
-          //Insert new content.
-          $("#swim-peek-device").contents().find("body").find("#cyco-mt-content-container")
-              .append(result);
-          //Get ref to the markup in the iframe.
-//          var iframeContentContainer 
-//              = iframe.contents().find(".document");
-//          iframeContentContainer.html(result);
-          //swimBehavior.prepareIframeContent();
+      $.ajax({
+        async: false,
+        type: "POST",
+        url: Drupal.settings.basePath + 'swim-peek',
+        data: {
+          'content': markup
+        },
+        success: function(data, textStatus, jqXHR) {
+          if ( data.status == 'success' ) {
+            //Restore body template content.
+            //Get the template code.
+            var templateCode = swimBehavior.templateBodyHtml.clone();
+            //Erase contents of the MT container, if any.
+            templateCode = $(templateCode).find("#cyco-mt-content-container").first().html('');
+            //Insert the MT template code into the preview iframe.
+            $("#swim-peek-device").contents().find("body").first()
+                .html( templateCode );
+            //Insert new content.
+            $("#swim-peek-device").contents().find("body").find("#cyco-mt-content-container")
+                .append(data.result);
+          }
+          else {
+            throw "showPeek: Ajax preview call failed.";
+          } // end data.status not success.
+        }, //End success function.
+        fail: function(jqXHR, textStatus) {
+          throw new Exception( "Ajax preview request failed: " + textStatus );
         }
-        else {
-          throw "showPeek: Ajax call failed.";
-        } // end not success.
       });
     }, // end showpeek.
     showThrobber : function( afterThisElement, message ) {

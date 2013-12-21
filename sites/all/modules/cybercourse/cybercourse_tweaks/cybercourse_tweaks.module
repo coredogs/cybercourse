@@ -98,3 +98,22 @@ function cybercourse_tweaks_node_view_alter (&$build) {
     unset($build['links']['comment']['#links']['comment_forbidden']);
   }
 }
+
+/**
+ * Implements hook_block_view_alter().
+ * 
+ * Change the "My account" link to show user name.
+ */
+function cybercourse_tweaks_block_view_alter(&$data, $block) {
+  if ($block->delta == 'user-menu') {
+    global $user;
+    foreach ($data['content'] as $key => $item) {
+      if ( isset( $item['#title'] ) ) {
+        if ( $item['#title'] == 'My account' ) {
+          $data['content'][$key]['#title'] = 'User: ' . $user->name;
+          break;
+        }
+      } //End isset().
+    } //End foreach.
+  } //End block->delta test.
+}

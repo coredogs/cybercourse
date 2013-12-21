@@ -10,6 +10,9 @@
 function swim_help($path, $arg) {
   switch ($path) {
     case 'admin/help#swim':
+      if ( ! user_access('peek content') ) {
+        return '<p>' . t('Access denied.') . '</p>';
+      }
       return '<p>' . t('Helpy help help, <a href="@jquery">jQuery</a>.', 
           array(
             '@jquery' => 'http://jquery.com',
@@ -30,6 +33,13 @@ function swim_menu() {
     'access arguments' => array('peek content'),
     'type' => MENU_CALLBACK,
   );
+  //Return rendered content to show in peek dialog.
+  $items['swim-peek'] = array(
+    'page callback' => 'swim_peek',
+    'access callback' => 'user_access',
+    'access arguments' => array('peek content'),
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -42,6 +52,10 @@ function swim_permission() {
       'title' => t('Can switch to plain text'),
       'description' => t('See a "Switch to plain text editor" link.')
     ),
+    'peek content' => array(
+      'title' => t('Peek at rendered content'),
+      'description' => t('See what the content looks like on various devices.')
+    ),
   );
 }
 
@@ -52,40 +66,37 @@ function swim_permission() {
  */
 function swim_ckeditor_plugin() {
   global $base_url;
-  return array(
-    'peek' => array(
-      // Plugin name.
-      'name' => 'peek',
-      // Plugin description - it will be displayed in the plugins management section of the profile settings.
-      'desc' => t('SWIM: Plugin to preview content on various devices.'),
-      // The full path to the CKEditor plugin directory, trailing slash included.
-      'path' => drupal_get_path('module', 'swim') . '/plugin/',
-    )
-  );
+  if ( user_access('peek content') ) {
+    return array(
+      'peek' => array(
+        // Plugin name.
+        'name' => 'peek',
+        // Plugin description - it will be displayed in the plugins management section of the profile settings.
+        'desc' => t('SWIM: Plugin to preview content on various devices.'),
+        // The full path to the CKEditor plugin directory, trailing slash included.
+        'path' => drupal_get_path('module', 'swim') . '/plugin/',
+      )
+    );
+  }
 }
 
 /**
  * Implements hook_form_alter().
  */
 function swim_form_alter(&$form, &$form_state, $form_id) {
-  // @todo Instead of checking form_id, check for a field
-  //having the SWIM format? Cache the results of the check 
-  //so don't run check again on this page call.
-  //Not sure if this is the right approach.
   try {
     global $base_url;
     if ( stristr($form_id, 'node_form') !== FALSE ) {
       //Is the SWIM format being used?
       $body_format_name = $form['body'][LANGUAGE_NONE][0]['#format'];
+      if ( is_null($body_format_name) || $body_format_name == '' ) {
+        //If no format, get the name of the default format.
+        $body_format_name = filter_default_format();
+      }
       $new_node = ! isset( $form['#entity']->nid );
       if ( $body_format_name == 'swim' || $new_node ) {
-        //Need Ajax markup module to work.
-        if ( ! module_invoke('ajax_markup', 'on') ) {
-          throw new Exception(t('SWIM: Ajax markup module must be on. '
-              . 'Please contact your site administrator.'));
-        }
         //If field_body_ck is null, put something in it.
-        //  This happens on existing nodes when bocy CK was just defined.
+        //  This happens on existing nodes when body CK was just defined.
         //  It should not happen, other than during development.
         if ( ! isset( $form['#node']->field_body_ck[LANGUAGE_NONE][0]['value'] ) ) {
           $form['#node']->field_body_ck[LANGUAGE_NONE][0]['value'] = '';
@@ -124,6 +135,7 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
         $settings = array(
           'base_url' => $base_url,
           'format_name' => 'swim',
+          'can_peek' => user_access('peek content') ? 'yes' : 'no',
           'editing_stylesheet' => 
             $base_url . '/' . drupal_get_path('module', 'swim') . '/css/swim_editing.css',
           'icon_path' =>
@@ -162,56 +174,88 @@ function _swim_form_submit($form, &$form_state) {
       = $body_summary;
   }
   //Convert to pure ReST.
+  _swim_ckhtml2rest($body_value);
+  if ( $body_summary ) {
+    _swim_ckhtml2rest($body_summary);
+  }  
   //First, the <br>s.
-  swim_remove_brs( $body_value );
-  if ( $body_summary ) {
-    swim_remove_brs( $body_summary );
-  }
-  //Replace &nbsp; with real spaces.
-  $body_value = str_replace('&nbsp;', ' ', $body_value);
-  if ( $body_summary ) {
-    $body_summary = str_replace('&nbsp;', ' ', $body_summary);
-  }
-  //Replace &#39; with real quotes.
-  $body_value = str_replace('&#39;', '\'', $body_value);
-  if ( $body_summary ) {
-    $body_summary = str_replace('&#39;', '\'', $body_summary);
-  }
-  //Handle numeric codes correctly.
-  // See http://www.php.net/manual/en/function.html-entity-decode.php#47371
-  $body_value = preg_replace('/&#(\d+);/me',"chr(\\1)",$body_value); #decimal notation
-  $body_value = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$body_value);  #hex notation
-  if ( $body_summary ) {
-    $body_summary = preg_replace('/&#(\d+);/me',"chr(\\1)",$body_summary); #decimal notation
-    $body_summary = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$body_summary);  #hex notation
-  }
-  //HTML entities to their real characters.
-  $body_value = html_entity_decode( $body_value );
-  if ( $body_summary ) {
-    $body_summary = html_entity_decode( $body_summary );
-  }
-  //Special chars - particularly #39; -> '.
-  $body_value = htmlspecialchars_decode( $body_value );
-  if ( $body_summary ) {
-    $body_summary = htmlspecialchars_decode( $body_summary );
-  }
-  //Trigger other module's translators.
-  drupal_alter( 'edithtml_2_directive', $body_value); //, $type );
-  if ( $body_summary ) {
-    drupal_alter('edithtml_2_directive', $body_summary); //, $type );
-  }
-  //Replace image HTML tags with directives.
-  //  These must be after other module's hooks are called, so that other 
-  //  modules have processes the images they own.
-  swim_img_2_directive( $body_value );
-  if ( $body_summary ) {
-    swim_img_2_directive( $body_summary );
-  }
+//  swim_remove_brs( $body_value );
+//  if ( $body_summary ) {
+//    swim_remove_brs( $body_summary );
+//  }
+//  //Replace &nbsp; with real spaces.
+//  $body_value = str_replace('&nbsp;', ' ', $body_value);
+//  if ( $body_summary ) {
+//    $body_summary = str_replace('&nbsp;', ' ', $body_summary);
+//  }
+//  //Replace &#39; with real quotes.
+//  $body_value = str_replace('&#39;', '\'', $body_value);
+//  if ( $body_summary ) {
+//    $body_summary = str_replace('&#39;', '\'', $body_summary);
+//  }
+//  //Handle numeric codes correctly.
+//  // See http://www.php.net/manual/en/function.html-entity-decode.php#47371
+//  $body_value = preg_replace('/&#(\d+);/me',"chr(\\1)",$body_value); #decimal notation
+//  $body_value = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$body_value);  #hex notation
+//  if ( $body_summary ) {
+//    $body_summary = preg_replace('/&#(\d+);/me',"chr(\\1)",$body_summary); #decimal notation
+//    $body_summary = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$body_summary);  #hex notation
+//  }
+//  //HTML entities to their real characters.
+//  $body_value = html_entity_decode( $body_value );
+//  if ( $body_summary ) {
+//    $body_summary = html_entity_decode( $body_summary );
+//  }
+//  //Special chars - particularly #39; -> '.
+//  $body_value = htmlspecialchars_decode( $body_value );
+//  if ( $body_summary ) {
+//    $body_summary = htmlspecialchars_decode( $body_summary );
+//  }
+//  //Trigger other module's translators.
+//  drupal_alter( 'edithtml_2_directive', $body_value); //, $type );
+//  if ( $body_summary ) {
+//    drupal_alter('edithtml_2_directive', $body_summary); //, $type );
+//  }
+//  //Replace image HTML tags with directives.
+//  //  These must be after other module's hooks are called, so that other 
+//  //  modules have processes the images they own.
+//  swim_img_2_directive( $body_value );
+//  if ( $body_summary ) {
+//    swim_img_2_directive( $body_summary );
+//  }
   //Put processed values (ReST now) back into body field.
   $form_state['values']['body'][LANGUAGE_NONE][0]['value'] = $body_value;
   if ( $body_summary ) {
     $form_state['values']['body'][LANGUAGE_NONE][0]['summary'] = $body_summary;
   }
+}
+
+/**
+ * Convert content from CKHTML (HTML from CK field) to pure ReST.
+ * @param string $content Content to convert.
+ */
+function _swim_ckhtml2rest( &$content ) {
+  //Convert to pure ReST.
+  //First, the <br>s.
+  swim_remove_brs( $content );
+  //Replace &nbsp; with real spaces.
+  $content = str_replace('&nbsp;', ' ', $content);
+  //Replace &#39; with real quotes.
+  $content = str_replace('&#39;', '\'', $content);
+  //Handle numeric codes correctly.
+  // See http://www.php.net/manual/en/function.html-entity-decode.php#47371
+  $content = preg_replace('/&#(\d+);/me',"chr(\\1)",$content); #decimal notation
+  $content = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$content);  #hex notation
+  //HTML entities to their real characters.
+  $content = html_entity_decode( $content );
+  //Special chars - particularly #39; -> '.
+  $content = htmlspecialchars_decode( $content );
+  //Trigger other module's translators.
+  drupal_alter( 'edithtml_2_directive', $content); //, $type );
+  //Replace image HTML tags with directives.
+  //  These must be after other module's hooks are called, so that other 
+  //  modules have processes the images they own.
+  swim_img_2_directive( $content );
 }
 
 /**
@@ -272,11 +316,9 @@ function swim_img_2_directive( &$content ) {
   );
 }
 
-
 /**
  * Return a page with the right media queries and such, and a place to 
  * put markup. MT otherwise.
- * @return array Output - renderable array.
  */
 function swim_mt_peek() {
   //Check perm.
@@ -290,6 +332,34 @@ function swim_mt_peek() {
   //Return some MT content. The theme system will wrap this in stuff that
   //the theme usually wraps content in.
   return '<div id="cyco-mt-content-container"/>';
+}
+
+/**
+ * Return rendered HTML for preview.
+ */
+function swim_peek() {
+  //Check perm.
+  if ( ! user_access('peek content') ) {
+    return MENU_ACCESS_DENIED;
+  }
+  //Suppress the admin menu.
+//  if ( module_exists('admin_menu') ) {
+//    module_invoke('admin_menu', 'suppress');
+//  }
+  //Convert the content to HTML.
+  $content = $_POST['content'];
+  //Convert content to pure ReST, so can call the ReST input filter.
+  _swim_ckhtml2rest($content);
+  //Convert the ReST content to HTML.
+  $fake_filter_object = new stdClass();
+//  $fake_filter_object->settings = array();
+  $html = swim_process_filter($content, $fake_filter_object);
+  //Return rendered content. 
+  drupal_json_output( array( 
+        'status' => 'success',
+        'result' => $html,
+  ));
+  drupal_exit();  
 }
 
 /**
@@ -474,9 +544,12 @@ Level 3<br>
 ' . t('   Hi from Aila, drinking tea.') . '
 </p>
 <p>' . t('Link:') . '<br><small><code>' . 
-      t('`Link text &lt;http://example.com/&gt;`_') . '</code></small></p>
-<p>' . t('Use the peek button to see how your content will look on '
-. 'different devices.') . '
-</p>';
+      t('`Link text &lt;http://example.com/&gt;`_') . '</code></small></p>';
+  if ( user_access('peek content') ) {
+    $help .= 
+      '<p>' . t('Use the peek button to see how your content will look on '
+      . 'different devices.') . '
+      </p>';
+  }
   return $help;
 }

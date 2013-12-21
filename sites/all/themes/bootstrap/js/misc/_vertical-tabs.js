@@ -39,13 +39,8 @@ Drupal.behaviors.verticalTabs = {
         $(this)
           .removeClass('collapsible collapsed panel panel-default')
           .addClass('tab-pane vertical-tabs-pane')
-          .data('verticalTab', vertical_tab);
-        if ($(this).find('legend a').length) {
-          $(this).find('legend').append('<div class="panel-title fieldset-legend">' + $(this).find('legend a').html() + '</div>');
-          $(this).find('legend a').remove();
-          $(this).append($(this).find('.panel-collapse').html());
-          $(this).find('.panel-collapse').remove();
-        }
+          .data('verticalTab', vertical_tab)
+          .find('> legend').remove();
         if (this.id == focusID) {
           tab_focus = $(this);
         }
@@ -121,7 +116,9 @@ Drupal.verticalTab.prototype = {
         .addClass('fade in')
         .siblings(':hidden.vertical-tabs-active-tab')
         .val(this.fieldset.attr('id'));
+console.log('in _vert - before');
     this.fieldset.data('verticalTab').item.find('a').tab('show');
+console.log('in _vert - after');
     this.item.addClass('selected');
     // Mark the active tab for screen readers.
     $('#active-vertical-tab').remove();

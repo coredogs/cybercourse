@@ -22,10 +22,10 @@ Styles for doing editing with SWIM.
   margin: 0;
   padding: 5px;
   background-color: grey;
-  position:absolute;
+  /*position:absolute;*/
   width: 100%;
   z-index: 100;
-  height: 30px;
+  /*height: 30px;*/
 }
 
 #swim-peek-toolbar img {
@@ -36,7 +36,7 @@ Styles for doing editing with SWIM.
   overflow:auto;
   width: 100%;
   height: 100%;
-  position: absolute;
+  /*position: absolute;*/
 }
 
 /* Styles for id=swim-peek-device. Black border for portables,
@@ -46,8 +46,8 @@ MT for desktop. */
   padding: 5px;
   margin: 0;
   overflow: auto;
-  position: absolute;
-  top:30px;
+/*  position: absolute;
+  top:30px;*/
 }
 
 .swim-peek-device-desktop {
@@ -76,8 +76,9 @@ MT for desktop. */
   z-index: 1100; 
 }
 
-.swim-button {
+a.cke_button.swim-button {
   border-color: rgb(47, 65, 111);
+  height: inherit;
 }
 
 /* Brokeh */

@@ -23,16 +23,20 @@ function knowledgemap_init() {
   ctools_include('node.pages', 'node', '');
 }
 
+ /**
+ * Implements hook_admin_paths().
+ */
+//function knowledgemap_admin_paths() {
+//  $paths = array(
+//    'atom/add/*/ajax' => TRUE,
+//  );
+//  return $paths;
+//}
+
 /**
  * Implements hook_menu.
  */
 function knowledgemap_menu() {
-  //Return HTML for the add form.
-//  $items['get-add-form-content-ajax'] = array(
-//    'page callback' => 'knowledgemap_get_add_form_content',
-//    'access callback' => 'knowledgemap_menu_access',
-//    'type' => MENU_CALLBACK,
-//  );
   //Add a new item. Passing in the coords of the mouse click, and the 
   //nid of the KM that will own the new item.
   $items['add-km-item-ajax'] = array(
@@ -40,6 +44,9 @@ function knowledgemap_menu() {
     'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
+  //Show CTools modal.
+  //Need theme callback so that the modal will use the admin theme, not the
+  //main theme.
   $items['edit-km-item/%node/%ctools_js'] = array(
     'title' => 'Edit',
     'page callback' => 'knowledgemap_edit_item_ctools',
@@ -48,6 +55,7 @@ function knowledgemap_menu() {
     'access arguments' => array('update', 1),
     'weight' => 0,
     'type' => MENU_CALLBACK,
+    'theme callback' => '_km_admin_theme'
   );
   $items['update-km-item-pos'] = array(
     'page callback' => 'knowledgemap_save_item_position',
@@ -78,6 +86,11 @@ function knowledgemap_menu() {
     'type' => MENU_CALLBACK,
   );
   return $items;
+}
+
+function _km_admin_theme() {
+  $theme = variable_get('admin_theme', 'seven');
+  return $theme;
 }
 
 /**
@@ -142,10 +155,7 @@ function knowledgemap_field_widget_info() {
 function knowledgemap_field_widget_form(&$form, &$form_state, 
     $field, $instance, $langcode, $items, $delta, $element) {
   
-//  return $element;
-  
-  
-  //$element contains some of the Right Stuff already. Add to it.
+    //$element contains some of the Right Stuff already. Add to it.
   $base = $element;
   //Can't add KM items on new node.
   //Is this a new node? $node is the KM node that has the widget in it.
@@ -334,11 +344,6 @@ function knowledgemap_make_km_rep($km_nid) {
     'connections' => $connections,
   );
 }
-
-//function knowledgemap_node_view($node, $view_mode, $langcode) {
-//  $r=5;
-//}
-
 
 function knowledgemap_add_item_ajax() {
   $title = $_POST['title'];
@@ -546,8 +551,8 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
             'item_type' => $node->field_item_type[LANGUAGE_NONE][0]['value'],
             'title' => $node->title,
             'body' => 
-                isset( $node->body[LANGUAGE_NONE][0]['value'] )
-                  ? $node->body[LANGUAGE_NONE][0]['value']
+                isset( $node->body[LANGUAGE_NONE][0]['summary'] )
+                  ? $node->body[LANGUAGE_NONE][0]['summary']
                   : '',
             'importance' => 
                 isset( $node->field_importance[LANGUAGE_NONE][0]['value'] )

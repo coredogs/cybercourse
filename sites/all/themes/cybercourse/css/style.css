@@ -130,25 +130,6 @@ header nav > ul.pull-right > li a {
   background-color: #EEE;*/
 }
 
-li.user-menu {
-  display: inline-block;
-  margin: 0.5em;
-}
-
-li.user-menu a {
-    -webkit-border-radius: 8px;
-    -moz-border-radius: 8px;
-    border-radius: 8px;
-    /*border: solid 1px #20538D;*/
-    -webkit-box-shadow:  0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 2px rgba(0, 0, 0, 0.2);
-    -moz-box-shadow:  0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 2px rgba(0, 0, 0, 0.2);
-    box-shadow:  0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 2px rgba(0, 0, 0, 0.2);
-    background: #ddd;
-    color: #111;
-    padding: 0.4em 0.6em;
-    text-decoration: none;
-}
-
 #block-menu-menu-footer-menu {
   margin-bottom: 0;
 }
@@ -202,4 +183,47 @@ table.package tr.enabling {
 /* From admin module (core)  */
 div.admin-requirements, div.admin-required {
     color: inherit;
+}
+
+li.user-menu {
+  display: inline-block;
+  margin: 0.5em;
+}
+
+/* Adminy buttons. Replicate Shiny's input.form-submit. */
+li.user-menu a {
+  color: #5A5A5A;
+  background: #e0e0e0;
+  background: -moz-linear-gradient(top, #fefefe 0%, #e0e0e0 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #fefefe), color-stop(100%, #e0e0e0));
+  background: -webkit-linear-gradient(top, #fefefe 0%, #e0e0e0 100%);
+  background: -o-linear-gradient(top, #fefefe 0%, #e0e0e0 100%);
+  background: -ms-linear-gradient(top, #fefefe 0%, #e0e0e0 100%);
+  background: linear-gradient(to bottom, #fefefe 0%, #e0e0e0 100%);
+  border: 1px solid #cccccc;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-radius: 4px;
+  -moz-box-shadow: 0 1px 2px #cccccc, inset 0 1px 1px white;
+  -webkit-box-shadow: 0 1px 2px #cccccc, inset 0 1px 1px white;
+  box-shadow: 0 1px 2px #cccccc, inset 0 1px 1px white;
+  font: normal 500 16px/16px "Open Sans", Arial, sans-serif;
+  margin-left: 1px;
+  margin-top: 1px;
+  padding: 6px 30px;
+  text-decoration: none;
+}
+li.user-menu a:hover,
+li.user-menu a:focus,
+li.user-menu a:active,
+li.user-menu a:disabled
+{
+  background: #eeeeee;
+  color: #5A5A5A;
+  text-shadow: 0 -1px 1px #fff;
+}
+
+/* Tabs on, e.g., node edit page. */
+.nav-tabs {
+  margin-bottom: 1em;
 }

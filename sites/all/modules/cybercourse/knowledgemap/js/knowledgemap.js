@@ -22,6 +22,14 @@ try {
       this.km_rep = settings.knowledgemap.knowledgemap_rep;
         //km_rep.km_item.display is a DOM element.
         //km_rep.connection.display is a jsPlumb thing.
+      $.each( this.km_rep.km_items, function(index, item) {
+        //Set flag to show that the body has not been rendered.
+        item.bodyRenderedFlag = false;
+        //Make sure that there is at least an MT string in the body.
+        if ( ! item.body ) {
+          item.body = "";
+        }
+      });
       //Valid item types.
       this.validItemTypes = settings.knowledgemap.all_item_types;
       //Make a string with class names derived from item types.
@@ -55,15 +63,15 @@ try {
 //      this.scrollbarHeight = scrollbarSize[1];
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
-      var kmNamespace = this;
+      var lmNamespace = this;
       jsPlumb.ready(function() {
-        kmNamespace.setJsPlumbDefaults();
-        kmNamespace.drawAllItems();
-        kmNamespace.drawAllConnections();
-        kmNamespace.adjustDrawingHeight();
-        if ( kmNamespace.mode == "edit" ) {
+        lmNamespace.setJsPlumbDefaults();
+        lmNamespace.drawAllItems();
+        lmNamespace.drawAllConnections();
+        lmNamespace.adjustDrawingHeight();
+        if ( lmNamespace.mode == "edit" ) {
           jsPlumb.bind("connection", function(info, evnt) {
-            kmNamespace.makeNewConnection(info, evnt);
+            lmNamespace.makeNewConnection(info, evnt);
           });            
         }
       });
@@ -96,27 +104,27 @@ try {
         //Set up the Add button.
         //Convenience var for JS namespace for this module. Everything gets
         //attached to Drupal.behaviors.knowledgemap.
-        var kmNamespace = this;
+        var lmNamespace = this;
         $("#add-km-item").click(function(evnt) {
           evnt.stopPropagation();
-          kmNamespace.clearSelection();
+          lmNamespace.clearSelection();
           //If already in add, exit state.
-          if ( kmNamespace.$drawing_area.state == 'add') {
+          if ( lmNamespace.$drawing_area.state == 'add') {
             //Exit add mode.
-            kmNamespace.$drawing_area.exitAddMode();
+            lmNamespace.$drawing_area.exitAddMode();
             return;
           }
           //Move into adding state.
           $("#add-km-item").attr("disabled", "disabled");
           $("#cancel-km-add").removeAttr("disabled");
-          kmNamespace.$drawing_area.addClass("adding-state");
-          kmNamespace.$drawing_area.state = "add";
+          lmNamespace.$drawing_area.addClass("adding-state");
+          lmNamespace.$drawing_area.state = "add";
           return false; //No propagation. 
         }); //End add item click.
         //The cancel button.
         $("#cancel-km-add").click(function(evnt){
-          if ( kmNamespace.$drawing_area.state == "add" ) {
-            kmNamespace.$drawing_area.exitAddMode();
+          if ( lmNamespace.$drawing_area.state == "add" ) {
+            lmNamespace.$drawing_area.exitAddMode();
           }
         }); //End cancel button click.
       }
@@ -124,21 +132,29 @@ try {
     createFloatingToolbars: function() {
       var itemToolbar = $(
           "<div id='km-item-toolbar' class='knowledgemap-toolbar'>"
-        +   "<input type='button' class='form-submit' id='km-item-show-details' "
-        +        "value='Show details'>"
+        +   "<a id='km-item-show-summary' class='cyco-button-small' href='javascript:void(0)' "
+        +        ">Summary</a>"
+        +    "<a "
+        +       "id='km-item-show-details' "
+        +       "href='do not know yet' "
+        +       "target='_blank' "
+        +       "class='cyco-button-small' "
+        +       "title='Show details about this item in a new window.'>"
+        +     "Details"
+        +   "</a>"
         + "</div>"
       );
       this.$drawing_area.append(itemToolbar);
       this.$itemToolbar = itemToolbar;
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
-      var kmNamespace = this;
-      $("#km-item-show-details").click(function(evnt) {
+      var lmNamespace = this;
+      $("#km-item-show-summary").click(function(evnt) {
         //Get the selected item's data.
-        var itemNid = kmNamespace.selectedItem.nid;
-        var itemData = kmNamespace.km_rep.km_items[itemNid];
+        var itemNid = lmNamespace.selectedItem.nid;
+        var itemData = lmNamespace.km_rep.km_items[itemNid];
         //Get a viewer for it.
-        var viewer = kmNamespace.getKmItemViewer(itemData);
+        var viewer = lmNamespace.getKmItemViewer(itemData);
         viewer.open( evnt );
       });
       if ( this.mode == "edit" ) {
@@ -160,25 +176,25 @@ try {
           + "</div>"
         );
         this.$drawing_area.append(connectionToolbar);
-        //Cache in kmNamespace.
+        //Cache in lmNamespace.
         this.$connectionToolbar = connectionToolbar;
         this.$connectionFrom = $("#km-connection-from");
         this.$connectionTo = $("#km-connection-to");
         $("#km-connection-reinforcing").click(function(evnt) {
           //Switch from required to reinforcing.
-          kmNamespace.switchConnectionRequired( "reinforcing" );
+          lmNamespace.switchConnectionRequired( "reinforcing" );
           evnt.stopPropagation();
           evnt.preventDefault()
         });
         $("#km-connection-required").click(function(evnt) {
           //Switch from reinforcing to required.
-          kmNamespace.switchConnectionRequired( "required" );
+          lmNamespace.switchConnectionRequired( "required" );
           evnt.stopPropagation();
           evnt.preventDefault()
         });
         $("#km-connection-delete").click(function(evnt) {
           //Delete a connection.
-          kmNamespace.deleteConnection( );
+          lmNamespace.deleteConnection( );
           evnt.stopPropagation();
           evnt.preventDefault()
         });
@@ -204,7 +220,7 @@ try {
       // @todo Show swirly thing.
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
-      var kmNamespace = this;
+      var lmNamespace = this;
       $.ajax({
         async: false,
         type: "POST",
@@ -217,7 +233,7 @@ try {
           if ( data.status == 'success' ) {
             //Change the display.
             var display = connectionData.display;
-            var style = kmNamespace.computeConnPaintStyle( display );
+            var style = lmNamespace.computeConnPaintStyle( display );
             display.setPaintStyle( style );
           }
           else {
@@ -225,7 +241,7 @@ try {
           }
         },
         fail: function(jqXHR, textStatus) {
-          throw new Exception( "Request failed: " + textStatus );
+          throw new Exception( "Knowledge map request failed: " + textStatus );
         }
       });
     }, //End Drupal.behaviors.knowledgemap.switchConnectionRequired
@@ -249,7 +265,7 @@ try {
       // @todo Show swirly thing.
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
-      var kmNamespace = this;
+      var lmNamespace = this;
       $.ajax({
         async: false,
         type: "POST",
@@ -260,12 +276,12 @@ try {
         success: function(data, textStatus, jqXHR) {
           if ( data.status == 'success' ) {
             //Change the display.
-            var display = kmNamespace.selectedConnection.display;
+            var display = lmNamespace.selectedConnection.display;
             jsPlumb.detach( display );
             //Remove the connection from the km rep.
-            delete kmNamespace.km_rep.connections[rid];
+            delete lmNamespace.km_rep.connections[rid];
             //Unselect.
-            kmNamespace.clearSelection();
+            lmNamespace.clearSelection();
           }
           else {
             throw new Exception(data.message);
@@ -287,69 +303,61 @@ try {
 //      $("#show-km-experiences").prop('checked', true);
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
-      var kmNamespace = this;
+      var lmNamespace = this;
       this.$drawing_area.click(function(evnt) {
-        if (kmNamespace.$drawing_area.state == "add") {
-          if ( kmNamespace.mode != "edit" ) {
+        if (lmNamespace.$drawing_area.state == "add") {
+          if ( lmNamespace.mode != "edit" ) {
             //Should never happen.
             throw new Exception("Error: $drawing_area.click add: not in edit mode.");
           }
-          var x_to_store = kmNamespace.getEventCoordX(evnt);
-          var y_to_store = kmNamespace.getEventCoordY(evnt);
-          kmNamespace.addNewItem(x_to_store, y_to_store);
+          var x_to_store = lmNamespace.getEventCoordX(evnt);
+          var y_to_store = lmNamespace.getEventCoordY(evnt);
+          lmNamespace.addNewItem(x_to_store, y_to_store);
           evnt.stopPropagation();
           evnt.preventDefault();        }
         else {
           //Clear selection if there is any.
-          kmNamespace.clearSelection();
+          lmNamespace.clearSelection();
         }
       }); //End drawing area click.
       $(document).keydown(function(evnt) {
         if ( evnt.keyCode == 27 ) {
           //User pressed ESC key.
-          if ( kmNamespace.$drawing_area.state == "add" ) {
-            if ( kmNamespace.mode != "edit" ) {
+          if ( lmNamespace.$drawing_area.state == "add" ) {
+            if ( lmNamespace.mode != "edit" ) {
               //Should never happen.
               throw new Exception("Error: ESC pressed: not in edit mode.");
             }
             //Exit add mode.
             evnt.stopPropagation();
             evnt.preventDefault();
-            kmNamespace.$drawing_area.exitAddMode();
+            lmNamespace.$drawing_area.exitAddMode();
           }
           else {
-            kmNamespace.clearSelection();
+            lmNamespace.clearSelection();
             evnt.preventDefault();
           }
         }
       }); //End esc keydown
       this.$drawing_area.exitAddMode = function() {
-        kmNamespace.$drawing_area.state = "normal";
-        kmNamespace.$drawing_area.removeClass("adding-state");
+        lmNamespace.$drawing_area.state = "normal";
+        lmNamespace.$drawing_area.removeClass("adding-state");
         $("#cancel-km-add").attr("disabled", "disabled");
         $("#add-km-item").removeAttr("disabled");
         $(".sendback").remove();
       };// end $drawing_area.exitAddMode
       //Set up the Show Knowledge Layer button.
       $("#show-km-knowledge").click(function(evnt){
-//        console.log("clicky");
-//        $("#show-km-knowledge").prop('checked',
-//          ! $("#show-km-knowledge").prop('checked')
-//        );
-        kmNamespace.$drawing_area.showKnowledgeLayer
+        lmNamespace.$drawing_area.showKnowledgeLayer
             = $("#show-km-knowledge").is(':checked');
-//            = ! kmNamespace.$drawing_area.showKnowledgeLayer;
-        kmNamespace.showCorrectItems();
+//            = ! lmNamespace.$drawing_area.showKnowledgeLayer;
+        lmNamespace.showCorrectItems();
       }); //End click show knowledge.
       //Set up the Show Experiences Layer button.
       $("#show-km-experiences").click(function(evnt){
-//        $("#show-km-experiences").prop('checked',
-//          ! $("#show-km-experiences").prop('checked')
-//        );
-        kmNamespace.$drawing_area.showExperiencesLayer
+        lmNamespace.$drawing_area.showExperiencesLayer
             = $("#show-km-experiences").is(':checked');
-//            = ! kmNamespace.$drawing_area.showExperiencesLayer;
-        kmNamespace.showCorrectItems();
+        lmNamespace.showCorrectItems();
       }); //End click show experiences.
     }, //End Drupal.behaviors.knowledgemap.addMethodsToDrawingArea'
     showCorrectItems : function() {
@@ -551,12 +559,12 @@ try {
       var $item = $(html);
       //Store ref to it in km map rep.
       this.km_rep.km_items[itemData.nid].display = $item;
+      //Append to the drawing.
+      this.$drawing_area.append( $item );
       //Set display elements.
       this.updateItemDisplay( $item );
       //Add events to display for item.
       this.addEventsToItem( $item );
-      //Append to the drawing.
-      this.$drawing_area.append( $item );
       //Check whether it pushed the drawing bottom down.
       if ( ! skipAdjustDrawingHeight ) {
         this.adjustDrawingHeight();
@@ -569,10 +577,10 @@ try {
       }
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
-      var kmNamespace = this;
+      var lmNamespace = this;
       //Set up select item click.
       $item.click( function(evnt) {
-        kmNamespace.itemClicked ( evnt );
+        lmNamespace.itemClicked ( evnt );
       });
       if ( this.mode == "edit" ) {
         jsPlumb.makeSource(
@@ -589,17 +597,17 @@ try {
         $item, {
           containment : "parent",
           start : function(evnt, ui) {
-            kmNamespace.$itemToolbar.hide();
-            if ( kmNamespace.mode == "edit" ) {
-              kmNamespace.$connectionToolbar.hide();
+            lmNamespace.$itemToolbar.hide();
+            if ( lmNamespace.mode == "edit" ) {
+              lmNamespace.$connectionToolbar.hide();
             }
           },
           stop : function(evnt, ui) {
-            if ( kmNamespace.mode == "edit" ) {
+            if ( lmNamespace.mode == "edit" ) {
               //When KM item dragged, save its new position.
-              kmNamespace.saveNewPosition( evnt, ui );
+              lmNamespace.saveNewPosition( evnt, ui );
             }
-            kmNamespace.adjustDrawingHeight();
+            lmNamespace.adjustDrawingHeight();
           }
         }
       );      
@@ -702,7 +710,10 @@ try {
         ;
       }
       else {
-        //Show the toolbar.
+        //Show the item toolbar.
+        //Set the details link destination.
+        this.$itemToolbar.find("#km-item-show-details")
+            .attr("href", Drupal.settings.basePath + "node/" + newNid);
         this.positionItemToolbar( $newItemClicked );
         this.$itemToolbar.show('fast');
       }
@@ -818,7 +829,7 @@ try {
       }
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
-      var kmNamespace = this;
+      var lmNamespace = this;
       //skipAdjustDrawingHeight is true if drawItem should not check whether 
       //the connection changes the max height of all elements in the drawing.
       //This is false, except when drawing the initial connections.
@@ -853,7 +864,7 @@ try {
       }
       if ( this.mode == "edit" ) {
         connection.bind("click", function(conn, evnt) {
-          kmNamespace.connectionClicked( conn, evnt );
+          lmNamespace.connectionClicked( conn, evnt );
         });
       }
     }, //End Drupal.behaviors.knowledgemap.drawConnection
@@ -958,7 +969,10 @@ try {
         'importance' : newImportance,
         'coord_x' : $("#coord_x").val(),
         'coord_y' : $("#coord_y").val(),
-        'km_nid' : this.km_nid
+        'km_nid' : this.km_nid,
+        'body' : '',
+        //Show not rendered yet.
+        'bodyRenderedFlag' : false
       };
       return newItem;
     }, //End Drupal.behaviors.knowledgemap.createNewItemFromInput
@@ -1010,7 +1024,7 @@ try {
       //Set up the dialog.
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
-      var kmNamespace = this;
+      var lmNamespace = this;
       $("#km-add-new-item-container")
         .hide()
         .dialog({
@@ -1028,7 +1042,7 @@ try {
               var newName = $('#km-item-name').val();
               var newType = $('#km-item-type').val();
               var newImportance = $('#km-item-importance').val();
-              var errorMessage = kmNamespace.checkNewItemData(
+              var errorMessage = lmNamespace.checkNewItemData(
                   newName, newType, newImportance
               );
               if ( errorMessage != '') {
@@ -1037,7 +1051,7 @@ try {
               else {
                 var $dialogRef = $(this);
                 //Create data record.
-                var newItem = kmNamespace.createNewItemFromInput(
+                var newItem = lmNamespace.createNewItemFromInput(
                     newName, newType, newImportance
                 );
                 $.ajax({
@@ -1049,11 +1063,11 @@ try {
                     if ( data.status == 'success' ) {
                       //Add data record to map array.
                       newItem.nid = data.new_nid;
-                      kmNamespace.km_rep.km_items[newItem.nid] = newItem;
+                      lmNamespace.km_rep.km_items[newItem.nid] = newItem;
                       //Draw the new item.
-                      kmNamespace.drawItem(newItem);
+                      lmNamespace.drawItem(newItem);
                       $dialogRef.dialog("close");
-                      kmNamespace.$drawing_area.exitAddMode();
+                      lmNamespace.$drawing_area.exitAddMode();
                     }
                     else {
                       throw new Exception(data.message);
@@ -1071,7 +1085,7 @@ try {
               id: "km_cancel_new_item_button",
               click: function() {
               $(this).dialog("close");
-              kmNamespace.$drawing_area.exitAddMode();
+              lmNamespace.$drawing_area.exitAddMode();
             }
             }//end of second array element.
             ],//End of buttons element array
@@ -1154,9 +1168,9 @@ try {
         }
         //Convenience var for JS namespace for this module. Everything gets
         //attached to Drupal.behaviors.knowledgemap.
-        var kmNamespace = this;
+        var lmNamespace = this;
         connection.bind("click", function(conn, evnt) {
-          kmNamespace.connectionClicked( conn, evnt );
+          lmNamespace.connectionClicked( conn, evnt );
         });
       }
     }, //End Drupal.behaviors.knowledgemap.makeNewConnection
@@ -1328,14 +1342,9 @@ try {
     },
     setItemPosition : function( $item, x, y ) {
       //Position an item in the drawing area.
-      var offset_y = parseFloat(y) + parseFloat(this.toolbarHeight);
-      $item.offset({ top: offset_y, left: x });
-//      position(
-//          { at: "left+" + x + " top+" + offset_y, 
-//            of: "#" + this.drawing_id, 
-//            my: "left top"
-//          }
-//      );
+      var adjustedY = parseFloat(y) + parseFloat(this.toolbarHeight);
+      $item.css('left', x + "px");
+      $item.css('top', adjustedY + "px");
     },
     saveNewPosition : function ( evnt, ui ) {
       //Start Drupal.behaviors.knowledgemap.saveNewPosition
@@ -1388,7 +1397,7 @@ try {
       var required = "required";
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
-      var kmNamespace = this;
+      var lmNamespace = this;
 //      //Show wait cursor.
 //      var currentCursor = this.$drawing_area.css("cursor");
 //      this.$drawing_area.css("cursor", "wait");
@@ -1403,11 +1412,11 @@ try {
         },
         success: function(data, textStatus, jqXHR) {
 //          //Restore cursor.
-//          kmNamespace.$drawing_area.css("cursor", currentCursor);
+//          lmNamespace.$drawing_area.css("cursor", currentCursor);
           if ( data.status == 'success' ) {
             //Add to map data array.
             var rid = data.rid;
-            kmNamespace.km_rep.connections[rid] = {
+            lmNamespace.km_rep.connections[rid] = {
               "rid" : rid,
               "from_nid" : sourceNid,
               "to_nid" : targetNid,
@@ -1415,7 +1424,7 @@ try {
               "display" : connInfo.connection
             };
             //Store rid in display object as well.
-            kmNamespace.km_rep.connections[rid].display.setParameter('rid', rid);
+            lmNamespace.km_rep.connections[rid].display.setParameter('rid', rid);
           }
           else {
             throw new Exception(data.message + " You should refresh the page.");
@@ -1423,7 +1432,7 @@ try {
         },
         fail: function (jqXHR, textStatus) {
           //Restore cursor.
-          kmNamespace.$drawing_area.css("cursor", currentCursor);
+          lmNamespace.$drawing_area.css("cursor", currentCursor);
           throw new Exception( "Request failed: " + textStatus + " You should refresh the page.");
         },
       });

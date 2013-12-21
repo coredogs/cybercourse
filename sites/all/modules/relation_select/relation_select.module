@@ -716,7 +716,9 @@ function relation_select_field_insert($entity_type, $entity, $field, $instance, 
             foreach ($item['relation_fields'] as $relation_field_name => $relation_field) {
               if (isset($relation_fields[$relation_field_name])) {
                 // Update an existing relation field instance.
-                $langcode = array_shift(array_keys($relation_field));
+//                $langcode = array_shift(array_keys($relation_field));
+                //KRM - see https://drupal.org/node/1856070
+                $langcode = key($relation_field);
                 $relation_field_items = array_shift($relation_field);
                 $relation_field = field_info_field($relation_field_name);
                 field_default_submit('relation', $relation, $relation_field, $relation_fields[$relation_field_name], $langcode, $relation_field_items, $item, $form_state);

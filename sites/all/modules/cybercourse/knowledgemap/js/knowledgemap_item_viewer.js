@@ -3,32 +3,28 @@
  */
 
 (function($) {
-  //Add everything to the jQuery namespace, since Drupal.behaviors.knowledgemap
-  //has not been defined when the code is loading.
   //Constructor for an item viewer.
   $.KmItemViewer = function( itemData ) {
-    //Convenience var for JS namespace for this module. Everthing gets
-    //attached to Drupal.behaviors.knowledgemap.
-    var kmNamespace = Drupal.behaviors.knowledgemap;
+    var lmNamespace = Drupal.behaviors.knowledgemap;
     this.itemData = itemData;
     var htmlElData = this.makeDialogHtml();
     this.itemData.dialogDomId = htmlElData.dialogDomId;
     $("body").append(htmlElData.html);
-    if ( kmNamespace.mode == "edit" ) {
-      //Add the action buttons.
-      this.addActionLinks( htmlElData.dialogDomId, this.itemData.nid );
-    }
+//    if ( lmNamespace.mode == "edit" ) {
+    //Add the action buttons.
+    this.addActionLinks( htmlElData.dialogDomId, this.itemData.nid );
+//    }
     var dialogOptions = {
       autoOpen : false,
       close: function() {
         //Kill display elements and free memory on close.
         var domId = $(this).attr("id");
         var nid = domId.split("-").pop();
-        var viewer = kmNamespace.kmItemViewers[nid];
+        var viewer = lmNamespace.kmItemViewers[nid];
         viewer.dialog.dialog("close");
         viewer.dialog.dialog("destroy");
         $("#" + domId).remove();
-        kmNamespace.kmItemViewers[nid] = false;
+        lmNamespace.kmItemViewers[nid] = false;
       }
     };
     this.dialog = $("#" + this.itemData.dialogDomId)
@@ -37,7 +33,7 @@
       var domId = $(this).attr("id");
       var nid = domId.split("-").pop();
       //Get user's attention - flash the small item in the map.
-      var itemDisplay = kmNamespace.km_rep.km_items[nid].display;
+      var itemDisplay = lmNamespace.km_rep.km_items[nid].display;
       //Exit if already animating.
       if ( itemDisplay.is(':animated') ) {
         return;
@@ -67,9 +63,8 @@
     if ( ! evnt ) {
       throw new Exception("Open viewer: no event.");
     }
-    //Convenience var for JS namespace for this module. Everthing gets
-    //attached to Drupal.behaviors.knowledgemap.
-    var kmNamespace = Drupal.behaviors.knowledgemap;
+    //Convenience var for JS namespace for this module. 
+    var lmNamespace = Drupal.behaviors.knowledgemap;
     if ( this.dialog.dialog("isOpen") ) {
       this.dialog.dialogExtend('restore');
       this.getUserAttention();
@@ -83,44 +78,42 @@
         my: 'left', at: 'right',of: "#" + domId});
     }// @todo broken, check user intent stuff
     //Hide item/connection toolbars.
-    if ( kmNamespace.$itemToolbar ) {
-      kmNamespace.$itemToolbar.hide();
+    if ( lmNamespace.$itemToolbar ) {
+      lmNamespace.$itemToolbar.hide();
     }
-    if ( kmNamespace.$connectionToolbar ) {
-      kmNamespace.$connectionToolbar.hide();
+    if ( lmNamespace.$connectionToolbar ) {
+      lmNamespace.$connectionToolbar.hide();
     }
     this.dialog.dialog("widget").find(".ui-dialog-titlebar-close").focus();
   }
 
   $.KmItemViewer.prototype.updateDialogDisplayFields = function() {
-    //Convenience var for JS namespace for this module. Everthing gets
-    //attached to Drupal.behaviors.knowledgemap.
-    var kmNamespace = Drupal.behaviors.knowledgemap;
+    //Convenience var for JS namespace for this module.
+//    var lmNamespace = Drupal.behaviors.knowledgemap;
     //Update the data the dialog is showing.
     var dialogDomId = this.itemData.dialogDomId;
     var itemData = this.itemData;
     $("#" + dialogDomId).dialog({ title: this.itemData.title });
     $("#" + dialogDomId + " .km-item-type")
         .html( capitaliseFirstLetter( this.itemData.item_type ) );
-    var bodyDisplay = 
-        this.itemData.body
-        ? this.itemData.body
-        : '';
+    //Prep the body for display.
+    this.prepBody( itemData );
     $("#" + dialogDomId + " .km-item-body")
-        .html( bodyDisplay );
+        .html( itemData.body );
     var importanceDisplay = 
         this.itemData.importance
           ? this.itemData.importance
           : "(Not set)";
     $("#" + dialogDomId + " .km-item-importance span")
         .html( importanceDisplay );      
-  }
+  };
 
   $.KmItemViewer.prototype.makeDialogHtml = function() {
-    //Convenience var for JS namespace for this module. Everthing gets
-    //attached to Drupal.behaviors.knowledgemap.
-    var kmNamespace = Drupal.behaviors.knowledgemap;
+    //Convenience var for JS namespace for this module. 
+//    var kmNamespace = Drupal.behaviors.knowledgemap;
     var domId = "km-item-dialog-" + this.itemData.nid;
+    //Make sure the body has been rendered.
+    this.prepBody( this.itemData );
     var html = 
           "<div id='" + domId + "' title='" + this.itemData.title + "' "
         + "   class='km-item-dialog km-item " + this.itemData.item_type + "'>"
@@ -138,81 +131,119 @@
        'dialogDomId' : domId,
        'html' : html
      };
+  };
+  
+  $.KmItemViewer.prototype.prepBody = function( itemData ) {
+    //Render body of it needs it.
+    if ( itemData.body ) {
+      if ( ! itemData.bodyRenderedFlag ) {
+        itemData.body = this.renderBody( itemData.body );
+        itemData.bodyRenderedFlag = true;
+      }
+    }    
+  };
+  
+  $.KmItemViewer.prototype.renderBody = function( contentToRender ) {
+    //Send ReST content to server for rendering.
+    var renderedResult = 'ouch';
+    $.ajax({
+      async: false,
+      type: "POST",
+      url: Drupal.settings.basePath + 'swim-peek',
+      data: {
+        'content': contentToRender
+      },
+      success: function(data, textStatus, jqXHR) {
+        if ( data.status == 'success' ) {
+          renderedResult = data.result;
+        }
+        else {
+          renderedResult = "Ajax preview call failed.";
+        } // end data.status not success.
+      }, //End success function.
+      fail: function(jqXHR, textStatus) {
+        renderedResult = "Ajax preview request failed.";
+      }
+    });
+    return renderedResult;
   }
 
   //Add Edit and Delete buttons to the dialog, when in ediit mode.
   $.KmItemViewer.prototype.addActionLinks = function( dialogDomId, kmItemNid ) {
-    //Convenience var for JS namespace for this module. Everthing gets
-    //attached to Drupal.behaviors.knowledgemap.
-    var kmNamespace = Drupal.behaviors.knowledgemap;
-    if ( kmNamespace.mode != "edit" ) {
-      //Should never happen.
-      console.log("Error: addActionLlinks: not in edit mode.");
-      return;
-    }
-    //Create edit link.
-    //Does some magic to simulate the logic of CTools modal links.
-    var $editLink = this.makeEditLink( kmItemNid );
-    //Same for delete button, but it's simpler to create.
-    var $deleteLink = this.makeDeleteLink( kmItemNid );
+    //Convenience var for JS namespace for this module.
+    var lmNamespace = Drupal.behaviors.knowledgemap;
+//    if ( lmNamespace.mode != "edit" ) {
+//      //Should never happen.
+//      console.log("Error: addActionLlinks: not in edit mode.");
+//      return;
+//    }
     //Create the toolbar.
     var $toolbar = $("<div class='km-action-group'>");
-    $toolbar.append($editLink);
-    $toolbar.append($deleteLink);
-    $editLink.show();
-    $deleteLink.show();
     //Add the toolbar to the dialog.
     $('#' + dialogDomId).prepend( $toolbar );
-    $deleteLink.click(function(evnt) {
-      if ( ! confirm("Are you sure you want to delete this item?") ) {
-        return;
-      }
-      var nid = jQuery(evnt.target).attr("data-nid");
-      $.ajax({
-        async: false,
-        type: "POST",
-        url: Drupal.settings.basePath + 'delete-item-ajax',
-        data: { 'nid' : nid },
-        success: function(data, textStatus, jqXHR) {
-          if ( data.status == 'success' ) {
-            //Close viewer.
-            $("#km-item-dialog-" + nid).dialog("close");
-            //Get ref to display object.
-            var itemDisplay = kmNamespace.km_rep.km_items[nid].display;
-            //Remove from screen.
-            jsPlumb.detachAllConnections(itemDisplay)
-            itemDisplay.remove();
-            //Kill rep data for the item.
-            delete kmNamespace.km_rep.km_items[nid];
-            //Remove all connections to/from the item.
-            var connData;
-            for ( var index in kmNamespace.km_rep.connections ) {
-              connData = kmNamespace.km_rep.connections[ index ];
-              if ( connData.from_nid == nid || connData.to_nid == nid ) {
-                //Remove the connection.
-                //jsPlumb.detach( connData.display );
-                //Drop map data.
-                delete kmNamespace.km_rep.connections[index];
-              } //End nid matches.
-            }//End for
-          }//End AJAX success.
-          else {
-            alert(data.message);
-          }
-        },
-        fail: function (jqXHR, textStatus) {
-          throw new Exception( "Request failed: " + textStatus );
-        },
+    //Details link doesn't need ctools.
+    var $detailsLink = this.makeDetailsLink( kmItemNid );
+    $toolbar.append( $detailsLink );
+    $detailsLink.show();
+    if ( lmNamespace.mode == "edit" ) {
+      //Create edit link.
+      //Does some magic to simulate the logic of CTools modal links.
+      var $editLink = this.makeEditLink( kmItemNid );
+      //Same for delete button, but it's simpler to create.
+      var $deleteLink = this.makeDeleteLink( kmItemNid );
+      $toolbar.append($editLink);
+      $toolbar.append($deleteLink);
+      $editLink.show();
+      $deleteLink.show();
+      $deleteLink.click(function(evnt) {
+        if ( ! confirm("Are you sure you want to delete this item?") ) {
+          return;
+        }
+        var nid = jQuery(evnt.target).attr("data-nid");
+        $.ajax({
+          async: false,
+          type: "POST",
+          url: Drupal.settings.basePath + 'delete-item-ajax',
+          data: { 'nid' : nid },
+          success: function(data, textStatus, jqXHR) {
+            if ( data.status == 'success' ) {
+              //Close viewer.
+              $("#km-item-dialog-" + nid).dialog("close");
+              //Get ref to display object.
+              var itemDisplay = lmNamespace.km_rep.km_items[nid].display;
+              //Remove from screen.
+              jsPlumb.detachAllConnections(itemDisplay)
+              itemDisplay.remove();
+              //Kill rep data for the item.
+              delete lmNamespace.km_rep.km_items[nid];
+              //Remove all connections to/from the item.
+              var connData;
+              for ( var index in lmNamespace.km_rep.connections ) {
+                connData = lmNamespace.km_rep.connections[ index ];
+                if ( connData.from_nid == nid || connData.to_nid == nid ) {
+                  //Remove the connection.
+                  //jsPlumb.detach( connData.display );
+                  //Drop map data.
+                  delete lmNamespace.km_rep.connections[index];
+                } //End nid matches.
+              }//End for
+            }//End AJAX success.
+            else {
+              alert(data.message);
+            }
+          },
+          fail: function (jqXHR, textStatus) {
+            throw new Exception( "Request failed: " + textStatus );
+          },
+        });
       });
-    });
-    //jQuery('#' + dialogDomId + " footer").append( $deleteLink );
+    }
   }
 
   $.KmItemViewer.prototype.makeEditLink = function( kmItemNid ) {
-    //Convenience var for JS namespace for this module. Everthing gets
-    //attached to Drupal.behaviors.knowledgemap.
-    var kmNamespace = Drupal.behaviors.knowledgemap;
-    if ( kmNamespace.mode != "edit" ) {
+    //Convenience var for JS namespace for this module. 
+    var lmNamespace = Drupal.behaviors.knowledgemap;
+    if ( lmNamespace.mode != "edit" ) {
       //Should never happen.
       throw new Exception("Error: addEditLink: not in edit mode.");
     }
@@ -225,7 +256,7 @@
     $newLink
         .attr("href", href)
         .removeClass('km-item-edit-link-original')
-        .addClass('km-item-edit-link km-item-action-link cyco-button');
+        .addClass('km-item-edit-link cyco-button-small');
     //var $this = $(this);
     //Copied from ctools modal.js. Registers the new link with the modal logic.
     $newLink.click(Drupal.CTools.Modal.clickAjaxLink);
@@ -242,10 +273,9 @@
   }
 
   $.KmItemViewer.prototype.makeDeleteLink = function( kmItemNid ) {
-    //Convenience var for JS namespace for this module. Everthing gets
-    //attached to Drupal.behaviors.knowledgemap.
-    var kmNamespace = Drupal.behaviors.knowledgemap;
-    if ( kmNamespace.mode != "edit" ) {
+    //Convenience var for JS namespace for this module. 
+    var lmNamespace = Drupal.behaviors.knowledgemap;
+    if ( lmNamespace.mode != "edit" ) {
       //Should never happen.
       throw new Exception("Error: addDeleteLink: not in edit mode.");
     }
@@ -253,48 +283,56 @@
           "<a id='km-item-delete-link-" + kmItemNid + "' "
         +     "data-nid='" + kmItemNid + "' "
         +     "href='javascript:void(0)'" //Click code does the server call.
-        +     "class='km-item-action-link cyco-button' "
+        +     "class='cyco-button-small' "
         +     "title='Premanently delete this item.'>"
         +   "Delete"
         + "</a>";
     return $(link);
   }
 
+  $.KmItemViewer.prototype.makeDetailsLink = function( lmItemNid ) {
+    //Convenience var for JS namespace for this module. 
+    var lmNamespace = Drupal.behaviors.knowledgemap;
+    var link = 
+          "<a "
+        +     "href='" + Drupal.settings.basePath + "node/" + lmItemNid + "' "
+        +     "target='_blank' "
+        +     "class='cyco-button-small' "
+        +     "title='Show details about this item in a new window.'>"
+        +   "Details"
+        + "</a>";
+    return $(link);
+  }
+
   $.fn.returnFromKmEditSave = function(nid) {
-    //Convenience var for JS namespace for this module. Everthing gets
-    //attached to Drupal.behaviors.knowledgemap.
-    var kmNamespace = Drupal.behaviors.knowledgemap;
-    if ( kmNamespace.mode != "edit" ) {
+    //Convenience var for JS namespace for this module.
+    var lmNamespace = Drupal.behaviors.knowledgemap;
+    if ( lmNamespace.mode != "edit" ) {
       //Should never happen.
       throw new Exception("Error: returnFromEditSave: not in edit mode.");
     }
     //Get new data passed by the server edit code.
+    //Server code puts the data into the settings, rather than behaviors.
     var newItemData = Drupal.settings.knowledgemap.new_item_data;
-    var oldItemType = kmNamespace.km_rep.km_items[nid].item_type;
+    var oldItemType = lmNamespace.km_rep.km_items[nid].item_type;
     //Replace bits. Better way?
-    kmNamespace.km_rep.km_items[nid].title = newItemData.title;
-    kmNamespace.km_rep.km_items[nid].item_type = newItemData.item_type;
-    kmNamespace.km_rep.km_items[nid].body = newItemData.body;
-    kmNamespace.km_rep.km_items[nid].importance = newItemData.importance;
+    lmNamespace.km_rep.km_items[nid].title = newItemData.title;
+    lmNamespace.km_rep.km_items[nid].item_type = newItemData.item_type;
+    //Make sure body has at least an MT string.
+    lmNamespace.km_rep.km_items[nid].body = 
+        newItemData.body ? newItemData.body : "";
+    lmNamespace.km_rep.km_items[nid].importance = newItemData.importance;
+    //Show not rendered into HTML yet.
+    lmNamespace.km_rep.km_items[nid].bodyRenderedFlag = false;
     //Update the viewer.
-    var itemViewer = kmNamespace.kmItemViewers[ nid ];
+    var itemViewer = lmNamespace.kmItemViewers[ nid ];
     if ( ! itemViewer ) {
       throw new Exception("returnFromEditSave: no viewer for nid " + nid);
     }
     //Update 
     itemViewer.updateDialogDisplayFields();
-    kmNamespace.updateItemDisplay( jQuery("#km-item-" + nid) );
+    lmNamespace.updateItemDisplay( jQuery("#km-item-" + nid) );
     itemViewer.dialog.dialog("widget").show();
-  //  kmNamespace.updateItemFields( nid );
-    //Did the item type change?
-  //  if ( newItemData.item_type != oldItemType ) {
-  //    kmNamespace.editChangedItemType( 
-  //        nid, oldItemType, newItemData.item_type
-  //    ); 
-  //  }
-  //Set display elements.
-    var itemDisplay = kmNamespace.km_rep.km_items[nid].display;
-    kmNamespace.updateItemDisplay( itemDisplay );
   }
 
 })(jQuery);

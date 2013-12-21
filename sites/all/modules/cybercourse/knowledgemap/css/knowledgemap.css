@@ -113,14 +113,14 @@
   position: absolute;
   display: none;
   z-index: 200;
-  padding: 5px;
-  border: 1px #bbb outset;
+  /*padding: 5px;*/
+  /*border: 1px #ccc outset;*/
   border-radius: 4px;
-  background-color: rgba(222, 222, 222, 0.5);
-/*  -moz-box-shadow:0px 0px 10px 4px rgba(222, 222, 222, 0.5);
+  background-color: rgba(30, 144, 255, 0.5);
+  -moz-box-shadow:0px 0px 10px 4px rgba(222, 222, 222, 0.5);
   -webkit-box-shadow:0px 0px 10px 4px rgba(222, 222, 222, 0.5);
-  box-shadow:0px 0px 10px 4px rgba(222, 222, 222, 0.5);*/
-  /*box-shadow:0px 0px 10px 4px rgba(30, 144, 255, 0.5);*/
+  box-shadow:0px 0px 10px 4px rgba(222, 222, 222, 0.5);
+  box-shadow:0px 0px 10px 4px rgba(30, 144, 255, 0.5);
 }
 
 /* Top tools */
@@ -227,8 +227,8 @@
 }
 
 .km-action-group {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
 }
 
 .km-item footer {
