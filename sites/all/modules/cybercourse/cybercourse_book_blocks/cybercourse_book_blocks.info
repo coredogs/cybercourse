@@ -2,7 +2,3 @@ name = Cybercourse: Book tree blocks
 description = Add clicky clicky blocks for book navigation.
 package = CyberCourse
 core = 7.x
-;dependencies[] = jquerymenu
-dependencies[] = cybercourse_create_blueprint
-
-

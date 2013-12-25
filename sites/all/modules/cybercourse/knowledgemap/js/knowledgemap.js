@@ -12,7 +12,8 @@ try {
       $(document).bind('CToolsDetachBehaviors', function(event, context) {
         Drupal.behaviors.ckeditor.detach(context, {}, 'unload');
       });  
-      // @todo Show swirly thing.
+      //Setup swirly thing.
+      this.spinner = new Spinner({color: "#67CADB"});
       //Set some convenience vars.
       //Mode - edit or view.
       this.mode = settings.knowledgemap.mode;
@@ -153,9 +154,17 @@ try {
         //Get the selected item's data.
         var itemNid = lmNamespace.selectedItem.nid;
         var itemData = lmNamespace.km_rep.km_items[itemNid];
-        //Get a viewer for it.
-        var viewer = lmNamespace.getKmItemViewer(itemData);
-        viewer.open( evnt );
+        //Show a viewer for it.
+        //Get an item viewer, either existing or new.
+        //Kludge to pass event for opening new or existing dialog.
+//        lmNamespace.eventKludge = evnt;
+        if ( lmNamespace.kmItemViewers[ itemData.nid ] ) {
+          lmNamespace.kmItemViewers[ itemData.nid ].open();
+        }
+        else {
+          lmNamespace.kmItemViewers[ itemData.nid ] 
+            = new $.KmItemViewer(itemData);
+        }
       });
       if ( this.mode == "edit" ) {
         //Set up the connection toolbar.

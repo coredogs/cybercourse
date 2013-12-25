@@ -1,0 +1,5 @@
+name = Spin
+machine name = spin
+description = Provides a spinner for Ajax requests.
+version = 1.3.2
+files[js][] = spin.min.js

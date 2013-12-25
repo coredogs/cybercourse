@@ -29,18 +29,33 @@ function swim_menu() {
   //themeing stuff in place. Used for previews.
   $items['swim-mt-peek'] = array(
     'page callback' => 'swim_mt_peek',
-    'access callback' => 'user_access',
-    'access arguments' => array('peek content'),
+    'access callback' => '_swim_check_peek_perm',
     'type' => MENU_CALLBACK,
   );
   //Return rendered content to show in peek dialog.
   $items['swim-peek'] = array(
     'page callback' => 'swim_peek',
-    'access callback' => 'user_access',
-    'access arguments' => array('peek content'),
+    'access callback' => '_swim_check_peek_perm',
     'type' => MENU_CALLBACK,
   );
   return $items;
+}
+
+
+function _swim_check_peek_perm() {
+  if ( user_access( 'peek content' ) ) {
+    return TRUE;
+  }
+  //Check if other modules want to grant access.
+  $results = module_invoke_all('swim_peek_access');
+  $access_granted = FALSE;
+  foreach( $results as $result ) {
+    if ( $result ) {
+      $access_granted = TRUE;
+      break;
+    }
+  }
+  return $access_granted;
 }
 
 /**
@@ -50,11 +65,11 @@ function swim_permission() {
   return array(
     'switch to plain' => array(
       'title' => t('Can switch to plain text'),
-      'description' => t('See a "Switch to plain text editor" link.')
+      'description' => t('When editing, seee a "Switch to plain text editor" link.')
     ),
     'peek content' => array(
       'title' => t('Peek at rendered content'),
-      'description' => t('See what the content looks like on various devices.')
+      'description' => t('When editing, see what the content looks like on various devices.')
     ),
   );
 }
@@ -338,14 +353,6 @@ function swim_mt_peek() {
  * Return rendered HTML for preview.
  */
 function swim_peek() {
-  //Check perm.
-  if ( ! user_access('peek content') ) {
-    return MENU_ACCESS_DENIED;
-  }
-  //Suppress the admin menu.
-//  if ( module_exists('admin_menu') ) {
-//    module_invoke('admin_menu', 'suppress');
-//  }
   //Convert the content to HTML.
   $content = $_POST['content'];
   //Convert content to pure ReST, so can call the ReST input filter.

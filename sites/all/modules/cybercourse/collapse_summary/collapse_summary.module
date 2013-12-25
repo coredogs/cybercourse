@@ -3,13 +3,22 @@
 /**
  * Implement hook_init().
  */
-function collapse_summary_init() {
-  drupal_add_js(
+//function collapse_summary_init() {
+//  drupal_add_js(
+//      drupal_get_path('module', 'collapse_summary') . '/collapse_summary.js'
+//  );
+//  drupal_add_css(
+//      drupal_get_path('module', 'collapse_summary') . '/collapse_summary.css'
+//  );
+//}
+
+function collapse_summary_form_alter( &$form, &$form_state, $form_id ) {
+ drupal_add_js(
       drupal_get_path('module', 'collapse_summary') . '/collapse_summary.js'
   );
   drupal_add_css(
       drupal_get_path('module', 'collapse_summary') . '/collapse_summary.css'
-  );
+  ); 
 }
 
 /**

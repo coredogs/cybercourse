@@ -17,13 +17,13 @@
     
     $.fn.bookBlockMenuClicked = function( $this ) {
       if ( ! $this ) {
-        $this = this;
+        $this = $(this);
       }
       var children = $this.parent('li.parent_li').find(' > ul > li');
       if ( children.hasClass('open') ) {
 //      if (children.is(':visiblise')) {
         children.removeClass('open').addClass('closed');
-        children.hide( $.bccShowAnimation );
+        children.hide();// $.bccMenuAnimation );
         $this.attr('title', 'Expand this branch').find(' > i')
 //            .addClass('glyphicon')
             .addClass('glyphicon-plus-sign')
@@ -31,7 +31,7 @@
       }
       else {
         children.removeClass('closed').addClass('open');
-        children.show( $.bccShowAnimation );
+        children.show();// $.bccMenuAnimation );
         $this.attr('title', 'Collapse this branch').find(' > i')
               .addClass('glyphicon-minus-sign')
               .removeClass('glyphicon-plus-sign');
@@ -69,7 +69,7 @@
         $(this).bookBlockMenuClicked();
       });
       //Animations from now on.
-      $.bccShowAnimation = 'fast';
+      $.bccMenuAnimation = ''; //'fast';
     }
   });
 

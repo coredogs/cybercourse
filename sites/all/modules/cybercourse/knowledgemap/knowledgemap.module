@@ -14,23 +14,13 @@ module_load_include('inc', 'knowledgemap', 'kmItem.inc');
  * Implements hook_init().
  * Load CTools stuff needed for the node edit form.
  */
-function knowledgemap_init() {
-  ctools_include('ajax');
-  ctools_include('modal');
-  drupal_add_js('misc/ajax.js');
-  ctools_modal_add_js('ajax-responder');
-  ctools_modal_add_js('modal');
-  ctools_include('node.pages', 'node', '');
-}
-
- /**
- * Implements hook_admin_paths().
- */
-//function knowledgemap_admin_paths() {
-//  $paths = array(
-//    'atom/add/*/ajax' => TRUE,
-//  );
-//  return $paths;
+//function knowledgemap_init() {
+//  ctools_include('ajax');
+//  ctools_include('modal');
+//  drupal_add_js('misc/ajax.js');
+//  ctools_modal_add_js('ajax-responder');
+//  ctools_modal_add_js('modal');
+//  ctools_include('node.pages', 'node', '');
 //}
 
 /**
@@ -41,7 +31,9 @@ function knowledgemap_menu() {
   //nid of the KM that will own the new item.
   $items['add-km-item-ajax'] = array(
     'page callback' => 'knowledgemap_add_item_ajax',
-    'access callback' => 'knowledgemap_menu_access',
+    'access callback' => 'node_access',
+    'access arguments' => array('create', 'knowledge_map_item'),
+//    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   //Show CTools modal.
@@ -59,30 +51,44 @@ function knowledgemap_menu() {
   );
   $items['update-km-item-pos'] = array(
     'page callback' => 'knowledgemap_save_item_position',
-    'access callback' => 'knowledgemap_menu_access',
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+//    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
-  $items['delete-item-ajax'] = array(
+  $items['delete-item-ajax/%node'] = array(
     'page callback' => 'knowledgemap_delete_item',
-    'access callback' => 'knowledgemap_menu_access',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('delete', 1),
+//    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   //User made a new connection. Save it.
+  //Access check is on map item, not connection.
   $items['save-new-connection'] = array(
     'page callback' => 'knowledgemap_save_new_connection',
-    'access callback' => 'knowledgemap_menu_access',
+    'access callback' => 'node_access',
+    'access arguments' => array('create', 'knowledge_map_item'),
+//    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   //Save connection required field for a connection. AJAX call.
+  //Access check is on map item, not connection.
   $items['set-connection-required-ajax'] = array(
     'page callback' => 'knowledgemap_set_connection_required',
-    'access callback' => 'knowledgemap_menu_access',
+    'access callback' => 'node_access',
+    'access arguments' => array('create', 'knowledge_map_item'),
+//    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   //User wants to delete a connection.
+  //Access check is on map item, not connection.
   $items['delete-connection-ajax'] = array(
     'page callback' => 'knowledgemap_delete_connection',
-    'access callback' => 'knowledgemap_menu_access',
+    'access callback' => 'node_access',
+    'access arguments' => array('create', 'knowledge_map_item'),
+//    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
   return $items;
@@ -93,16 +99,40 @@ function _km_admin_theme() {
   return $theme;
 }
 
+function knowledgemap_permission() {
+  return array(
+    'view learningmap' => array(
+      'title' => t('View learning maps'),
+      'description' => t('Look at learning maps.'),
+    ),
+//    'edit learningmap' => array(
+//      'title' => t('Edit learning maps'),
+//      'description' => t('Change learning maps.'),
+//    ),
+  );
+}
+
 /**
  * Menu access callback.
  * @return boolean True if user has right role.
  */
-function knowledgemap_menu_access() {
-  global $user;
-  $access = in_array('administrator', $user->roles)
-      || in_array('author', $user->roles);
-  return $access;
+//function knowledgemap_menu_access() {
+//  global $user;
+//  $access = in_array('administrator', $user->roles)
+//      || in_array('author', $user->roles);
+//  return $access;
+//}
+
+/**
+ * Implements hook_swim_peek_access().
+ * 
+ * People who can see knowledge maps can call the peek function in
+ * SWIM. 
+ */
+function knowledgemap_swim_peek_access() {
+  return user_access('view learningmap');
 }
+
 /**
  * Implements hook_field_info(). 
  * Creates one formatter and one input widget.
@@ -217,6 +247,19 @@ function knowledgemap_field_widget_form(&$form, &$form_state,
 
 function knowledgemap_add_client_code() {
   //Add libraries.
+  // Try to load the library and check if that worked.
+  $library = libraries_load('spin');
+  if ( empty($library['loaded']) || ! $library['loaded'] ) {
+    drupal_set_message('Learning map: spin library missing.');
+  }
+  
+  ctools_include('ajax');
+  ctools_include('modal');
+  drupal_add_js('misc/ajax.js');
+  ctools_modal_add_js('ajax-responder');
+  ctools_modal_add_js('modal');
+  ctools_include('node.pages', 'node', '');
+  
 //  ctools_include('ajax');
 //  drupal_add_js('misc/ajax.js');  
 //  ctools_include('modal');
@@ -455,59 +498,10 @@ function knowledgemap_cancel_edit($form, &$form_state) {
   $nid = $form['#node']->nid;
   $commands = array();
   ctools_add_js('ajax-responder');
-//  $commands[] = ajax_command_invoke(
-//      'body', 
-//      'returnFromEditCancel', 
-//      array( $nid )
-//  );  
   $commands[] = ctools_modal_command_dismiss();
   print ajax_render($commands);
   exit;
 }
-
-
-//function knowledgemap_form_alter(&$form, &$form_state, $form_id) {
-//  if ( $form_id == 'knowledge_map_item_node_form' ) {
-//    //The form could be in a modal, in which case the KM node the item
-//    //should be associated with is known.
-//    if ( $form['title']['#default_value'] == NEW_KM_ITEM_INDICATOR) {
-//      //The form is in a modal.
-//      $form['title']['#default_value'] = '';
-//      //Remove the widget for the relation that 
-//      //links the item to the knowledge map node. 
-//      unset( $form['field_knowledge_map'] );
-//      //Store whether his is an add or edit. Only the add needs
-//      //special treatment later, to create the relationship after the 
-//      //new nid is known.
-//      $node = $form_state['node'];
-//      $is_new_node = (!isset($node->nid) || isset($node->is_new));
-//      $node->knowledgemap_operation 
-//          = $is_new_node ? 'add' : 'edit';
-//      //Hide the coord fields.
-//      $form['field_coord_x']['#access'] = FALSE;
-//      $form['field_coord_y']['#access'] = FALSE;
-//      //Submit handler.
-//      $form['#submit'][] = 'knowledgemap_submit_item_form';
-//      //After build handler.
-//      //$form['#after_build'][] = 'knowledgemap_submit_item_form';
-//    }
-//  }
-//  
-//}
-//
-//function knowledgemap_submit_item_form($form, &$form_state) {
-//  global $base_url;
-////  $form_state['redirect'][] = $base_url . '/add-done/nojs';
-////  unset($_REQUEST['destination'], $_REQUEST['edit']['destination']);
-//  $form_state['redirect'][] = drupal_get_destination();
-//  $form_state['redirect'][] = $base_url . '/add-done/nojs';
-//
-//  unset($_GET['destination']);
-//  drupal_static_reset('drupal_get_destination');
-//  drupal_get_destination();
-//  
-//}
-
 
 /**
  * Page Callback - Modal: Edit Node.
@@ -515,19 +509,13 @@ function knowledgemap_cancel_edit($form, &$form_state) {
 function knowledgemap_edit_item_ctools($node, $js = NULL) {
   // Check $js.
   if (!$js) {
-//  if ( FALSE ) {
     return drupal_access_denied();
   }
- 
   $type_name = node_type_get_name($node);
   $title = t('<em>Edit @type</em> @title', 
       array('@type' => $type_name, '@title' => $node->title)
   );
-
   $commands = array();
-
-//  ctools_include('node.pages', 'node', '');
-
   $form_state = array(
     'title' => $title,
     'ajax'  => TRUE,
@@ -536,12 +524,10 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
     ),
   );
   $commands = ctools_modal_form_wrapper($node->type . '_node_form', $form_state);
-
   if (!empty($form_state['executed']) && empty($form_state['rebuild'])) {
       $node = $form_state['node'];
       // overwrite commands.
       $commands = array();
-
       ctools_add_js('ajax-responder');
       $commands[] = ctools_modal_command_dismiss();
       //Send new item data to the client.
@@ -567,14 +553,7 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
           'returnFromKmEditSave', 
           array( $node->nid )
       );
-//      if ($force_page_reload) {
-//        $commands[] = ctools_ajax_command_reload();
-//      }
   }
-
-  // add CSS class to Modal-Frame
-//  $commands[] = ajax_command_invoke('#modalContent', 'addClass', array('custom-module-node', 'custom-module-node-form'));
-
   print ajax_render($commands);
   exit;
 }
@@ -781,18 +760,11 @@ function knowledgemap_delete_connection() {
 /**
  * Delete an item. AJAX call.
  * This will delete all connections as well.
+ * @param int $nid Nid of item to delete.
  * @throws Exception Something bad happened. 
  */
-function knowledgemap_delete_item() {
+function knowledgemap_delete_item( $nid ) {
   try {
-    //Check that required data is in call.
-    if ( ! isset( $_POST['nid'] ) ) {
-      throw new Exception(
-          'Required item data missing. Need nid.'
-      );
-    }
-    //Get data from call.
-    $nid = $_POST['nid'];
     //Check that the node exists.
     $node = node_load($nid);
     if ( ! $node ) {
@@ -818,116 +790,6 @@ function knowledgemap_delete_item() {
     drupal_exit();
   }  
 }
-
-/**
- * Return the content for making the add form. AJAX call.
- */
-//function knowledgemap_get_add_form_content() {
-//  $html = '<h1>DOGZ</h1>
-//<div id="km-add-new-item-container">
-//<p>Please enter a name for the knowledge item, and pick its type.</p>
-//
-//<div data-collapse id="km-add-item-help">
-//  <p><span>Help</span></p>
-//  <div class="km-help-content">
-//      <p>The name should be just a few words, like "Taking photographs" or
-//        "Depth of field." </p>
-//
-//      <p>Item types are either knowledge elements, or experiences.</p>
-//
-//      <ul>
-//        <li>
-//          Knowledge elements are things students learn. There are two
-//          types of knowledge elements:
-//          <ul>
-//            <li>Skills. Things that students learn how to do. E.g., 
-//            "Taking photographs."</li>
-//            <li>Concepts. Ideas students learn, e.g., "Depth of field."</li>
-//          </ul>
-//        </li>
-//        <li>
-//          Experiences are things students do to help them learn. There are four
-//          types of knowledge elements:
-//          <ul>
-//            <li>Explanations. Didactic content to read or watch. 
-//              E.g., "Taking good photos."
-//            </li>
-//            <li>
-//              Examples. Samples of concepts or skills. Can be stories. 
-//              E.g., "Good and bad photos," "Paula shoots a picnic."
-//            </li>
-//            <li>
-//              Exercises. Things that students do.
-//              E.g., "Pick the best photo."
-//            </li>
-//            <li>
-//              Patterns. Common ways of doing things.
-//              E.g., "Photographing social events."
-//            </li>
-//            <li>
-//              Other. Other experiences.
-//              E.g., field trips.
-//            </li>
-//          </ul>
-//        </li>
-//      </ul>
-//  </div>
-//</div>
-//
-//    <form id="km-add-new-item-form">
-//      <div class="km-input-field-container">
-//        <label for="km-item-name">Name</label>
-//        <div class="km-input-field-inner-container">
-//          <input type="text" id="km-item-name" spellcheck 
-//                 placeholder="E.g., Taking photographs" required autofocus
-//                 title="Name of this item, e.g., Taking photographs"
-//                 size="30" />
-//          <p class="km-input-field-hint">
-//            Name of this item, e.g., Taking photographs.
-//          </p>
-//        </div>
-//      </div>
-//      <div class="km-input-field-container">
-//        <label for="km-item-type">Type</label>
-//        <div class="km-input-field-inner-container">
-//          <select id="km-item-type" title="What type of item is this?">
-//            <option value="not selected" selected="selected">- Choose one -</option>
-//            <optgroup label="Knowledge item">
-//              <option value="skill">Skill</option>
-//              <option value="concept">Concept</option>
-//            </optgroup>
-//            <optgroup label="Experience">
-//              <option value="explanation">Explanation</option>
-//              <option value="example">Example</option>
-//              <option value="exercise">Exercise</option>
-//              <option value="pattern">Pattern</option>
-//              <option value="other">Other</option>
-//            </optgroup>
-//          </select>
-//          <p class="km-input-field-hint">
-//            Item type, e.g., Skill.
-//          </p>
-//          <input type="hidden" name="coord_x" id="coord_x">
-//          <input type="hidden" name="coord_y" id="coord_y">
-//        </div>
-//      </div>
-//    </form>
-//';
-//  try {
-//    drupal_json_output( array( 
-//        'status' => 'success',
-//        'form' => $html,
-//    ));
-//    drupal_exit();  
-//  } catch (Exception $e) {
-//    $message = knowledgemap_log_exception($e);
-//    drupal_json_output( array( 
-//        'status' => 'error',
-//        'message' => 'knowledgemap_get_add_form_content' . $message,
-//    ));
-//    drupal_exit();
-//  }
-//}
 
 /**
  * Implements hook_field_formattter_info().
@@ -986,47 +848,6 @@ function knowledgemap_field_formatter_view($entity_type, $entity, $field,
         );
       } // End for each.
       knowledgemap_add_client_code();
-      //Add libraries.
-    //  ctools_include('modal');
-    //  ctools_modal_add_js('ajax-responder');
-    //  ctools_modal_add_js('modal');
-//      drupal_add_library('system', 'ui.dialog');
-//      $x = drupal_add_css(
-//          drupal_get_path('module', 'knowledgemap') 
-//              . '/libs/jquery-ui-1.10.3.custom/css/smoothness/jquery-ui-1.10.3.custom.min', 
-//          'file'
-//      );      
-//      drupal_add_js(
-//          drupal_get_path('module', 'knowledgemap') 
-//              . '/libs/jsPlumb/jquery.jsPlumb-1.4.1-all-min.js', 
-//          'file'
-//      );
-//      drupal_add_js(
-//          drupal_get_path('module', 'knowledgemap') 
-//              . '/libs/jquery-dialogextend/build/jquery.dialogextend.min.js', 
-//          'file'
-//      );
-    //Add the KM drawing code.
-//      drupal_add_js(
-//          drupal_get_path('module', 'knowledgemap') 
-//              . '/js/knowledgemap_utils.js', 
-//          'file'
-//      );  
-//      drupal_add_js(
-//          drupal_get_path('module', 'knowledgemap') 
-//              . '/js/knowledgemap_item_viewer.js', 
-//          'file'
-//      );
-//      drupal_add_js(
-//          drupal_get_path('module', 'knowledgemap') 
-//              . '/js/knowledgemap.js', 
-//          'file'
-//      );
-//      drupal_add_css(
-//          drupal_get_path('module', 'knowledgemap') 
-//              . '/css/knowledgemap.css', 
-//          'file'
-//      );      
       break;
   } // End switch.
   return $element;

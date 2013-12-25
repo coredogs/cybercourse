@@ -3,5 +3,5 @@ Bootstrap messes with admin_menu's styles. Undo some of that.
 */
 
 body.admin-menu {
-  padding-top: 0 !important;
+  /*padding-top: 0 !important;*/
 }

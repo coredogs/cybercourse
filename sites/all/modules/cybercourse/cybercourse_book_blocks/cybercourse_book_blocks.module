@@ -10,6 +10,20 @@ define('CBB_MAX_CHARS', 30);
  */
 define('CBB_MAX_RECURSION_LEVELS', 20);
 
+function cybercourse_book_blocks_permission() {
+  return array(
+    'view unpublished cyco course content' => array(
+      'title' => t('View unpublished course content'),
+      'description' => t('User can see course content that has not been published.'),
+    ),
+    'view unpublished cyco blueprint content' => array(
+      'title' => t('View unpublished blueprint content'),
+      'description' => t('User can see blueprint content that has not been published.'),
+    ),
+  );
+}
+
+
 /**
  * Implements hook_block_info().
  */
@@ -34,25 +48,29 @@ function cybercourse_book_blocks_block_view($delta = '') {
   switch ($delta) {
     case 'courses' :
       $block['subject'] = '';
-      $block['content'] = _cbb_courses();
+      $block['content'] = _cbb_create_block_content( 'course' );
       return $block;
     case 'blueprints' :
       $block['subject'] = ''; 
-      $block['content'] = _cbb_blueprints();
+      $block['content'] = _cbb_create_block_content( 'blueprint' );
       return $block;
   }
 }
 
 /**
- * Create content for the courses block.
+ * Create content for a book block.
+ * @param string $type Block type - course or blueprint.
  * @global stdClass $user You know what it is.
  * @return string Content representing the block.
  */
-function _cbb_courses() {
+function _cbb_create_block_content( $type ) {
+  if ( $type != 'course' && $type != 'blueprint') {
+    throw new Exception('_cbb_create_block_content: unknown type: ' . $type );
+  }
   $output = '';
-  $nids = _cbb_get_nids_of_type('course');
-  //Get the blueprint template nid.
-  $template_nid = cccblueprint_find_template_nid('course');
+  $nids = _cbb_get_nids_of_type( $type );
+  //Get the template nid. Template is an MT book that is cloned.
+  $template_nid = cccblueprint_find_template_nid( $type );
   if ( $template_nid ) {
     //Remove it from the nid array.
     $index = array_search( $template_nid, $nids );
@@ -61,10 +79,10 @@ function _cbb_courses() {
     }
   }
   if ( sizeof( $nids ) == 0 ) {
-    return _cbb_make_empty_message('courses');
+    return _cbb_make_empty_message( $type );
   }
   foreach ( $nids as $nid ) {
-    $rendered_tree = _cbb_make_book_tree($nid);
+    $rendered_tree = _cbb_get_book_tree( $nid );
     $output .= $rendered_tree;
   }
   return $output;
@@ -115,7 +133,7 @@ function _cbb_blueprints() {
     return _cbb_make_empty_message('blueprints');
   }
   foreach ( $nids as $nid ) {
-    $rendered_tree = _cbb_make_book_tree($nid);
+    $rendered_tree = _cbb_get_book_tree( $nid );
     $output .= $rendered_tree;
   }
   return $output;
@@ -148,27 +166,27 @@ $_ccbb_content_types = array(
 );
 
 function cybercourse_book_blocks_form_blueprint_node_form_alter(&$form, &$form_state) {
-  _ccbb_remember_published($form);
+  _ccbb_remember_published_state($form);
 }
 
 function cybercourse_book_blocks_form_blueprint_page_node_form_alter(&$form, &$form_state) {
-  _ccbb_remember_published($form);
+  _ccbb_remember_published_state($form);
 }
 
 function cybercourse_book_blocks_form_course_node_form_alter(&$form, &$form_state) {
-  _ccbb_remember_published($form);
+  _ccbb_remember_published_state($form);
 }
 
 function cybercourse_book_blocks_form_course_page_node_form_alter(&$form, &$form_state) {
-  _ccbb_remember_published($form);
+  _ccbb_remember_published_state($form);
 }
 
 function cybercourse_book_blocks_form_learning_map_node_form_alter(&$form, &$form_state) {
-  _ccbb_remember_published($form);
+  _ccbb_remember_published_state($form);
 }
 
 
-function _ccbb_remember_published(&$form) {
+function _ccbb_remember_published_state(&$form) {
   $published = '';
   if ( isset( $form['options']['status']['#default_value'] ) ) {
     $published = $form['options']['status']['#default_value'];
@@ -181,15 +199,26 @@ function _ccbb_remember_published(&$form) {
 }
 
 function _ccbb_check_published_change($form, &$form_state) {
-  $r=5;
+  //Get the old state.
+  $old_status = $form_state['values']['old_published'];
+  //Get the new state.
+  $new_status = $form_state['values']['status'];
+  //Erase the book block tree caches if they are not the same. 
+  //Trees will be rebuilt as required.
+  if ( $new_status != $old_status ) {
+    $bid = $form['#entity']->book['bid'];
+    variable_del(_ccbb_compute_cache_name($bid, TRUE) );
+    variable_del(_ccbb_compute_cache_name($bid, FALSE) );
+  }
 }
 
 /**
  * Make a tree for a node
  * @param int $nid Nid.
+ * @param string $book_type Course or blueprint.
  * @return string Content.
  */
-function _cbb_make_book_tree( $nid ) {
+function _cbb_get_book_tree( $nid ) {
   drupal_add_js(
       drupal_get_path('module', 'cybercourse_book_blocks') 
           . '/js/cybercourse_book_blocks.js', 
@@ -210,14 +239,18 @@ function _cbb_make_book_tree( $nid ) {
       array('cyco_book_blocks' => $settings),
       'setting'
   );
-  
+  $node = node_load($nid);
+  //Perm for whether the current user can see unpublished items.
+  $book_type = $node->type;     
+  $perm_to_check = "view unpublished cyco $book_type content";
+  $see_unpublished = user_access($perm_to_check);
   //Use cached menu?
-  $cache = variable_get('_cbb_menu_cache_' . $nid, NULL);
+  $cache_name = _ccbb_compute_cache_name($nid, $see_unpublished );
+  $cache = variable_get($cache_name, NULL);
   if ( ! is_null($cache) ) {
     return $cache;
   }
   //Regenerate the menu.
-  $node = node_load($nid);
   $current_recusion_level = 0;
   $tree = array();
   $tree[$node->title] = _cybercourse_book_blocks_make_tree(
@@ -230,16 +263,33 @@ function _cbb_make_book_tree( $nid ) {
   $trail = array ( current_path() );
   global $_cbb_root_path;
   $_cbb_root_path = 'node/' . $nid;
+  //Render, with unpublished nodes.
   $rendered = theme(
       'cbb_book_tree', 
       array(
         'tree' => $tree, 
         'trail' => $trail,
+        'include_unpublished' => $see_unpublished,
       )
   );
   $rendered = '<div class="tree menuTop">' . $rendered . '</div>';
-  variable_set('_cbb_menu_cache_' . $nid, $rendered);
+  variable_set( $cache_name, $rendered);
   return $rendered;
+}
+
+/**
+ * Compute the name of the cache to use.
+ * @param string $book_type Course or blueprint.
+ * @param boolean $see_unpublished True if current user can see unpublished pages.
+ */
+function _ccbb_compute_cache_name( $nid, $see_unpublished ) {
+  if ( $see_unpublished ) {
+    $name = '_cbb_menu_cache_w_unpublished' . $nid;
+  }
+  else {
+    $name = '_cbb_menu_cache_wo_unpublished' . $nid;
+  }
+  return $name;
 }
 
 
@@ -351,7 +401,8 @@ function _cybercourse_book_blocks_make_tree( $mlid, $nid, $title, $published,
 function theme_cbb_book_tree($variables) {
   $tree = $variables['tree'];
   $trail = $variables['trail'];
-  $menu_output = cbb_recursive_link_creator($tree, $trail);
+  $include_unpublished = $variables['include_unpublished'];
+  $menu_output = cbb_recursive_link_creator($include_unpublished, $tree, $trail);
   if (!empty($menu_output)) {
     $output = '';
     // We create the shell to hold the menu outside the recursive function.
@@ -363,6 +414,7 @@ function theme_cbb_book_tree($variables) {
 }
 
 function cbb_recursive_link_creator(
+    $include_unpublished,
     $items = array(), 
     $trail, 
     $parentid = ''
@@ -384,7 +436,10 @@ function cbb_recursive_link_creator(
       //Skip processing for a nonauthor trying to see an 
       //  unpublished page.
       if (    isset( $item['link'] ) 
-           && ( $user_is_author || $item['link']['published'] ) 
+           && ( 
+                  $item['link']['published'] 
+               || $include_unpublished
+              )
          ) {
         $count++;
         $id = $parentid . '-' . $count;
@@ -396,21 +451,12 @@ function cbb_recursive_link_creator(
         if ( ! empty($item['below'])  ) {
           $nextlevel = '';
           $nextlevel = cbb_recursive_link_creator(
-              $item['below'], $url_array, $id
+              $include_unpublished, $item['below'], $url_array, $id
           );
           if (!empty($nextlevel)) {
             $classes[] = 'parent_li';
           }
         }
-
-//        if (
-//                $_GET['q'] == $item['link']['path'] 
-//            || (    $item['link']['path'] == '<front>' 
-//                 && $_GET['q'] == variable_get('site_frontpage', 'node')
-//                )
-//           ) {
-//          $classes[] = 'currentPage';
-//        }
         if ($count == 1) {
           $classes[] = 'first';
         }

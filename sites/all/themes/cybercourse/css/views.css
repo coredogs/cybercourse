@@ -55,3 +55,12 @@ div.view-header {
 .view-exercises .views-field-edit-node {
   /*text-align: right;*/
 }
+
+/* Comments list. */
+.view-comments .views-row {
+  margin-bottom: 2em;
+}
+
+.view-comments .views-row .views-field-subject {
+  font-size: 120%;
+}

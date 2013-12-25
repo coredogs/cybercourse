@@ -116,9 +116,7 @@ Drupal.verticalTab.prototype = {
         .addClass('fade in')
         .siblings(':hidden.vertical-tabs-active-tab')
         .val(this.fieldset.attr('id'));
-console.log('in _vert - before');
     this.fieldset.data('verticalTab').item.find('a').tab('show');
-console.log('in _vert - after');
     this.item.addClass('selected');
     // Mark the active tab for screen readers.
     $('#active-vertical-tab').remove();

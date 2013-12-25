@@ -5,15 +5,18 @@
 (function($) {
   //Constructor for an item viewer.
   $.KmItemViewer = function( itemData ) {
-    var lmNamespace = Drupal.behaviors.knowledgemap;
+    this.spinner = new Spinner({color:"#67CADB"});
     this.itemData = itemData;
-    var htmlElData = this.makeDialogHtml();
-    this.itemData.dialogDomId = htmlElData.dialogDomId;
-    $("body").append(htmlElData.html);
-//    if ( lmNamespace.mode == "edit" ) {
+    //Call async ajax function, passing where to resume once the operation is complete.
+    this.renderBody( this, this.continueInit );
+  };
+  $.KmItemViewer.prototype.continueInit = function () {
+    var lmNamespace = Drupal.behaviors.knowledgemap;
+    var dialogHtml = this.makeDialogHtml();
+    this.itemData.dialogDomId = dialogHtml.dialogDomId;
+    $("body").append(dialogHtml.html);
     //Add the action buttons.
-    this.addActionLinks( htmlElData.dialogDomId, this.itemData.nid );
-//    }
+    this.addActionLinks( dialogHtml.dialogDomId, this.itemData.nid );
     var dialogOptions = {
       autoOpen : false,
       close: function() {
@@ -56,27 +59,32 @@
         .animate(state2, speed)
       ;
     });
+    this.open();
     return this;
   }
 
-  $.KmItemViewer.prototype.open = function( evnt ) {
-    if ( ! evnt ) {
-      throw new Exception("Open viewer: no event.");
-    }
+  /**
+   * Open a viewer.
+   */
+  $.KmItemViewer.prototype.open = function() {
+    //var evnt = Drupal.behaviors.knowledgemap.eventKludge;
     //Convenience var for JS namespace for this module. 
     var lmNamespace = Drupal.behaviors.knowledgemap;
-    if ( this.dialog.dialog("isOpen") ) {
-      this.dialog.dialogExtend('restore');
-      this.getUserAttention();
-    }
-    else {
-      var domId = $(evnt.currentTarget).attr('id');
-      this.updateDialogDisplayFields();
+//    if ( this.dialog.dialog("isOpen") ) {
+//      this.dialog.dialogExtend('restore');
+//      this.getUserAttention();
+//    }
+//    else {
+//      var domId = $(evnt.currentTarget).attr('id');
+      //this.updateDialogDisplayFields();
       this.dialog.dialog("open");
       //Position dialog at right of opened item.
+      var nid = this.itemData.nid;
+      var itemDisplay = lmNamespace.km_rep.km_items[nid].display;
+        //The small display node in the map.
       this.dialog.dialog("widget").position({
-        my: 'left', at: 'right',of: "#" + domId});
-    }// @todo broken, check user intent stuff
+        my: 'left', at: 'right',of: "#" + itemDisplay.attr("id")});
+//    }// @todo broken, check user intent stuff
     //Hide item/connection toolbars.
     if ( lmNamespace.$itemToolbar ) {
       lmNamespace.$itemToolbar.hide();
@@ -88,16 +96,12 @@
   }
 
   $.KmItemViewer.prototype.updateDialogDisplayFields = function() {
-    //Convenience var for JS namespace for this module.
-//    var lmNamespace = Drupal.behaviors.knowledgemap;
     //Update the data the dialog is showing.
     var dialogDomId = this.itemData.dialogDomId;
     var itemData = this.itemData;
     $("#" + dialogDomId).dialog({ title: this.itemData.title });
     $("#" + dialogDomId + " .km-item-type")
         .html( capitaliseFirstLetter( this.itemData.item_type ) );
-    //Prep the body for display.
-    this.prepBody( itemData );
     $("#" + dialogDomId + " .km-item-body")
         .html( itemData.body );
     var importanceDisplay = 
@@ -109,11 +113,7 @@
   };
 
   $.KmItemViewer.prototype.makeDialogHtml = function() {
-    //Convenience var for JS namespace for this module. 
-//    var kmNamespace = Drupal.behaviors.knowledgemap;
     var domId = "km-item-dialog-" + this.itemData.nid;
-    //Make sure the body has been rendered.
-    this.prepBody( this.itemData );
     var html = 
           "<div id='" + domId + "' title='" + this.itemData.title + "' "
         + "   class='km-item-dialog km-item " + this.itemData.item_type + "'>"
@@ -132,41 +132,54 @@
        'html' : html
      };
   };
-  
-  $.KmItemViewer.prototype.prepBody = function( itemData ) {
-    //Render body of it needs it.
-    if ( itemData.body ) {
-      if ( ! itemData.bodyRenderedFlag ) {
-        itemData.body = this.renderBody( itemData.body );
-        itemData.bodyRenderedFlag = true;
-      }
-    }    
+
+  $.KmItemViewer.prototype.renderBody = function( functionOwner, resumeFunction ) {
+    //Send ReST content to server for rendering.
+    var lmNamespace = this;
+    //Already rendered it?
+    if ( ! this.itemData.body || this.itemData.bodyRenderedFlag ) {
+      resumeFunction.call(functionOwner);
+    }
+    else {
+      $.ajax({
+        async: true,
+        type: "POST",
+        url: Drupal.settings.basePath + 'swim-peek',
+        data: {
+          'content': lmNamespace.itemData.body
+        },
+        beforeSend: function() {
+          lmNamespace.startSpinner();
+        },
+        complete: function() {
+          lmNamespace.stopSpinner();
+        },
+        success: function(data, textStatus, jqXHR) {
+          if ( data.status == 'success' ) {
+            lmNamespace.itemData.bodyRenderedFlag = true;
+            lmNamespace.itemData.body = data.result;
+            resumeFunction.call(functionOwner);
+          }
+          else {
+            alert( "Ajax preview call failed." );
+          } // end data.status not success.
+        }, //End success function.
+        fail: function(jqXHR, textStatus) {
+          alert( "Ajax preview request failed." );
+        }
+      });
+    }
   };
   
-  $.KmItemViewer.prototype.renderBody = function( contentToRender ) {
-    //Send ReST content to server for rendering.
-    var renderedResult = 'ouch';
-    $.ajax({
-      async: false,
-      type: "POST",
-      url: Drupal.settings.basePath + 'swim-peek',
-      data: {
-        'content': contentToRender
-      },
-      success: function(data, textStatus, jqXHR) {
-        if ( data.status == 'success' ) {
-          renderedResult = data.result;
-        }
-        else {
-          renderedResult = "Ajax preview call failed.";
-        } // end data.status not success.
-      }, //End success function.
-      fail: function(jqXHR, textStatus) {
-        renderedResult = "Ajax preview request failed.";
-      }
-    });
-    return renderedResult;
-  }
+  $.KmItemViewer.prototype.startSpinner = function() {
+    this.spinner.spin( 
+        document.getElementById( Drupal.behaviors.knowledgemap.drawing_id )
+    );
+  };
+
+  $.KmItemViewer.prototype.stopSpinner = function() {
+    this.spinner.stop();
+  };
 
   //Add Edit and Delete buttons to the dialog, when in ediit mode.
   $.KmItemViewer.prototype.addActionLinks = function( dialogDomId, kmItemNid ) {
@@ -302,37 +315,47 @@
         +   "Details"
         + "</a>";
     return $(link);
+  };
+  
+  $.fn.returnFromKmEditSave = function(nid) {
+    //Get a ref to the viewer object for that nid, so it can update itself.
+    var kmItemViewer = Drupal.behaviors.knowledgemap.kmItemViewers[nid]
+    if ( ! kmItemViewer ) {
+      alert("Return from save couldna find item viewer. nid: " + nid);
+      return;
+    }
+    kmItemViewer.updateAfterEdit();
   }
 
-  $.fn.returnFromKmEditSave = function(nid) {
-    //Convenience var for JS namespace for this module.
+  $.KmItemViewer.prototype.updateAfterEdit = function() {
     var lmNamespace = Drupal.behaviors.knowledgemap;
-    if ( lmNamespace.mode != "edit" ) {
-      //Should never happen.
-      throw new Exception("Error: returnFromEditSave: not in edit mode.");
-    }
     //Get new data passed by the server edit code.
     //Server code puts the data into the settings, rather than behaviors.
     var newItemData = Drupal.settings.knowledgemap.new_item_data;
-    var oldItemType = lmNamespace.km_rep.km_items[nid].item_type;
+    //var oldItemType = this.itemData.item_type;
     //Replace bits. Better way?
     lmNamespace.km_rep.km_items[nid].title = newItemData.title;
+    this.itemData.title = newItemData.title;
     lmNamespace.km_rep.km_items[nid].item_type = newItemData.item_type;
+    this.itemData.item_type = newItemData.item_type;
     //Make sure body has at least an MT string.
     lmNamespace.km_rep.km_items[nid].body = 
         newItemData.body ? newItemData.body : "";
+    this.itemData.body = lmNamespace.km_rep.km_items[nid].body;
     lmNamespace.km_rep.km_items[nid].importance = newItemData.importance;
+    this.itemData.importance = newItemData.importance;
     //Show not rendered into HTML yet.
-    lmNamespace.km_rep.km_items[nid].bodyRenderedFlag = false;
+    this.itemData.bodyRenderedFlag = false;
+    //Render the body. Ajaxy thing that continues below.
+    this.renderBody( this, this.updateAfterEditContinue );
+  };
+    
+  $.KmItemViewer.prototype.updateAfterEditContinue = function() {  
     //Update the viewer.
-    var itemViewer = lmNamespace.kmItemViewers[ nid ];
-    if ( ! itemViewer ) {
-      throw new Exception("returnFromEditSave: no viewer for nid " + nid);
-    }
-    //Update 
-    itemViewer.updateDialogDisplayFields();
-    lmNamespace.updateItemDisplay( jQuery("#km-item-" + nid) );
-    itemViewer.dialog.dialog("widget").show();
-  }
+    this.updateDialogDisplayFields();
+    //Update the display of the item in the node graph. Title etc. could have changed.
+    Drupal.behaviors.knowledgemap.updateItemDisplay( jQuery("#km-item-" + nid) );
+    this.dialog.dialog("widget").show();
+  };
 
 })(jQuery);
