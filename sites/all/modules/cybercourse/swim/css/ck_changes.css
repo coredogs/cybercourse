@@ -1,10 +1,8 @@
 /*
 Changes to CKEditor editing space.
 */
-body {
-  font-family: Monaco,Menlo,Consolas,"Courier New",monospace;
-}
 
 body.swim_ck {
   font-family: Monaco,Menlo,Consolas,"Courier New",monospace;
+  margin: 0.3em;
 }

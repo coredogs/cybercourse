@@ -13,7 +13,7 @@
            } );
     
     //Animation to show. None to start with.
-    $.bccMenuAnimation = '';
+    //$.bccMenuAnimation = '';
     
     $.fn.bookBlockMenuClicked = function( $this ) {
       if ( ! $this ) {
@@ -21,7 +21,6 @@
       }
       var children = $this.parent('li.parent_li').find(' > ul > li');
       if ( children.hasClass('open') ) {
-//      if (children.is(':visiblise')) {
         children.removeClass('open').addClass('closed');
         children.hide();// $.bccMenuAnimation );
         $this.attr('title', 'Expand this branch').find(' > i')

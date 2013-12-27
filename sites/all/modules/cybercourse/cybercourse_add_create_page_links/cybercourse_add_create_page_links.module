@@ -166,7 +166,13 @@ function cybercourse_add_create_page_links_node_view_alter(&$build) {
             . '/js/cacpl.js', 
         'file'
     );
+    drupal_add_css(
+        drupal_get_path('module', 'cybercourse_add_create_page_links') 
+            . '/css/cybercourse_add_create_page_links.css', 
+        'file'
+    );
     //Add links to the page build.
+    //Replace this with correct Drupally themeing stuff. 
     $build['cacpl_links'] = array(
       '#prefix' => '<div id="cacpl-create-widget-location">',
       '#markup' => '',

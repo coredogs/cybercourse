@@ -112,13 +112,25 @@ var Drupal = Drupal || {};
       }
       var anchors = $(context).find('a').toArray();
       for (i = 0; i < anchors.length; i++) {
-        if (!anchors[i].scrollTo) {
-          this.bootstrapAnchor(anchors[i]);
+        //KRM
+        var anchHref = $(anchors[i]).attr("href");
+        if ( anchHref ) {
+          if ( anchHref.length > 1 && anchHref.charAt(0) === "#") {
+            if (!anchors[i].scrollTo) {
+                this.bootstrapAnchor(anchors[i]);
+            }
+          }
         }
       }
       $scrollableElement.once('bootstrap-anchors', function () {
         $scrollableElement.on('click.bootstrap-anchors', 'a[href*="#"]:not([data-toggle],[data-target])', function(e) {
-          this.scrollTo(e);
+        //KRM
+          var attrHref = this.attributes["href"];
+          if ( attrHref ) {
+            if ( attrHref.length > 1 && attrHref.charAt(0) === "#") {
+              this.scrollTo(e);
+            }
+          }
         });
       });
     },

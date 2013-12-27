@@ -165,53 +165,6 @@ $_ccbb_content_types = array(
   'course_page_node_form',  
 );
 
-function cybercourse_book_blocks_form_blueprint_node_form_alter(&$form, &$form_state) {
-  _ccbb_remember_published_state($form);
-}
-
-function cybercourse_book_blocks_form_blueprint_page_node_form_alter(&$form, &$form_state) {
-  _ccbb_remember_published_state($form);
-}
-
-function cybercourse_book_blocks_form_course_node_form_alter(&$form, &$form_state) {
-  _ccbb_remember_published_state($form);
-}
-
-function cybercourse_book_blocks_form_course_page_node_form_alter(&$form, &$form_state) {
-  _ccbb_remember_published_state($form);
-}
-
-function cybercourse_book_blocks_form_learning_map_node_form_alter(&$form, &$form_state) {
-  _ccbb_remember_published_state($form);
-}
-
-
-function _ccbb_remember_published_state(&$form) {
-  $published = '';
-  if ( isset( $form['options']['status']['#default_value'] ) ) {
-    $published = $form['options']['status']['#default_value'];
-  }
-  $form['old_published'] = array(
-    '#type' => 'hidden',
-    '#value' => $published,
-  );
-  $form['#submit'][] = '_ccbb_check_published_change';
-}
-
-function _ccbb_check_published_change($form, &$form_state) {
-  //Get the old state.
-  $old_status = $form_state['values']['old_published'];
-  //Get the new state.
-  $new_status = $form_state['values']['status'];
-  //Erase the book block tree caches if they are not the same. 
-  //Trees will be rebuilt as required.
-  if ( $new_status != $old_status ) {
-    $bid = $form['#entity']->book['bid'];
-    variable_del(_ccbb_compute_cache_name($bid, TRUE) );
-    variable_del(_ccbb_compute_cache_name($bid, FALSE) );
-  }
-}
-
 /**
  * Make a tree for a node
  * @param int $nid Nid.
@@ -229,10 +182,17 @@ function _cbb_get_book_tree( $nid ) {
           . '/css/cybercourse_book_blocks.css', 
       'file'
   );
-  //Sent path of current page.
+  //Sent path of current page. Client code will highlight the path to that page.
+  $current_path = request_path();
+  if ( substr($current_path, -4) == 'edit' ) {
+    //On the edit page. Still want to highlight it in the menu.
+    //So make the current path the path to the view page.
+    $current_path = substr($current_path, 0, -5);
+    $current_path = drupal_get_path_alias( $current_path );
+  }
   global $base_url;
   $settings = array(
-    'current_path' => request_path(),
+    'current_path' => $current_path,
     'base_url' => $base_url,
   );
   drupal_add_js(
@@ -290,31 +250,6 @@ function _ccbb_compute_cache_name( $nid, $see_unpublished ) {
     $name = '_cbb_menu_cache_wo_unpublished' . $nid;
   }
   return $name;
-}
-
-
-function cybercourse_book_blocks_node_update($node) {
-  _ccbb_erase_menu_cache( $node );
-}
-
-
-function cybercourse_book_blocks_node_insert($node) {
-  _ccbb_erase_menu_cache( $node );
-}
-
-
-function cybercourse_book_blocks_node_delete($node) {
-  _ccbb_erase_menu_cache( $node );
-}
-
-/**
- * Erase the cache for book menu a node is in.
- */
-function _ccbb_erase_menu_cache( $node ) {
-  if ( isset($node->book) ) {
-    $bid = $node->book['bid'];
-    variable_del( '_cbb_menu_cache_' . $bid );
-  }
 }
 
 /**
@@ -597,4 +532,88 @@ function _cbb_max_len($string) {
   }
   return $string;
 }
+
+/**
+ * Implements hook_form_FORM_alter().
+ * 
+ * Check for changes in publication status of content.
+ */
+//function cybercourse_book_blocks_form_blueprint_node_form_alter(&$form, &$form_state) {
+//  _ccbb_remember_published_state($form);
+//}
+//
+//function cybercourse_book_blocks_form_blueprint_page_node_form_alter(&$form, &$form_state) {
+//  _ccbb_remember_published_state($form);
+//}
+//
+//function cybercourse_book_blocks_form_course_node_form_alter(&$form, &$form_state) {
+//  _ccbb_remember_published_state($form);
+//}
+//
+//function cybercourse_book_blocks_form_course_page_node_form_alter(&$form, &$form_state) {
+//  _ccbb_remember_published_state($form);
+//}
+//
+//function cybercourse_book_blocks_form_learning_map_node_form_alter(&$form, &$form_state) {
+//  _ccbb_remember_published_state($form);
+//}
+//
+//
+//function _ccbb_remember_published_state(&$form) {
+//  $published = '';
+//  if ( isset( $form['options']['status']['#default_value'] ) ) {
+//    $published = $form['options']['status']['#default_value'];
+//  }
+//  $form['old_published'] = array(
+//    '#type' => 'hidden',
+//    '#value' => $published,
+//  );
+//  $form['#submit'][] = '_ccbb_check_published_change';
+//}
+//
+//function _ccbb_check_published_change($form, &$form_state) {
+//  //Get the old state.
+//  $old_status = $form_state['values']['old_published'];
+//  //Get the new state.
+//  $new_status = $form_state['values']['status'];
+//  //Erase the book block tree caches if they are not the same. 
+//  //Trees will be rebuilt as required.
+//  if ( $new_status != $old_status ) {
+//    $bid = $form['#entity']->book['bid'];
+//    variable_del(_ccbb_compute_cache_name($bid, TRUE) );
+//    variable_del(_ccbb_compute_cache_name($bid, FALSE) );
+//  }
+//}
+
+function cybercourse_book_blocks_node_update($node) {
+  _ccbb_maybe_erase_menu_cache( $node );
+}
+
+
+function cybercourse_book_blocks_node_insert($node) {
+  _ccbb_maybe_erase_menu_cache( $node );
+}
+
+
+function cybercourse_book_blocks_node_delete($node) {
+  _ccbb_maybe_erase_menu_cache( $node );
+}
+
+/**
+ * Erase the cache for book menu a node is in.
+ */
+function _ccbb_maybe_erase_menu_cache( $node ) {
+  if ( isset($node->book) ) {
+    if (_ccbb_relevant_content_type( $node ) ) {
+      $bid = $node->book['bid'];
+      variable_del(_ccbb_compute_cache_name($bid, TRUE) );
+      variable_del(_ccbb_compute_cache_name($bid, FALSE) );    
+    }
+  }
+}
+
+function _ccbb_relevant_content_type( $node ) {
+  static $types = array('course', 'course_page', 'page', 'blueprint_page');
+  return in_array($node->type, $types);
+} 
 

@@ -94,12 +94,6 @@ li.expanded.author-menu-parent ul {
   margin-left: 2em;
 }
 
-/* Show workflow tags inline on node edit form. */
-.field-name-field-workflow-tags .form-item {
-  display: inline-block;
-  margin-right: 2em;  
-}
-
 /* Some views stuff */
 .view-recent-content-changes .views-row {
   border-top: 1px solid #DDDDDD;
