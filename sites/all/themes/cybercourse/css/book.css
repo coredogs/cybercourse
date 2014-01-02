@@ -14,10 +14,12 @@
 }
 
 .book-navigation .page-links {
-  border-top: 1px solid #888;
-  border-bottom: 1px solid #888;
+  border-top: 1px dotted #888;
+  border-bottom: 1px dotted #888;
   text-align: center;
   padding: 0.5em;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
 .book-navigation .page-links .page-previous i {
@@ -59,4 +61,9 @@
 .block-cybercourse-book-blocks li i.glyphicon-minus-sign,
 .block-cybercourse-book-blocks li i.glyphicon-plus-sign {
   cursor: pointer;
+}
+
+/* For outline rearranger thing. */
+#book-outline input.form-control {
+  width: auto;
 }

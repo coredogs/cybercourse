@@ -10,6 +10,31 @@ define('CBB_MAX_CHARS', 30);
  */
 define('CBB_MAX_RECURSION_LEVELS', 20);
 
+/**
+ * Implements hook_menu_link_alter().
+ * 
+ * Clears book menu caches for book containing item.
+ * Runs more often than it should. Runs when the content of a page changes, 
+ * but its menu data has not.
+ */
+function cybercourse_book_blocks_menu_link_alter(&$item){
+  if ( isset( $item['bid'] ) ) {
+    $bid = $item['bid'];
+    $book_root = node_load($bid);
+    //Perm for whether the current user can see unpublished items.
+    $book_type = $book_root->type;
+    if ( $book_type == 'blueprint' || $book_type == 'course' ) {
+      $see_unpublished = TRUE;
+      $cache_name = _ccbb_compute_cache_name($bid, $see_unpublished );
+      variable_del($cache_name);
+      $see_unpublished = FALSE;
+      $cache_name = _ccbb_compute_cache_name($bid, $see_unpublished );
+      variable_del($cache_name);
+    }
+  }
+}
+
+
 function cybercourse_book_blocks_permission() {
   return array(
     'view unpublished cyco course content' => array(
@@ -116,28 +141,28 @@ function _cbb_get_nids_of_type( $bundle_name ) {
  * @global stdClass $user You know what it is.
  * @return string Content representing the block.
  */
-function _cbb_blueprints() {
-  $output = '';
-  $nids = _cbb_get_nids_of_type('blueprint');
-  //Get the blueprint template nid.
-  $template_nid = cccblueprint_find_template_nid('blueprint');
-  if ( $template_nid ) {
-    //Remove it from the nid array.
-    $index = array_search( $template_nid, $nids );
-    if ( $index !== FALSE ) {
-      unset( $nids[$index] );
-    }
-  }
-  if ( sizeof( $nids ) == 0 ) {
-    //Tell the user that there are no blueprints.
-    return _cbb_make_empty_message('blueprints');
-  }
-  foreach ( $nids as $nid ) {
-    $rendered_tree = _cbb_get_book_tree( $nid );
-    $output .= $rendered_tree;
-  }
-  return $output;
-}
+//function _cbb_blueprints() {
+//  $output = '';
+//  $nids = _cbb_get_nids_of_type('blueprint');
+//  //Get the blueprint template nid.
+//  $template_nid = cccblueprint_find_template_nid('blueprint');
+//  if ( $template_nid ) {
+//    //Remove it from the nid array.
+//    $index = array_search( $template_nid, $nids );
+//    if ( $index !== FALSE ) {
+//      unset( $nids[$index] );
+//    }
+//  }
+//  if ( sizeof( $nids ) == 0 ) {
+//    //Tell the user that there are no blueprints.
+//    return _cbb_make_empty_message('blueprints');
+//  }
+//  foreach ( $nids as $nid ) {
+//    $rendered_tree = _cbb_get_book_tree( $nid );
+//    $output .= $rendered_tree;
+//  }
+//  return $output;
+//}
 
 
 /**

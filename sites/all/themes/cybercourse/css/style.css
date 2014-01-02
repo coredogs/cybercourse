@@ -163,6 +163,7 @@ h3.block-title,
 
 ul.cycobb {
   margin-bottom: 0.5em;
+  font-size: 85%;
 }
 
 /* To make the modules page work. */
@@ -219,5 +220,11 @@ li.user-menu a:disabled
 
 /* Tabs on, e.g., node edit page. */
 .nav-tabs {
+  margin-bottom: 1em;
+}
+
+
+.field-type-taxonomy-term-reference {
+  margin-top: 1em;
   margin-bottom: 1em;
 }

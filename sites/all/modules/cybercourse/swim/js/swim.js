@@ -7,13 +7,15 @@
       CKEDITOR.on("instanceReady", function(evnt) {
         var editor = evnt.editor;
         editor.document.appendStyleSheet( Drupal.settings.swim.editing_stylesheet );
-        //Size the summary editor.
-        if ( editor.name == 'edit-body-und-0-summary' ) {
-          editor.config.height = "8em";
-        }
+        //Size the editor.
+        editor.ui.space( 'contents' ).setStyle( 'height', 
+            $(window).height() * 0.5 + 'px' );
+//        editor.config.height = "666px"; //$(window).height() * 0.5;
+//        if ( editor.name == 'edit-body-und-0-summary' ) {
+//        }
         if ( editor.name == 'edit-body-und-0-value' ) {
           //Size the main editor.
-          editor.config.height = "30em";
+//          editor.config.height = "30em";
           //Start up Swim init.
           Drupal.behaviors.swim.swimSetup();
         }
@@ -141,7 +143,7 @@
       /**
        * Watch the plugin's peek button.
        */
-    peekButtonClicked : function () {
+    peekButtonClicked : function ( editor ) {
         //Add an obscuring thing.
         var obscurer = 
   "<h1 style='margin:0;padding:0;background-color:white;position:absolute;"
@@ -154,7 +156,7 @@
           $( "#swim-peek-outer" ).dialog( "open" );
         }
         //Show the current peek.
-        Drupal.behaviors.swim.showPeek();
+        Drupal.behaviors.swim.showPeek( editor );
       },
     deviceButtonClicked : function( buttonClicked ) {
       this.selectedPeek = buttonClicked;
@@ -174,7 +176,7 @@
     /**
      * Grab rendered text from the server and show it.
      */
-    showPeek : function() {
+    showPeek : function( editor ) {
       //Position edges of device below toolbar.
       var toolbarHeight = $("#swim-peek-toolbar").outerHeight();
       $("#swim-peek-device").css("top", toolbarHeight );
@@ -220,7 +222,7 @@
         throw "showpeek: bad selectedpeek: *" + this.selectedPeek + "*";
       }
       //Get content from server.
-      var editor = CKEDITOR.instances["edit-body-und-0-value"];
+//      var editor = CKEDITOR.instances["edit-body-und-0-value"];
       var markup = editor.getData();
       var swimBehavior = this; //Convenience for closures.
       $.ajax({

@@ -1,0 +1,29 @@
+/*
+Tweaks for the notifications module's links.
+*/
+.node .links {
+  margin-left: 0;
+  margin-top: 1em;
+}
+
+.node .links .comment-add {
+  display: none;
+}
+
+.node .links .notifications-1 {
+  margin: 1.5em 1.5em 1.5em 0;
+  padding: 0.4em;
+  border: 1px solid #398439;
+  border-radius: 4px;
+  background-color: #5CB85C;
+}
+
+.node .links .notifications-1 a {
+  color: white;
+}
+
+.node .links .notifications-1:hover,
+.node .links .notifications-1 a:hover {
+  text-decoration: none;
+  background-color: #47A447;
+}

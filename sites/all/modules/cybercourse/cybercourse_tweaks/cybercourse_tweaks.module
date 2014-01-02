@@ -4,6 +4,22 @@
 require_once drupal_get_path('module', 'cybercourse_tweaks') 
     . '/includes/attainment_modals.php';
 
+/*
+ * If notifications module is active, change link text.
+ */
+function cybercourse_tweaks_init() {
+  if ( module_exists('notifications') ) {
+    drupal_add_js( 
+        drupal_get_path('module', 'cybercourse_tweaks') 
+        . '/js/notifications_tweaks.js' 
+    );
+    drupal_add_css( 
+        drupal_get_path('module', 'cybercourse_tweaks') 
+        . '/css/notifications_tweaks.css' 
+    );
+  }
+}
+
 /**
  * Implements hook_form_FORM_alter().
  * Adds instructiond to the book rearrange form.

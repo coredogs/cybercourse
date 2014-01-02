@@ -72,17 +72,8 @@ table#pseudent-choose-table td.selected {
   float: left;
 }
 
-
-/*table#pseudent-choose-table .pseudent-title,
-table#pseudent-choose-table .pseudent-image {
-  border-color: #888;
-  border-style: solid;
+/* 'Back to pseudent list' link. */
+.pseudents-back-link {
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
-
-table#pseudent-choose-table .pseudent-title {
-  border-width: 1px 0 1px 1px;
-}
-
-table#pseudent-choose-table .pseudent-image {
-  border-width: 1px 1px 1px 0;
-}*/

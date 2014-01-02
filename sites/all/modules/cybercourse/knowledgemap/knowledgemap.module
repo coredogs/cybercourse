@@ -260,6 +260,12 @@ function knowledgemap_add_client_code() {
   ctools_modal_add_js('modal');
   ctools_include('node.pages', 'node', '');
   
+//  drupal_add_css(
+//      drupal_get_path('module', 'ctools') 
+//          . '/css/modal.css', 
+//      'file'
+//  );  
+  
 //  ctools_include('ajax');
 //  drupal_add_js('misc/ajax.js');  
 //  ctools_include('modal');
@@ -273,11 +279,18 @@ function knowledgemap_add_client_code() {
 //          . '/libs/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.min.js', 
 //      'file'
 //  );  
-  drupal_add_js(
+//  drupal_add_js(
+//      drupal_get_path('module', 'knowledgemap') 
+//          . '/libs/blockui/jquery.blockUI.js', 
+//      'file'
+//  );
+  
+  drupal_add_css(
       drupal_get_path('module', 'knowledgemap') 
-          . '/libs/blockui/jquery.blockUI.js', 
+          . '/css/ctools_modal_extras.css', 
       'file'
-  );
+  ); 
+  
   drupal_add_js(
       drupal_get_path('module', 'knowledgemap') 
           . '/libs/jsPlumb/jquery.jsPlumb-1.4.1-all-min.js', 
@@ -511,6 +524,19 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
   if (!$js) {
     return drupal_access_denied();
   }
+  
+  knowledgemap_add_client_code(); 
+//  ctools_include('ajax');
+//  ctools_include('modal');
+//  drupal_add_js('misc/ajax.js');
+//  ctools_modal_add_js('ajax-responder');
+//  ctools_modal_add_js('modal');
+//  ctools_include('node.pages', 'node', '');
+//  
+//    drupal_add_library('system', 'ui');  
+//  drupal_add_library('system', 'ui.dialog');
+
+  
   $type_name = node_type_get_name($node);
   $title = t('<em>Edit @type</em> @title', 
       array('@type' => $type_name, '@title' => $node->title)
@@ -534,6 +560,7 @@ function knowledgemap_edit_item_ctools($node, $js = NULL) {
       $new_item_data = array(
         'knowledgemap' => array(
           'new_item_data' => array(
+            'nid' => $node->nid,
             'item_type' => $node->field_item_type[LANGUAGE_NONE][0]['value'],
             'title' => $node->title,
             'body' => 

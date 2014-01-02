@@ -10,6 +10,13 @@
 	- Select content types to auto create main book page when creating. 
   # Or edit a content type and check or uncheck Auto create book main page and Allow content type as child of book
 
+= Migration from old BookMadeSimple module
+
+  # disable old BookMadeSimple module
+  # remove BookMadeSimple directory
+  # install new Book Made Simple module
+  # enable Book Made Simple module
+
 = Use =
 
 This module will create a main book page for content type selected in BookMadeSimple settings. This is a shortcut to create a node and click on Update book outline.

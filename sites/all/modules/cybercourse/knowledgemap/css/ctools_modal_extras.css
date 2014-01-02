@@ -1,0 +1,8 @@
+/*
+Styles to get ctools modals working right.
+*/
+
+/* Make the modal scroll. */
+.modal-body {
+  overflow:scroll;
+}

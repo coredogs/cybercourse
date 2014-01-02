@@ -71,6 +71,13 @@ function swim_permission() {
       'title' => t('Peek at rendered content'),
       'description' => t('When editing, see what the content looks like on various devices.')
     ),
+    'access ckHtml field' => array(
+      'title' => t('Access hidden CKEditor HTML field.'),
+      'description' => t(
+          'In case body field gets out of sync with HTML used in CKEditor. '
+        . 'Should not be needed.'    
+      )
+    ),
   );
 }
 
@@ -127,6 +134,8 @@ function swim_form_alter(&$form, &$form_state, $form_id) {
                 = $form['#node']->field_body_ck[LANGUAGE_NONE][0]['summary'];
           }
         }
+        //Access to field_body_ck.
+        $form['field_body_ck']['#access'] = user_access( 'access ckHtml field' );
         //Set up call to submit function.
         $form['#submit'][] = '_swim_form_submit';
         //Set up UI stuff.

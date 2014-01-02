@@ -1,6 +1,12 @@
 <?php
+/**
+ * @file
+ * Install file for book_made_simple.
+ */
 
-
+/**
+ * Implements hook_install().
+ */
 function book_made_simple_install() {
 	db_query("UPDATE {system} SET weight = 10 WHERE name = 'book_made_simple'");
 }
@@ -18,9 +24,10 @@ function book_made_simple_update_6013() {
   return $ret;
 }
 
+/**
+ * Implements hook_uninstall().
+ */
 function book_made_simple_uninstall() {
-
 	variable_del('book_made_simple_auto_main_page');
 	variable_del('book_made_simple_add_types');
-	
 }

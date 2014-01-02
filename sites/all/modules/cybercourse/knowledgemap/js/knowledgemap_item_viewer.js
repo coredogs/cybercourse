@@ -332,6 +332,7 @@
     //Get new data passed by the server edit code.
     //Server code puts the data into the settings, rather than behaviors.
     var newItemData = Drupal.settings.knowledgemap.new_item_data;
+    var nid = newItemData.nid;
     //var oldItemType = this.itemData.item_type;
     //Replace bits. Better way?
     lmNamespace.km_rep.km_items[nid].title = newItemData.title;
@@ -350,7 +351,8 @@
     this.renderBody( this, this.updateAfterEditContinue );
   };
     
-  $.KmItemViewer.prototype.updateAfterEditContinue = function() {  
+  $.KmItemViewer.prototype.updateAfterEditContinue = function() {
+    var nid = Drupal.settings.knowledgemap.new_item_data.nid;
     //Update the viewer.
     this.updateDialogDisplayFields();
     //Update the display of the item in the node graph. Title etc. could have changed.

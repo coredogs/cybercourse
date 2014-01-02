@@ -13,7 +13,7 @@
         }
         editor.addCommand( 'peek', {
           exec: function( editor ) {
-            Drupal.behaviors.swim.peekButtonClicked();
+            Drupal.behaviors.swim.peekButtonClicked( editor );
           }
         });
         editor.ui.addButton( 'Peek', {
