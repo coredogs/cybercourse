@@ -144,7 +144,7 @@
       $.ajax({
         async: true,
         type: "POST",
-        url: Drupal.settings.basePath + 'swim-peek',
+        url: Drupal.settings.basePath + 'km-render-summary',
         data: {
           'content': lmNamespace.itemData.body
         },
@@ -270,9 +270,16 @@
         .attr("href", href)
         .removeClass('km-item-edit-link-original')
         .addClass('km-item-edit-link cyco-button-small');
-    //var $this = $(this);
-    //Copied from ctools modal.js. Registers the new link with the modal logic.
-    $newLink.click(Drupal.CTools.Modal.clickAjaxLink);
+    //Bind click events to the new link.
+    $newLink
+            .bind("click", function() {
+              //Remember body scroll position, so can restore it later.
+              $.KmItemViewer.scrollTop = $("body").scrollTop();
+              $.KmItemViewer.scrollLeft = $("body").scrollLeft();
+            })
+            //Copied from ctools modal.js. Registers the new link 
+            //with the modal logic.
+            .bind("click", Drupal.CTools.Modal.clickAjaxLink);
     // Create a drupal ajax object
     var element_settings = {};
     if ($newLink.attr('href')) {
@@ -358,6 +365,9 @@
     //Update the display of the item in the node graph. Title etc. could have changed.
     Drupal.behaviors.knowledgemap.updateItemDisplay( jQuery("#km-item-" + nid) );
     this.dialog.dialog("widget").show();
+    //Scroll back to where the user clicked the edit link.
+    $("body").scrollTop( $.KmItemViewer.scrollTop );
+    $("body").scrollLeft( $.KmItemViewer.scrollLeft );
   };
 
 })(jQuery);

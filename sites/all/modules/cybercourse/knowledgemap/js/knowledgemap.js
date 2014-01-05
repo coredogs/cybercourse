@@ -1,5 +1,3 @@
-try {
-
 (function($) {
   var done_once = false;
   Drupal.behaviors.knowledgemap = {
@@ -78,6 +76,8 @@ try {
       });
       //Create the floating toolbars.
       this.createFloatingToolbars();
+      //Scroll back to the top of the page.
+      $("body").scrollTop(0);
       done_once = true;
     }, //End Drupal.behaviors.knowledgemap.attach
     //Create a toolbar for the drawing area.
@@ -663,6 +663,8 @@ try {
           .addClass(itemData.item_type);
       //Set position.
       this.setItemPosition( $itemDisplay, itemData.coord_x, itemData.coord_y);
+      //Redraw links, since size of element could change.
+      jsPlumb.repaint( this.km_rep.km_items[nid].display );
     }, //End Drupal.behaviors.knowledgemap.updateItemDisplay
     itemClicked : function ( evnt ) {
       //Start Drupal.behaviors.knowledgemap.itemClicked
@@ -1019,7 +1021,16 @@ try {
       $("#km-item-name").val("");
       $("#km-item-importance").val("");
       $("#km-item-type").val("not selected");
-      $("#km-add-new-item-container").dialog("open");
+      //Center the container and open it.
+      $("#km-add-new-item-container")
+          .dialog( "option", "position",
+              { 
+                my: "center",
+                at: "center",
+                of: window
+              }
+          )
+          .dialog("open");
     }, //End Drupal.behaviors.knowledgemap.addNewItem
     createAddForm: function() {
       //Start Drupal.behaviors.knowledgemap.createAddForm
@@ -1031,6 +1042,12 @@ try {
         //Should never happen.
         this.badThing("Error: createAddForm: not in edit mode.");
       }
+      //Skip if already made it.
+      if ( $("#km-add-new-item-container").length > 0 ) {
+        return;
+      }
+      //Remember the body scroll position for later.
+      var bodyScrollTop = $("body").scrollTop();
       //Load the HTML for the add form.
       var html = this.addFormHtml();
       $("body").append(html);
@@ -1041,7 +1058,6 @@ try {
       //attached to Drupal.behaviors.knowledgemap.
       var lmNamespace = this;
       $("#km-add-new-item-container")
-        .hide()
         .dialog({
           autoOpen: false,
           dialogClass: "no-close",
@@ -1123,6 +1139,8 @@ try {
             $("#km_save_new_item_button").click();
           }
         });
+        //Scroll back to where the user was.
+        $("body").scrollTop( bodyScrollTop );
     }, //End Drupal.behaviors.knowledgemap.createAddForm
     checkNewItemData: function(itemTitle, itemType, itemImportance) {
       //Start Drupal.behaviors.knowledgemap.checkNewItemData
@@ -1594,12 +1612,3 @@ try {
     }
   };    
 })(jQuery);
-
-} catch (e) {
-  alert( 
-        "Error! " + e.message + "/n/nPlease take a screenshot of "
-      + "your entire browser screen and "
-      + "send it to Kieran Mathieson at kieran@dolfinity.com./n/n"
-      + "Please explain what you were trying to do at the time./n/n" 
-      + "Jokes welcome as well. ");
-}

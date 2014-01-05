@@ -27,6 +27,11 @@ module_load_include('inc', 'knowledgemap', 'kmItem.inc');
  * Implements hook_menu.
  */
 function knowledgemap_menu() {
+  $items['km-render-summary'] = array(
+    'page callback' => 'knowledgemap_render_summary',
+    'access callback' => 'knowledgemap_view_lm_access',
+    'type' => MENU_CALLBACK,
+  );
   //Add a new item. Passing in the coords of the mouse click, and the 
   //nid of the KM that will own the new item.
   $items['add-km-item-ajax'] = array(
@@ -132,12 +137,20 @@ function knowledgemap_update_item_access() {
 //}
 
 /**
+ * Render a learning item's summary.
+ * @return string HTML to show.
+ */
+function knowledgemap_render_summary() {
+  return swim_peek();
+}
+
+/**
  * Implements hook_swim_peek_access().
  * 
  * People who can see knowledge maps can call the peek function in
  * SWIM. 
  */
-function knowledgemap_swim_peek_access() {
+function knowledgemap_view_lm_access() {
   return user_access('view learningmap');
 }
 

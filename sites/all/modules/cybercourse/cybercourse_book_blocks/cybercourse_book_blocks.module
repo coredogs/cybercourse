@@ -3,7 +3,7 @@
 /**
  * Max number characters link text can be.
  */
-define('CBB_MAX_CHARS', 30);
+define('CBB_MAX_CHARS', 50);
 
 /**
  * Max number of recursion levels when generating tree menu..
