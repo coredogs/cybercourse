@@ -1,0 +1,6 @@
+name = Toggle left sidebar
+description = Let the user show and hide the left sidebar.
+package = CyberCourse
+core = 7.x
+scripts[] = cybercourse_toggle_left_sidebar.js
+stylesheets[all][] = cybercourse_toggle_left_sidebar.css

@@ -51,9 +51,9 @@ function knowledgemap_menu() {
   );
   $items['update-km-item-pos'] = array(
     'page callback' => 'knowledgemap_save_item_position',
-    'access callback' => 'node_access',
-    'access arguments' => array('update', 1),
-//    'access callback' => 'knowledgemap_menu_access',
+//    'access callback' => 'node_access',
+//    'access arguments' => array('update', 1),
+    'access callback' => 'knowledgemap_update_item_access',
     'type' => MENU_CALLBACK,
   );
   $items['delete-item-ajax/%node'] = array(
@@ -110,6 +110,14 @@ function knowledgemap_permission() {
 //      'description' => t('Change learning maps.'),
 //    ),
   );
+}
+
+
+function knowledgemap_update_item_access() {
+  $item_nid = $_POST['km_item_nid'];
+  $node = node_load( $item_nid );
+  $access = node_access( 'update', $node );
+  return $access;
 }
 
 /**

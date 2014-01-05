@@ -1,0 +1,5 @@
+name = jQuery Cookie
+machine name = jquery-cookie
+description = Library for messing with cookies.
+version = 1.4.0
+files[js][] = jquery.cookie.js

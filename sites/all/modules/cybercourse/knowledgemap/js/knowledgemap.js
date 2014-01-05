@@ -212,7 +212,7 @@ try {
     switchConnectionRequired: function( newType ) {
       if ( this.mode != "edit" ) {
         //Should never happen.
-        throw new Exception("Error: switchConnectionRequired: not in edit mode.");
+        this.badThing("Error: switchConnectionRequired: not in edit mode.");
       }
       //Confirm.
       if ( ! confirm("Are you sure you want to change the connection type?") ) {
@@ -246,22 +246,25 @@ try {
             display.setPaintStyle( style );
           }
           else {
-            throw new Exception(data.message);
+            lmNamespace.badThing(data.message);
           }
         },
         fail: function(jqXHR, textStatus) {
-          throw new Exception( "Knowledge map request failed: " + textStatus );
+          lmNamespace.badThing( "Knowledge map request failed: " + textStatus );
+        },
+        error: function(jqXHR, textStatus) {
+          lmNamespace.badThing( "Knowledge map request failed: " + textStatus );
         }
       });
     }, //End Drupal.behaviors.knowledgemap.switchConnectionRequired
     deleteConnection: function( ) {
       //Start Drupal.behaviors.knowledgemap.deleteConnection
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("deleteConnection: this unexpected.");
+        this.badThing("deleteConnection: this unexpected.");
       }
       if ( this.mode != "edit" ) {
         //Should never happen.
-        throw new Exception("Error: deleteConnection: not in edit mode.");
+        this.badThing("Error: deleteConnection: not in edit mode.");
       }
       //Confirm.
       if ( ! confirm("Are you sure you want to delete the connection?") ) {
@@ -293,11 +296,14 @@ try {
             lmNamespace.clearSelection();
           }
           else {
-            throw new Exception(data.message);
+            lmNamespace.badThing(data.message);
           }
         },
         fail: function(jqXHR, textStatus) {
-          throw new Exception( "Request failed: " + textStatus );
+          lmNamespace.badThing( "Request failed: " + textStatus );
+        },
+        error: function(jqXHR, textStatus) {
+          lmNamespace.badThing( "Request failed: " + textStatus );
         }
       });
     }, //End Drupal.behaviors.knowledgemap.deleteConnection
@@ -317,7 +323,7 @@ try {
         if (lmNamespace.$drawing_area.state == "add") {
           if ( lmNamespace.mode != "edit" ) {
             //Should never happen.
-            throw new Exception("Error: $drawing_area.click add: not in edit mode.");
+            lmNamespace.badThing("Error: $drawing_area.click add: not in edit mode.");
           }
           var x_to_store = lmNamespace.getEventCoordX(evnt);
           var y_to_store = lmNamespace.getEventCoordY(evnt);
@@ -335,7 +341,7 @@ try {
           if ( lmNamespace.$drawing_area.state == "add" ) {
             if ( lmNamespace.mode != "edit" ) {
               //Should never happen.
-              throw new Exception("Error: ESC pressed: not in edit mode.");
+              lmNamespace.badThing("Error: ESC pressed: not in edit mode.");
             }
             //Exit add mode.
             evnt.stopPropagation();
@@ -463,7 +469,7 @@ try {
     clearSelection : function() {
       //Start Drupal.behaviors.knowledgemap.clearSelection
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("clearSelection: this unexpected.");
+        this.badThing("clearSelection: this unexpected.");
       }
       //Clear the item selection
       if ( this.selectedItem ) {
@@ -492,7 +498,7 @@ try {
     setJsPlumbDefaults : function() {
       //Start Drupal.behaviors.knowledgemap.setJsPlumbDefaults
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("setJsPlumbDefaults: this unexpected.");
+        this.badThing("setJsPlumbDefaults: this unexpected.");
       }
       jsPlumb.importDefaults({
         Anchor: "AutoDefault",
@@ -532,7 +538,7 @@ try {
     drawAllItems : function() {
       //Start Drupal.behaviors.knowledgemap.drawAllItems
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("drawAllItems: this unexpected.");
+        this.badThing("drawAllItems: this unexpected.");
       }
       //Draw all the items in the knowledge map.
       var items = this.km_rep.km_items;
@@ -544,7 +550,7 @@ try {
     drawItem : function (itemData, skipAdjustDrawingHeight ) {
       //Start Drupal.behaviors.knowledgemap.drawItem
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("drawItem: this unexpected.");
+        this.badThing("drawItem: this unexpected.");
       }
       //skipAdjustDrawingHeight is true if drawItem should not check whether 
       //the item changes the max height of all elements in the drawing.
@@ -582,7 +588,7 @@ try {
     addEventsToItem : function( $item ){
       //Start Drupal.behaviors.knowledgemap.addEventsToItem
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("addEventsToItem: this unexpected.");
+        this.badThing("addEventsToItem: this unexpected.");
       }
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
@@ -624,7 +630,7 @@ try {
     updateItemDisplay: function ( $itemDisplay ) {
       //Start Drupal.behaviors.knowledgemap.updateItemDisplay
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("updateItemDisplay: this unexpected.");
+        this.badThing("updateItemDisplay: this unexpected.");
       }
       //Update the displayed item.
       //$itemDisplay is a div showing an item.
@@ -661,7 +667,7 @@ try {
     itemClicked : function ( evnt ) {
       //Start Drupal.behaviors.knowledgemap.itemClicked
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("itemClicked: this unexpected.");
+        this.badThing("itemClicked: this unexpected.");
       }
       //Clicked on an item. 
       if ( this.$drawing_area.state == "add" ) {
@@ -731,11 +737,11 @@ try {
     prepareConnectionToolbar : function ( connectionData ) {
       //Start Drupal.behaviors.knowledgemap.prepareConnectionToolbar
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("prepareConnectionToolbar: this unexpected.");
+        this.badThing("prepareConnectionToolbar: this unexpected.");
       }
       if ( this.mode != "edit" ) {
         //Should never happen.
-        throw new Exception("Error: prepareConnectionToolbar: not in edit mode.");
+        this.badThing("Error: prepareConnectionToolbar: not in edit mode.");
       }
       if ( connectionData.required == "required" ) {
         $('#km-connection-reinforcing').show();
@@ -755,7 +761,7 @@ try {
     positionItemToolbar : function( $item ) {
       //Start Drupal.behaviors.knowledgemap.positionItemToolbar
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("drawAllItems: this positionItemToolbar.");
+        this.badThing("drawAllItems: this positionItemToolbar.");
       }
       var toolbarHeight = this.$itemToolbar.outerHeight();
       var toolbarWidth = this.$itemToolbar.outerWidth();
@@ -786,11 +792,11 @@ try {
     positionConnectionToolbar : function( $connection ) {
       //Start Drupal.behaviors.knowledgemap.positionConnectionToolbar
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("positionConnectionToolbar: this unexpected.");
+        this.badThing("positionConnectionToolbar: this unexpected.");
       }
       if ( this.mode != "edit" ) {
         //Should never happen.
-        throw new Exception("Error: positionConnectionToolbar: not in edit mode.");
+        this.badThing("Error: positionConnectionToolbar: not in edit mode.");
       }
       var toolbarHeight = this.$connectionToolbar.outerHeight();
       var toolbarWidth = this.$connectionToolbar.outerWidth();
@@ -823,7 +829,7 @@ try {
     drawAllConnections : function() {
       //Start Drupal.behaviors.knowledgemap.drawAllConnections
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("drawAllConnections: this unexpected.");
+        this.badThing("drawAllConnections: this unexpected.");
       }
       //Draw all the connections in the knowledge map.
       var connections = this.km_rep.connections;
@@ -834,7 +840,7 @@ try {
     drawConnection : function( connData, skipAdjustDrawingHeight ) {
       //Start Drupal.behaviors.knowledgemap.drawConnection
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("drawConnection: this unexpected.");
+        this.badThing("drawConnection: this unexpected.");
       }
       //Convenience var for JS namespace for this module. Everything gets
       //attached to Drupal.behaviors.knowledgemap.
@@ -881,7 +887,7 @@ try {
       //Return array of classes for a connection.
       //Start Drupal.behaviors.knowledgemap.computeConnectionCategoryClasses
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("computeConnectionCategoryClasses: this unexpected.");
+        this.badThing("computeConnectionCategoryClasses: this unexpected.");
       }
       var fromType = this.km_rep.km_items[connData.from_nid].item_type;
       var toType = this.km_rep.km_items[connData.to_nid].item_type;
@@ -907,11 +913,11 @@ try {
     connectionClicked : function( clickedConnJsPlumbDisplayObject, evnt ) {
       //Start Drupal.behaviors.knowledgemap.connectionClicked
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("connectionClicked: this unexpected.");
+        this.badThing("connectionClicked: this unexpected.");
       }
       if ( this.mode != "edit" ) {
         //Should never happen.
-        throw new Exception("Error: connectionClicked: not in edit mode.");
+        this.badThing("Error: connectionClicked: not in edit mode.");
       }
       //User clicked on a connection.
       //The parameter is the JsPlumb connection object that was clicked on.
@@ -944,7 +950,7 @@ try {
     computeConnPaintStyle : function( connJsPlumbDisplayObject ) {
       //Start Drupal.behaviors.knowledgemap.computeConnPaintStyle
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("computeConnPaintStyle: this unexpected.");
+        this.badThing("computeConnPaintStyle: this unexpected.");
       }
       //Compute the style for a connection, based on its type, and whether
       //it is selected.
@@ -970,7 +976,7 @@ try {
     createNewItemFromInput: function( newName, newType, newImportance ) {
       //Start Drupal.behaviors.knowledgemap.createNewItemFromInput
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("createNewItemFromInput: this unexpected.");
+        this.badThing("createNewItemFromInput: this unexpected.");
       }
       var newItem = {
         'title' : newName,
@@ -988,12 +994,12 @@ try {
     addNewItem: function(coord_x, coord_y) {
       //Start Drupal.behaviors.knowledgemap.addNewItem
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("addNewItem: this unexpected.");
+        this.badThing("addNewItem: this unexpected.");
       }
       //User wants to add a new item at the clicked location.
       if ( this.mode != "edit" ) {
         //Should never happen.
-        throw new Exception("Error: addNewItem: not in edit mode.");
+        this.badThing("Error: addNewItem: not in edit mode.");
       }
       //Create the add form if it does not exist.
       if ( $("#km-add-new-item-container").length == 0 ) {
@@ -1018,12 +1024,12 @@ try {
     createAddForm: function() {
       //Start Drupal.behaviors.knowledgemap.createAddForm
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("createAddForm: this unexpected.");
+        this.badThing("createAddForm: this unexpected.");
       }
       //Creates a form that lets users add new elements.
       if ( this.mode != "edit" ) {
         //Should never happen.
-        throw new Exception("Error: createAddForm: not in edit mode.");
+        this.badThing("Error: createAddForm: not in edit mode.");
       }
       //Load the HTML for the add form.
       var html = this.addFormHtml();
@@ -1079,11 +1085,14 @@ try {
                       lmNamespace.$drawing_area.exitAddMode();
                     }
                     else {
-                      throw new Exception(data.message);
+                      lmNamespace.badThing(data.message);
                     }
                   },
                   fail: function (jqXHR, textStatus) {
-                    throw new Exception( "Request failed: " + textStatus );
+                    lmNamespace.badThing( "Request failed: " + textStatus );
+                  },
+                  error: function (jqXHR, textStatus) {
+                    lmNamespace.badThing( "Request failed: " + textStatus );
                   }
                 });
               }
@@ -1118,7 +1127,7 @@ try {
     checkNewItemData: function(itemTitle, itemType, itemImportance) {
       //Start Drupal.behaviors.knowledgemap.checkNewItemData
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("checkNewItemData: this unexpected.");
+        this.badThing("checkNewItemData: this unexpected.");
       }
       var msg = '';
       if ( ! itemTitle ) {
@@ -1143,11 +1152,11 @@ try {
     makeNewConnection: function(connInfoFromJsPlumb, evnt) {
       //Start Drupal.behaviors.knowledgemap.makeNewConnection
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("makeNewConnection: this unexpected.");
+        this.badThing("makeNewConnection: this unexpected.");
       }
       if ( this.mode != "edit" ) {
         //Should never happen.
-        throw new Exception("Error: makeNewConnection: not in edit mode.");
+        this.badThing("Error: makeNewConnection: not in edit mode.");
       }
       //Kill the selection.
       this.clearSelection();
@@ -1186,7 +1195,7 @@ try {
     checkConnection: function ( connInfo ) {
       //Start Drupal.behaviors.knowledgemap.checkConnection
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("checkConnection: this unexpected.");
+        this.badThing("checkConnection: this unexpected.");
       }
       //Check for duplicate connection.
       var allConn = jsPlumb.getAllConnections().jsPlumb_DefaultScope;
@@ -1209,22 +1218,22 @@ try {
       var sourceNid = sourceId.replace("km-item-", "");
       var sourceType = this.getItemType( sourceNid );
       if ( sourceType == 'not found' ) {
-        throw "Source item not found. nid: " + sourceNid;
+        this.badThing("Source item not found. nid: " + sourceNid);
       }
       var sourceCategory = this.getItemCategory( sourceType );
       if ( sourceCategory == "unknown" ){
-        throw "Source item type bad. Type: " + sourceType;
+        this.badThing("Source item type bad. Type: " + sourceType);
       }
       //Get data about connection target.
       var targetId = connInfo.targetEndpoint.elementId;
       var targetNid = targetId.replace("km-item-", "");
       var targetType = this.getItemType( targetNid );
       if ( targetType == 'not found' ) {
-        throw "Target item not found. nid: " + targetNid;
+        this.badThing("Target item not found. nid: " + targetNid);
       }
       var targetCategory = this.getItemCategory( targetType );
       if ( targetCategory == "unknown" ){
-        throw "Target item type bad. Type: " + targetType;
+        this.badThing("Target item type bad. Type: " + targetType);
       }
       //Warn user about potential problems.
       var message = '';
@@ -1262,7 +1271,7 @@ try {
     getItemType : function( itemNid ) {
       //Start Drupal.behaviors.knowledgemap.getItemType
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("getItemType: this unexpected.");
+        this.badThing("getItemType: this unexpected.");
       }
       var result = this.getItemData( itemNid );
       if ( result != 'not found' ) {
@@ -1273,7 +1282,7 @@ try {
     getItemData : function( itemNid ) {
       //Start Drupal.behaviors.knowledgemap.getItemData
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("getItemData: this unexpected.");
+        this.badThing("getItemData: this unexpected.");
       }
       //Fetch item data for the item with the given nid.
       var items = this.km_rep.km_items;
@@ -1287,7 +1296,7 @@ try {
     getItemCategory : function( itemType ) {
       //Start Drupal.behaviors.knowledgemap.getItemCategory
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("getItemCategory: this unexpected.");
+        this.badThing("getItemCategory: this unexpected.");
       }
       var category = "unknown";
       switch ( itemType ) {
@@ -1320,7 +1329,7 @@ try {
     getKmItemViewer : function( itemData ) {
       //Start Drupal.behaviors.knowledgemap.getKmItemViewer
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("getKmItemViewer: this unexpected.");
+        this.badThing("getKmItemViewer: this unexpected.");
       }
       //Get an item viewer, either existing or new.
       if ( ! this.kmItemViewers[ itemData.nid ] ) {
@@ -1355,20 +1364,30 @@ try {
       $item.css('left', x + "px");
       $item.css('top', adjustedY + "px");
     },
+    badThing : function ( errMsg ) {
+      errMsg = 
+          "Exception: " 
+        + errMsg 
+        + " Please take a screen shot and send it to someone.";
+      console.log( errMsg );
+      alert( errMsg );
+    },
     saveNewPosition : function ( evnt, ui ) {
       //Start Drupal.behaviors.knowledgemap.saveNewPosition
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("saveNewPosition: this unexpected.");
+        this.badThing( "saveNewPosition: this unexpected." );
       }
       if ( this.mode != "edit" ) {
         //Should never happen.
-        throw new Exception("Error: saveNewPosition: not in edit mode.");
+        this.badThing( "Error: saveNewPosition: not in edit mode." );
       }
       //Save the new position of an item.
       var coord_x = this.getEventCoordX(evnt);
       var coord_y = this.getEventCoordY(evnt);
       var domId = evnt.target.id;
-      var kmItemNid = domId.replace("km-item-", "")
+      var kmItemNid = domId.replace("km-item-", "");
+      //Keep this for closures.
+      var lmNamespace = this;
       $.ajax({
         type: "POST",
         url: Drupal.settings.basePath + 'update-km-item-pos',
@@ -1377,27 +1396,35 @@ try {
           "coord_y" : coord_y,
           "km_item_nid" : kmItemNid
         },
-        success: function(data, textStatus, jqXHR) {
+        done: function(data) {
+          console.log("dog done");
           if ( data.status == 'success' ) {
             //Nowt to do.
           }
           else {
-            throw new Exception(data.message);
+            lmNamespace.badThing( data.message );
           }
         },
         fail: function (jqXHR, textStatus) {
-          throw new Exception( "Request failed: " + textStatus );
+          lmNamespace.badThing(
+            "Request failed: " + jqXHR.status + " " + textStatus
+          );
         },
+        error: function(jqXHR, textStatus) {
+          lmNamespace.badThing(
+            "Request failed: " + jqXHR.status + " " + textStatus
+          );
+        }
       });
     }, //End Drupal.behaviors.knowledgemap.saveNewPosition
     saveConnection : function ( connInfo ) {
       //Start Drupal.behaviors.knowledgemap.saveConnection
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("saveConnection: this unexpected.");
+        this.badThing("saveConnection: this unexpected.");
       }
       if ( this.mode != "edit" ) {
         //Should never happen.
-        throw new Exception("Error: saveConnection: not in edit mode.");
+        this.badThing("Error: saveConnection: not in edit mode.");
       }
       //Save data about a new connection to the server.
       //@todo Spinny thing.
@@ -1436,20 +1463,25 @@ try {
             lmNamespace.km_rep.connections[rid].display.setParameter('rid', rid);
           }
           else {
-            throw new Exception(data.message + " You should refresh the page.");
+            lmNamespace.badThing(data.message + " You should refresh the page.");
           }
         },
         fail: function (jqXHR, textStatus) {
           //Restore cursor.
           lmNamespace.$drawing_area.css("cursor", currentCursor);
-          throw new Exception( "Request failed: " + textStatus + " You should refresh the page.");
+          lmNamespace.badThing( "Request failed: " + textStatus + " You should refresh the page.");
         },
+        error: function (jqXHR, textStatus) {
+          //Restore cursor.
+          lmNamespace.$drawing_area.css("cursor", currentCursor);
+          lmNamespace.badThing( "Request failed: " + textStatus + " You should refresh the page.");
+        }
       });
     }, //End saveConnection
     redrawItem : function( nid ) {
       //Start Drupal.behaviors.knowledgemap.redrawItem
       if ( this != Drupal.behaviors.knowledgemap ) {
-        throw new Exception("redrawItem: this unexpected.");
+        this.badThing("redrawItem: this unexpected.");
       }
       //Redraw an item. Called after returning from editing, 
       //since the size of the item might have changed, importance changed, etc.

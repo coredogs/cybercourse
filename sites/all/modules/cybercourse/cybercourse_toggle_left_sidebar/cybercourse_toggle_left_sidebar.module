@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * Implements hook_init().
+ */
+function cybercourse_toggle_left_sidebar_init() {
+  //Add libraries.
+  // Try to load the library and check if that worked.
+  $library = libraries_load('jquery-cookie');
+  if ( empty($library['loaded']) || ! $library['loaded'] ) {
+    drupal_set_message('Learning map: jquery-cookie library missing.');
+  }
+}
