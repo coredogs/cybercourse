@@ -61,11 +61,10 @@ function knowledgemap_menu() {
     'access callback' => 'knowledgemap_update_item_access',
     'type' => MENU_CALLBACK,
   );
-  $items['delete-item-ajax/%node'] = array(
+  $items['delete-item-ajax'] = array(
     'page callback' => 'knowledgemap_delete_item',
-    'page arguments' => array(1),
-    'access callback' => 'node_access',
-    'access arguments' => array('delete', 1),
+//    'page arguments' => array(1),
+    'access callback' => 'knowledgemap_delete_item_access',
 //    'access callback' => 'knowledgemap_menu_access',
     'type' => MENU_CALLBACK,
   );
@@ -122,6 +121,13 @@ function knowledgemap_update_item_access() {
   $item_nid = $_POST['km_item_nid'];
   $node = node_load( $item_nid );
   $access = node_access( 'update', $node );
+  return $access;
+}
+
+function knowledgemap_delete_item_access() {
+  $nid = $_POST['nid'];
+  $node = node_load( $nid );
+  $access = node_access( 'delete', $node );
   return $access;
 }
 
@@ -811,8 +817,9 @@ function knowledgemap_delete_connection() {
  * @param int $nid Nid of item to delete.
  * @throws Exception Something bad happened. 
  */
-function knowledgemap_delete_item( $nid ) {
+function knowledgemap_delete_item() {
   try {
+    $nid = $_POST['nid'];
     //Check that the node exists.
     $node = node_load($nid);
     if ( ! $node ) {
