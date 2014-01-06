@@ -1358,23 +1358,31 @@
     }, //End Drupal.behaviors.knowledgemap.getKmItemViewer
     getEventCoordX : function ( evnt ) {
       //Get the X of an event relative to the drawing area.
-      if ( $(evnt.target).attr('id') == this.drawing_id ) {
-        //Clicked on drawing area, e.g., add new item.
-        return evnt.offsetX; 
-      }
-      else {
-        return $(evnt.target).position().left;
-      }
+      var evntPosInWindow = evnt.pageX;
+      var clickedElmntPos = $(evnt.target).offset().left;
+      var relativePos = evntPosInWindow - clickedElmntPos;
+      return relativePos;
+//      if ( $(evnt.target).attr('id') == this.drawing_id ) {
+//        //Clicked on drawing area, e.g., add new item.
+//        return evnt.offsetX; 
+//      }
+//      else {
+//        return $(evnt.target).position().left;
+//      }
     },
     getEventCoordY : function ( evnt ) {
       //Get the Y of an event relative to the drawing area.
-      if ( $(evnt.target).attr('id') == this.drawing_id ) {
-        //Clicked on drawing area, e.g., add new item.
-        return evnt.offsetY - this.toolbarHeight; 
-      }
-      else {
-        return $(evnt.target).position().top - this.toolbarHeight;
-      }
+      var evntPosInWindow = evnt.pageY;
+      var clickedElmntPos = $(evnt.target).offset().top;
+      var relativePos = evntPosInWindow - clickedElmntPos - this.toolbarHeight;
+      return relativePos;
+//      if ( $(evnt.target).attr('id') == this.drawing_id ) {
+//        //Clicked on drawing area, e.g., add new item.
+//        return evnt.offsetY - this.toolbarHeight; 
+//      }
+//      else {
+//        return $(evnt.target).position().top - this.toolbarHeight;
+//      }
     },
     setItemPosition : function( $item, x, y ) {
       //Position an item in the drawing area.
