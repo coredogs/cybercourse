@@ -1179,10 +1179,8 @@ function node_save($node) {
     module_invoke_all('node_' . $op, $node);
     module_invoke_all('entity_' . $op, $node, 'node');
 
-    // Update the node access table for this node. There's no need to delete
-    // existing records if the node is new.
-    $delete = $op == 'update';
-    node_access_acquire_grants($node, $delete);
+    // Update the node access table for this node.
+    node_access_acquire_grants($node);
 
     // Clear internal properties.
     unset($node->is_new);
@@ -2224,8 +2222,8 @@ function node_last_changed($nid) {
 /**
  * Returns a list of all the existing revision numbers.
  *
- * @param Drupal\node\Node $node
- *   The node entity.
+ * @param $node
+ *   The node object.
  *
  * @return
  *   An associative array keyed by node revision number.
@@ -2762,10 +2760,11 @@ function node_page_view($node) {
  */
 function node_update_index() {
   $limit = (int)variable_get('search_cron_limit', 100);
-
+//$fh = fopen('d:/out.txt', 'w');
   $result = db_query_range("SELECT n.nid FROM {node} n LEFT JOIN {search_dataset} d ON d.type = 'node' AND d.sid = n.nid WHERE d.sid IS NULL OR d.reindex <> 0 ORDER BY d.reindex ASC, n.nid ASC", 0, $limit, array(), array('target' => 'slave'));
-
   foreach ($result as $node) {
+//  fwrite($fh, 'dog ');
+//  fwrite($fh, $node->nid . "\n");
     _node_index_node($node);
   }
 }
