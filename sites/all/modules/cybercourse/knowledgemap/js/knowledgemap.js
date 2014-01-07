@@ -1359,8 +1359,9 @@
     getEventCoordX : function ( evnt ) {
       //Get the X of an event relative to the drawing area.
       var evntPosInWindow = evnt.pageX;
-      var clickedElmntPos = $(evnt.target).offset().left;
-      var relativePos = evntPosInWindow - clickedElmntPos;
+//      var clickedElmntPos = $(evnt.target).offset().left;
+      var drawingAreaPos = Drupal.behaviors.knowledgemap.$drawing_area.offset().left;
+      var relativePos = evntPosInWindow - drawingAreaPos; //clickedElmntPos;
       return relativePos;
 //      if ( $(evnt.target).attr('id') == this.drawing_id ) {
 //        //Clicked on drawing area, e.g., add new item.
@@ -1373,8 +1374,10 @@
     getEventCoordY : function ( evnt ) {
       //Get the Y of an event relative to the drawing area.
       var evntPosInWindow = evnt.pageY;
-      var clickedElmntPos = $(evnt.target).offset().top;
-      var relativePos = evntPosInWindow - clickedElmntPos - this.toolbarHeight;
+//      var clickedElmntPos = $(evnt.target).offset().top;
+      var drawingAreaPos = Drupal.behaviors.knowledgemap.$drawing_area.offset().top;
+      var relativePos = evntPosInWindow - drawingAreaPos - this.toolbarHeight;
+//      var relativePos = evntPosInWindow - clickedElmntPos - this.toolbarHeight;
       return relativePos;
 //      if ( $(evnt.target).attr('id') == this.drawing_id ) {
 //        //Clicked on drawing area, e.g., add new item.
