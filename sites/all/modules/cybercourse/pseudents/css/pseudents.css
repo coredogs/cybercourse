@@ -69,7 +69,7 @@ table#pseudent-choose-table td.selected {
 }
 
 .pseudent-content {
-  float: left;
+  /*float: left;*/
 }
 
 /* 'Back to pseudent list' link. */
