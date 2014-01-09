@@ -210,6 +210,9 @@ function pseudents_edithtml_2_directive_alter( &$content ) {
 function _pseudents_make_directive_replacements($matches) {
   $nid = $matches[1];
   $content = $matches[2];
+  //Add four spaces after every new line in the content, because indentation
+  //is significant in ReST.
+  $content = str_replace("\n", "\n    ", $content);
   $replacement = 
       '.. pseudent:: ' . $nid . "\n\n"
     . '    ' . $content . "\n\n";

@@ -260,7 +260,7 @@ function _swim_form_submit($form, &$form_state) {
  */
 function _swim_ckhtml2rest( &$content ) {
   //Convert to pure ReST.
-  //First, the <br>s.
+  //First, the <br>s/ leaving just the \ns.
   swim_remove_brs( $content );
   //Replace &nbsp; with real spaces.
   $content = str_replace('&nbsp;', ' ', $content);
