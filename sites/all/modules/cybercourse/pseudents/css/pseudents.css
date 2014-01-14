@@ -73,7 +73,8 @@ table#pseudent-choose-table td.selected {
 }
 
 .pseudent-content {
-  float: left;
+  /*float: left;*/
+  overflow: hidden;
 }
 
 /* 'Back to pseudent list' link. */
