@@ -170,7 +170,7 @@ function _cybercourse_exercise_make_replacements($matches) {
 //        $exercise_node->body['und'][0]['value'] . $link;
     //Prep the exer for viewing, with a custom view mode.
     $view = node_view($exercise_node, 'cybercourse_exercise_insert', NULL);
-    //$view['body'][0]['#markup'] .= $link;
+    $view['body'][0]['#markup'] .= $link;
     $render = drupal_render($view);
     return $render;
   } 
