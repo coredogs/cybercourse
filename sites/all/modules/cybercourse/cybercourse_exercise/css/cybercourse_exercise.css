@@ -12,7 +12,7 @@ Styles for exercises.
   padding: 1em;
 }
 
-.inserted-exercise > div:first-child {
+.inserted-exercise-title {
   font-size: 150%;
   font-weight: bold;
   margin-bottom: 1em;

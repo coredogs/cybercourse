@@ -95,7 +95,7 @@ function _cbb_create_block_content( $type ) {
   $output = '';
   $nids = _cbb_get_nids_of_type( $type );
   //Get the template nid. Template is an MT book that is cloned.
-  $template_nid = cccblueprint_find_template_nid( $type );
+  $template_nid = _cbb_find_template_nid( $type );
   if ( $template_nid ) {
     //Remove it from the nid array.
     $index = array_search( $template_nid, $nids );
@@ -111,6 +111,30 @@ function _cbb_create_block_content( $type ) {
     $output .= $rendered_tree;
   }
   return $output;
+}
+
+/**
+ * 
+ * @return nid, or FALSE if not found.
+ */
+function _cbb_find_template_nid( $book_type ) {
+  //Find the nid of the blueprint template root.
+  $query = new EntityFieldQuery;
+  $query
+    ->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', $book_type)
+//    ->propertyCondition('status', 1)
+    ->propertyCondition('title', 
+        $book_type == 'blueprint' ? BLUEPRINT_TO_COPY_TITLE : COURSE_TO_COPY_TITLE
+      );
+  $query_result = $query->execute();
+  if ( sizeof($query_result['node']) != 1 ) {
+    return FALSE;
+  }
+  foreach( $query_result['node'] as $key=>$value ) {
+    $template_nid = $key;
+  }
+  return $template_nid;
 }
 
 /**
