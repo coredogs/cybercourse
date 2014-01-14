@@ -82,9 +82,9 @@
 
   <?php print render($title_prefix); ?>
   <?php if (!$page): ?>
-    <h2<?php print $title_attributes; ?>>
+    <div<?php print $title_attributes; ?>>
       Exercise: <?php print $title; ?>
-    </h2>
+    </div>
   <?php endif; ?>
   <?php print render($title_suffix); ?>
 

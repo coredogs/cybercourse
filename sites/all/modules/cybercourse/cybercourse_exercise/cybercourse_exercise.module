@@ -15,6 +15,10 @@ function cybercourse_exercise_init() {
       $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise') 
         . '/js/cybercourse_exercise.js'
   );
+//  drupal_add_css(
+//      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise') 
+//        . '/css/cybercourse_exercise.css'
+//  );
 }
 
 /**
@@ -46,37 +50,64 @@ function _cybercourse_exercise_close_popup() {
 /**
  * Implementation of hook_filter_info().
  */
-function cybercourse_exercise_filter_info() {
-  //Define a filter that can replace a reference to an exercise in page with the
-  //exercise content.
-  $filters['cybercourse_exercise_insert'] = array(
-    'title' => t('Insert CyberCourse exercise'),
-    'description' => t('[[[cycoexercise (node_id)]]], to insert the exercise with given NID'),
-    'process callback' => 'cybercourse_exercise_filter_node_insert_process',
-    'tips callback'  => 'cybercourse_exercise_filter_node_embed_tips',
-    'cache' => FALSE,
-  );
-  return $filters;
+//function cybercourse_exercise_filter_info() {
+//  //Define a filter that can replace a reference to an exercise in page with the
+//  //exercise content.
+//  $filters['cybercourse_exercise_insert'] = array(
+//    'title' => t('Insert CyberCourse exercise'),
+//    'description' => t('[[[cycoexercise (node_id)]]], to insert the exercise with given NID'),
+//    'process callback' => 'cybercourse_exercise_filter_node_insert_process',
+//    'tips callback'  => 'cybercourse_exercise_filter_node_embed_tips',
+//    'cache' => FALSE,
+//  );
+//  return $filters;
+//}
+
+/**
+ * Process callback for hook_filter. Finds [[[cycoexercise (node_id)]]]
+ * and passes match data onto function that will do the insertion.
+ */
+/**
+ * Implements hook_cycomarkup_2_viewhtml().
+ * 
+ * Translate exercise CyCo markup in $content to its 
+ * viewHTML equivalent. 
+ * 
+ * [[[cycoexercise 123]]]
+ * 
+ * See SWIM docs for more.
+ */
+function cybercourse_exercise_cycomarkup_2_viewhtml_alter(&$content) {
+  $regex = '/\[\[\[\s*cycoexercise\s*(\d+)\s*\]\]\]/';
+      //[[[, optional whitespace, cycoexercise, optional whitespace, 
+      //exercise number, optional whitespace, ]]]
+  $content = preg_replace_callback( $regex,
+      '_cybercourse_exercise_make_replacements', $content );
+   
+//  return preg_replace_callback('/\[\[\[\s*cycoexercise\s*(\d+)\s*\]\]\]/',
+//      //[[[, optional whitespace, cycoexercise, optional whitespace, 
+//      //exercise number, optional whitespace, ]]]
+//      '_cybercourse_exercise_make_replacements', $content);
 }
 
 /**
  * Process callback for hook_filter. Finds [[[cycoexercise (node_id)]]]
  * and passes match data onto function that will do the insertion.
  */
-function cybercourse_exercise_filter_node_insert_process(
-    $text, $filter, $format, $langcode, $cache, $cache_id) {
-  return preg_replace_callback('/\[\[\[\s*cycoexercise\s*(\d+)\s*\]\]\]/',
-      //[[[, optional whitespace, cycoexercise, optional whitespace, 
-      //exercise number, optional whitespace, ]]]
-      '_cybercourse_exercise_make_replacements', $text);
-}
+//function cybercourse_exercise_filter_node_insert_process(
+//    $text, $filter, $format, $langcode, $cache, $cache_id) {
+//  return preg_replace_callback('/\[\[\[\s*cycoexercise\s*(\d+)\s*\]\]\]/',
+//      //[[[, optional whitespace, cycoexercise, optional whitespace, 
+//      //exercise number, optional whitespace, ]]]
+//      '_cybercourse_exercise_make_replacements', $text);
+//}
 
 /**
  * Tips callback for hook_filter
  */
-function cybercourse_exercise_filter_node_embed_tips($filter, $format, $long) {
-  return t('[[[cycoexercise 123]]] - Insert an exercise.');
-}
+//function cybercourse_exercise_filter_node_embed_tips($filter, $format, $long) {
+//  return t('[[[cycoexercise 123]]] - Insert an exercise.');
+//}
 
 /**
  * Generates the HTML for the exercise.
@@ -139,8 +170,7 @@ function _cybercourse_exercise_make_replacements($matches) {
 //        $exercise_node->body['und'][0]['value'] . $link;
     //Prep the exer for viewing, with a custom view mode.
     $view = node_view($exercise_node, 'cybercourse_exercise_insert', NULL);
-    $view['body'][0]['#markup'] .= $link;
-        
+    //$view['body'][0]['#markup'] .= $link;
     $render = drupal_render($view);
     return $render;
   } 
