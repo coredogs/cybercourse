@@ -3,6 +3,8 @@
  * @todo Create SWIM text format at install.
  */
 
+//URL (from root) of a page on how to fix errors repotredf by docutils (ReST).
+define( 'SWIM_FORMAT_ERROR_HELP_URL', 'swim-format-error-help' );
 
 /**
  * Implements hook_help().
@@ -279,7 +281,7 @@ function _swim_ckhtml2rest( &$content ) {
   //Replace image HTML tags with directives.
   //  These must be after other module's hooks are called, so that other 
   //  modules have processes the images they own.
-  swim_img_2_directive( $content );
+  swim_img_2_path( $content );
 }
 
 /**
@@ -290,7 +292,28 @@ function swim_remove_brs( &$content ) {
   $content = preg_replace('/\<\s*br\s*\/?\s*\>/i', '', $content);
 }
 
+/**
+ * Replace img tags with just the src attribute.
+ * @param string $content The entire img tag.
+ * @return string The src (path).
+ */
+function swim_img_2_path( &$content ) {
+  //Pattern to find the img tags. Need the ? to make the match lazy, not greedy.
+  $pattern = '/<img.*?>/im';
+  $content = preg_replace_callback(
+      $pattern, 
+      function ($matches) {
+        //Got an image tag.
+        //Parse it with QueryPath
+        $src = htmlqp($matches[0], 'img')->attr('src');
+        return $src;
+      },
+      $content
+  );
+      $r=5;
+}
 
+/*
 function swim_img_2_directive( &$content ) {
   //Pattern to find the img tags. Need the ? to make the match lazy, not greedy.
   $pattern = '/<img.*?>/im';
@@ -339,6 +362,7 @@ function swim_img_2_directive( &$content ) {
       $content
   );
 }
+ */
 
 /**
  * Return a page with the right media queries and such, and a place to 
@@ -424,13 +448,83 @@ function swim_process_filter($text, $filter, $format = 'SWIM', $langcode = 'und'
   fclose($pipes[0]);
   // read the output from the engine
   $html = stream_get_contents($pipes[1]);
+  $error_messages = stream_get_contents($pipes[2]);
   // all done! Clean up
   fclose($pipes[1]);
+  fclose($pipes[2]);
   proc_close($p);
+  //Show error messages, if any.
+  if ( $error_messages ) {
+    $error_messages = _swim_format_docutils_errors( $error_messages );
+    drupal_set_message($error_messages, 'error');
+  }
+  
   //Translate the CyCo directives markup into HTML
   //Trigger other module's translators.
   drupal_alter( 'cycomarkup_2_viewhtml', $html );
   return $html;
+}
+
+/**
+ * Change error messages from Python's docutils into something that
+ * will look OK for a drupal_set_message(). Sample input:
+ * <string>:5: (ERROR/3) Error in "image" directive:
+ * 1 argument(s) required, 0 supplied.
+ * 
+ * .. image::
+ * 
+ * @param string $docutils_error_messages Error messages returned from Python.
+ * @return string Messages formatted for drupal_set_message().
+ */
+function _swim_format_docutils_errors( $docutils_error_messages ) {
+  $drupal_message = str_replace('<string>', '', $docutils_error_messages);
+  $drupal_message = preg_replace('/\:[0-9]+\:\ /m', '', $drupal_message);
+  // :, then 1 or more digits, then :, then space.
+  $drupal_message = str_replace("\n", '<br>', $drupal_message);
+  $themed_message = theme(
+      'swim_format_error', 
+      array(
+        'message' => $drupal_message,
+        'help_url' => SWIM_FORMAT_ERROR_HELP_URL,
+      )
+  );
+  return $themed_message;
+}
+/**
+ * Implements hook_theme().
+ */
+function swim_theme() {
+  $theme_functions = array(
+    'swim_format_error' => array(
+      'variables' => array(
+        'message' => NULL, 
+        'help_url' =>NULL
+      ),
+    )
+  );
+  return $theme_functions;
+}
+
+/**
+ * Theme a SWIM format error.
+ * @param array $variables Message, and help URL.
+ * @return string HTML to show.
+ */
+function theme_swim_format_error( $variables ) {
+  $message = $variables['message'];
+  $help_url = $variables['help_url'];
+  $help_link = l( t('help on fixing things'), $help_url );
+  $output = 
+      '<div class="swim_format_error">'
+        . '<p>' 
+        .   t('Snap! The formatting system is confused. You can get some ') 
+        .   $help_link . t( '.' )
+        . '</p>'
+        . '<div class="swim_format_error_message">'
+        .   t( $message )
+        . '</div>'
+    . '</div>';
+  return $output;
 }
 
 /**
