@@ -11,6 +11,6 @@ div.figure {
   padding: 1em;
 }
 
-div.figure.bordered + img {
+div.figure img.bordered {
   border: 1px solid #444;
 }
