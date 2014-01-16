@@ -7,10 +7,10 @@ h1.title {
 }
 
 div.figure {
-  margin: 1em;
-  padding: 1em;
+  margin-bottom: 2em;
 }
 
 div.figure img.bordered {
+  padding: 1em;
   border: 1px solid #444;
 }
