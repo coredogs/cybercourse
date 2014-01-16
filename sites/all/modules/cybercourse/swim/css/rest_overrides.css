@@ -6,3 +6,11 @@ h1.title {
   text-align: left;
 }
 
+div.figure {
+  margin: 1em;
+  padding: 1em;
+}
+
+div.figure.bordered + img {
+  border: 1px solid #444;
+}
