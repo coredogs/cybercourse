@@ -233,10 +233,10 @@ function _cbb_get_book_tree( $nid ) {
   );
   //Sent path of current page. Client code will highlight the path to that page.
   $current_path = request_path();
-  if ( substr($current_path, -4) == 'edit' ) {
+  if ( drupal_substr($current_path, -4) == 'edit' ) {
     //On the edit page. Still want to highlight it in the menu.
     //So make the current path the path to the view page.
-    $current_path = substr($current_path, 0, -5);
+    $current_path = drupal_substr($current_path, 0, -5);
     $current_path = drupal_get_path_alias( $current_path );
   }
   global $base_url;
@@ -577,7 +577,7 @@ function theme_cbb_links($variables) {
  */
 function _cbb_max_len($string) {
   if ( strlen($string) > ( CBB_MAX_CHARS - 3 ) ) {
-    $string = substr($string, 0, CBB_MAX_CHARS - 3) . '...';
+    $string = drupal_substr($string, 0, CBB_MAX_CHARS - 3) . '...';
   }
   return $string;
 }

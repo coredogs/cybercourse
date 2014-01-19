@@ -448,7 +448,12 @@ function field_sql_storage_field_storage_write($entity_type, $entity, $op, $fiel
 
     // Execute the query if we have values to insert.
     if ($do_insert) {
+      try{
       $query->execute();
+      }
+catch( PDOException $Exception ) {
+  $r = 5;
+    }      
       $revision_query->execute();
     }
   }

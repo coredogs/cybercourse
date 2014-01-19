@@ -258,11 +258,15 @@ function _swim_form_submit($form, &$form_state) {
 
 /**
  * Convert content from CKHTML (HTML from CK field) to pure ReST.
+ * Anything the user typed must by HTML encoded, e.g., if the user typed
+ * <, then &lt; should be in the content.
+ * HTML that CK inserted should be as regular tags.
  * @param string $content Content to convert.
  */
 function _swim_ckhtml2rest( &$content ) {
   //Convert to pure ReST.
   //First, the <br>s/ leaving just the \ns.
+
   swim_remove_brs( $content );
   //Replace &nbsp; with real spaces.
   $content = str_replace('&nbsp;', ' ', $content);
@@ -270,18 +274,21 @@ function _swim_ckhtml2rest( &$content ) {
   $content = str_replace('&#39;', '\'', $content);
   //Handle numeric codes correctly.
   // See http://www.php.net/manual/en/function.html-entity-decode.php#47371
-  $content = preg_replace('/&#(\d+);/me',"chr(\\1)",$content); #decimal notation
-  $content = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$content);  #hex notation
-  //HTML entities to their real characters.
-  $content = html_entity_decode( $content );
-  //Special chars - particularly #39; -> '.
-  $content = htmlspecialchars_decode( $content );
+//  $content = preg_replace('/&#(\d+);/me',"chr(\\1)",$content); #decimal notation
+//  $content = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$content);  #hex notation
   //Trigger other module's translators.
   drupal_alter( 'edithtml_2_directive', $content); //, $type );
   //Replace image HTML tags with directives.
   //  These must be after other module's hooks are called, so that other 
   //  modules have processes the images they own.
   swim_img_2_path( $content );
+  //Strip all remaining HTML tags.
+  //This gets rid of paste errors. I hope!
+  $content = strip_tags($content);
+  //HTML entities to their real characters.
+  $content = html_entity_decode( $content, ENT_QUOTES, 'UTF-8' );
+  //Special chars - particularly #39; -> '.
+  $content = htmlspecialchars_decode( $content );
 }
 
 /**

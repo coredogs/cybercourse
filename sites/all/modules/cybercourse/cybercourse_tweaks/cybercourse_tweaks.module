@@ -76,7 +76,7 @@ function _cct_kill_delete_button(&$form) {
  */
 function cybercourse_tweaks_menu_breadcrumb_alter(&$active_trail, $item) {
   $to_find = 'admin/content/book';
-  if (substr( current_path(), 0, strlen($to_find) ) == $to_find ) {
+  if (drupal_substr( current_path(), 0, strlen($to_find) ) == $to_find ) {
     $active_trail = array();
   }
 }

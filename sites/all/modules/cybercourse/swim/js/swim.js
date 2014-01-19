@@ -8,15 +8,10 @@
         var editor = evnt.editor;
         editor.document.appendStyleSheet( Drupal.settings.swim.editing_stylesheet );
         //Size the editor.
-        editor.ui.space( 'contents' ).setStyle( 'height', 
-            $(window).height() * 0.5 + 'px' );
-//        editor.config.height = "666px"; //$(window).height() * 0.5;
-//        if ( editor.name == 'edit-body-und-0-summary' ) {
-//        }
+        editor.ui.space( 'contents' )
+            .setStyle( 'height', $(window).height() * 0.5 + 'px' )
+            .setStyle( 'width', '100%');
         if ( editor.name == 'edit-body-und-0-value' ) {
-          //Size the main editor.
-//          editor.config.height = "30em";
-          //Start up Swim init.
           Drupal.behaviors.swim.swimSetup();
         }
       });
@@ -75,18 +70,12 @@
       var thisythis = this;
       var loadedAlready = false;
       $("#swim-peek-device").load(function() {
-//        console.log("ready num bodies: " +  $("#swim-peek-device").contents().children("html").children("body").length);
-//        console.log("ready num documents: " +  $("#swim-peek-device").contents().children("html").children("body").find(".document").length);
-//        console.log("iframe ready");
         if ( ! loadedAlready ) {
           //Do this only once. Sometimes there is more than one load event.
           thisythis.continueInit();
           loadedAlready = true;
         }
       });
-//      console.log("waiting for iframe");
-      //Wait until the content is loaded.
-//      swimWaitForLoad();
     }, //End attach.
     continueInit: function() {
       //Make a clone of the HTML to use as a template.
@@ -118,7 +107,7 @@
         swimBehavior.showPeek();
       } );
       //Init toolbar display.
-      this.selectedPeek = "phone";
+      this.selectedPeek = "desktop";
       this.showSelectedButton();
       $.each(CKEDITOR.instances, function(index, instance) {
         //Turn on the CKEditor peek button, so show all is ready.
@@ -126,20 +115,7 @@
         //Add styles for editing with CK.
         instance.document.appendStyleSheet(Drupal.settings.swim.editing_stylesheet);
       });
-//      CKEDITOR.instances['edit-body-und-0-value'].commands.peek.enable();
-      //Add styles for editing with CK.
-//      CKEDITOR.instances['edit-body-und-0-value'].document.appendStyleSheet(Drupal.settings.swim.editing_stylesheet);
     }, //End continueInit.
-//    prepareIframeContent : function() {
-//      //The iframe has a page loaded. Remove all the content on the page 
-//      //that is not needed to show the preview, e.g., sidebars. 
-//      //This is theme-dependent. I don't know how to make it generic, to
-//      //work with any theme.
-////      var iframeContent = $("#swim-peek-device").contents();
-//      var bodyTemplate = $("#swim-peek-device").contents().children("html").children("body");
-//      return bodyTemplate.html();
-//    }, //end prepareIframeContent
-    
       /**
        * Watch the plugin's peek button.
        */
