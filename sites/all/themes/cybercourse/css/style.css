@@ -228,3 +228,9 @@ li.user-menu a:disabled
   margin-top: 1em;
   margin-bottom: 1em;
 }
+
+/* Modules admin page - make modules names stand out. */
+#permissions .module {
+  font-weight: bold;
+  font-size: 120%;
+}

@@ -17,3 +17,13 @@ Styles for exercises.
   font-weight: bold;
   margin-bottom: 1em;
 }
+
+.entityconnect-add {
+  float: none !important;
+  height: auto !important;
+}
+
+.entityconnect-edit {
+  float: none !important;
+  height: auto !important;
+}

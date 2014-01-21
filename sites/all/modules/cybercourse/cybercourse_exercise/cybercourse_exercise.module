@@ -234,4 +234,21 @@ function cybercourse_exercise_entity_info_alter(&$entity_info) {
   );  
 }
 
+function cybercourse_exercise_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
+  if ( isset( $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+      ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0'] ) ) {
+    $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+      ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+      ['#weight'] = 4;
+    $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+      ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+      ['#value'] = 'Edit this item';
+    $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+      ['add_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+      ['#weight'] = 8;
+    $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+      ['add_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+      ['#value'] = 'Add a new rubric item';
 
+  }
+}
