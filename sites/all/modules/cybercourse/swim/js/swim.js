@@ -21,6 +21,7 @@
         return;
       }
       swimDoneOnce = true;
+      this.setupBeforeUnload();
       if ( ! CKEDITOR.instances['edit-body-und-0-value'].commands.peek ) {
         //Skip the rest if there is no peek command. The command is only
         //created if the user has Drupal's permission to peek.
@@ -242,6 +243,45 @@
       var element = $(afterThisElement).siblings(".ajax-progress-throbber");
       if ( element ) {
         element.remove();
+      }
+    },
+    setupBeforeUnload : function() {
+      //Store starting values of content fields.
+      this.initialBody = 
+         CKEDITOR.instances['edit-body-und-0-value'].document.getBody().getText();
+      if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
+        this.initialSummary = 
+            CKEDITOR.instances['edit-body-und-0-summary'].document.getBody().getText();
+      }
+      //Convenience var for closures.
+      var swimRef = this;
+      //Flag showing whether unload code should check for changes.
+      this.checkForChanges = true;
+      //When click Save, Save and Edit, etc., no need to check for changes. 
+      //Drupal will handle it.
+      $("#edit-submit, #edit-save-edit, #edit-preview-changes, #edit-delete")
+          .click(function(){
+            swimRef.checkForChanges = false;
+          });
+      window.onbeforeunload = function() {
+        if ( swimRef.checkForChanges ) {
+          var contentChanged = false;
+          //Body changed?
+          if ( CKEDITOR.instances['edit-body-und-0-value'].document.getBody().getText()
+               != swimRef.initialBody ) {
+            contentChanged = true;
+          }
+          //If summary exists, did it change?
+          if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
+            if ( CKEDITOR.instances['edit-body-und-0-summary'].document.getBody().getText()
+                 != swimRef.initialSummary ) {
+              contentChanged = true;
+            }
+          }
+          if ( contentChanged ) {
+            return "There are unsaved changes. Are you sure you want to leave?";
+          }
+        }
       }
     }
   };
