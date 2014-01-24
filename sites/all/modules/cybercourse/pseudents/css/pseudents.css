@@ -82,3 +82,7 @@ table#pseudent-choose-table td.selected {
   margin-top: 1em;
   margin-bottom: 1em;
 }
+
+#pseudent-table-container {
+  overflow: scroll;
+}

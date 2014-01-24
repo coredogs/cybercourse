@@ -1,0 +1,7 @@
+/* 
+Classes to use with the figure and other directives.
+*/
+
+.bordered {
+  border: 1px thin #444;
+}

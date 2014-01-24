@@ -15,8 +15,13 @@
       Drupal.settings.pseudents.currentSelection = '';
       var theDialog = this;
       return {
+          onShow:function( evt ) {
+//            console.log('show fired');
+            //Move to a place it can expand.
+            this.move( 10, 10 );
+          },
           ok: function( evt ) {
-            console.log('ok fired');
+            //console.log('ok fired');
           },
           cancel: function() {
           },
@@ -140,7 +145,7 @@
 
   function makeChoosePseudentHtml ( pseudents ) {
     var NUM_COLUMNS = 5;
-    var html = '<table id="pseudent-choose-table">';
+    var html = '<div id="pseudent-table-container"><table id="pseudent-choose-table">';
     var col = 1;
     jQuery.each( pseudents, function( index, pseudent ) {
       if ( col == 1 ) {
@@ -172,6 +177,10 @@
         col = 1;
       }
     }); //End each.
+    if ( col != 1 ) {
+      html += '</tr>';
+    }
+    html += '</html></div>';
     return html;
   }
   
