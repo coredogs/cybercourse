@@ -3,5 +3,5 @@ Classes to use with the figure and other directives.
 */
 
 .bordered {
-  border: 1px thin #444;
+  border: 1px solid #444;
 }
