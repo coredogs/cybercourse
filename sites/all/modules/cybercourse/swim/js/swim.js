@@ -8,9 +8,16 @@
         var editor = evnt.editor;
         editor.document.appendStyleSheet( Drupal.settings.swim.editing_stylesheet );
         //Size the editor.
-        editor.ui.space( 'contents' )
-            .setStyle( 'height', $(window).height() * 0.5 + 'px' )
-            .setStyle( 'width', '100%');
+        if ( editor.name == "edit-body-und-0-value" ) {
+          editor.resize('100%', '500');
+          //$(window).height() * 0.5
+        }
+        if ( editor.name == "edit-body-und-0-summary" ) {
+          editor.resize('100%', '120');
+        }
+//        editor.ui.space( 'contents' )
+//            .setStyle( 'height', $(window).height() * 0.5 + 'px' )
+//            .setStyle( 'width', '100%');
         if ( editor.name == 'edit-body-und-0-value' ) {
           Drupal.behaviors.swim.swimSetup();
         }
