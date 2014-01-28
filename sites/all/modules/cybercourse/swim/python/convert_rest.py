@@ -1,4 +1,11 @@
+#from imp import reload
 import sys
+# setdefaultencoding is removed during Python start. Get it back.
+# See http://stackoverflow.com/questions/2276200/changing-default-encoding-of-python
+reload(sys)  # Reload does the trick!
+sys.setdefaultencoding('utf-8')
+# import codecs
+
 from docutils import nodes, core, io
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.roles import set_classes
@@ -118,11 +125,15 @@ if testing:
     f.close()
     data_in = ''.join(content)
 else:
+    # in_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+    # in_stream = codecs.getreader("utf-8")(sys.stdin)
     data_in = ''
     for line in sys.stdin:
+#    for line in_stream:
         data_in += line
 
 #Parse some content.
 #thing = core.publish_parts(data_in, writer_name='html')
 doc = core.publish_parts(data_in, writer_name='html')['html_body']
+#out_stream = codecs.getwriter("utf-8")(sys.stdout)
 print (doc)
