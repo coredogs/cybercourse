@@ -1,0 +1,6 @@
+name = CyberCourse pattern
+description = The CyberCourse pattern system.
+package = CyberCourse
+core = 7.x
+version = 7.1
+stylesheets[all][] = css/cybercourse_pattern.css

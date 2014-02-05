@@ -1,13 +1,13 @@
-#from imp import reload
+#Python 2
 import sys
 # setdefaultencoding is removed during Python start. Get it back.
 # See http://stackoverflow.com/questions/2276200/changing-default-encoding-of-python
 reload(sys)  # Reload does the trick!
 sys.setdefaultencoding('utf-8')
-# import codecs
 
 from docutils import nodes, core, io
 from docutils.parsers.rst import Directive, directives
+from docutils.parsers.rst.directives.body import *
 from docutils.parsers.rst.roles import set_classes
 from docutils.utils.code_analyzer import Lexer, LexerError, NumberLines
 
@@ -45,12 +45,7 @@ class Authornote(Directive):
         return [prefix_node, content_node, postfix_node]
 
 
-
-
 class Exercise(Directive):
-    """
-    reStructuredText directive to show code listings with google-code-prettify
-    """
     has_content = False
     required_arguments = 1
 
@@ -94,10 +89,23 @@ class Pseudent(Directive):
         # Return the nodes in sequence.
         return [prefix_node, content_node, postfix_node]
 
+class Pattern(Directive):
+    has_content = False
+    required_arguments = 1
+
+    def run(self):
+        # Put in pattern that is replaced in Drupal by a custom filter.
+        # Can apply permissions checks and other things on the
+        # server side.
+        result = '[[[cycopattern ' + self.arguments[0] + ']]]\n'
+        raw_node = nodes.raw('', result, format='html')
+        return [raw_node]
+
 #Register the new directives.
 directives.register_directive('exercise', Exercise)
 directives.register_directive('pseudent', Pseudent)
 directives.register_directive('authornote', Authornote)
+directives.register_directive('pattern', Pattern)
 
 
 ##Create a new directive
@@ -120,20 +128,15 @@ directives.register_directive('authornote', Authornote)
 #Read the content to translate.
 testing = False
 if testing:
-    f = open('in3.txt')
+    f = open('in5.txt')
     content = f.readlines()
     f.close()
     data_in = ''.join(content)
 else:
-    # in_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-    # in_stream = codecs.getreader("utf-8")(sys.stdin)
     data_in = ''
     for line in sys.stdin:
-#    for line in_stream:
         data_in += line
 
 #Parse some content.
-#thing = core.publish_parts(data_in, writer_name='html')
 doc = core.publish_parts(data_in, writer_name='html')['html_body']
-#out_stream = codecs.getwriter("utf-8")(sys.stdout)
 print (doc)

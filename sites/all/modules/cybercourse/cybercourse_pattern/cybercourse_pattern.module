@@ -1,0 +1,254 @@
+<?php
+
+/*
+ * Implements hook_init.
+ * 
+ * Insert JS files to make a popup.
+ */
+function cybercourse_pattern_init() {
+  global $base_url;
+  drupal_add_js(
+      $base_url . '/' . drupal_get_path('module', 'cybercourse_pattern')
+        . '/js/popup/jquery.popupwindow.js'
+  );
+  drupal_add_js(
+      $base_url . '/' . drupal_get_path('module', 'cybercourse_pattern') 
+        . '/js/cybercourse_pattern.js'
+  );
+//  drupal_add_css(
+//      $base_url . '/' . drupal_get_path('module', 'cybercourse_pattern') 
+//        . '/css/cybercourse_pattern.css'
+//  );
+}
+
+/**
+ * Implements hook_menu.
+ */
+function cybercourse_pattern_menu() {
+  $items = array();
+  //A page that just closes the window it is in.
+  $items['cybercourse-pattern-close-popup'] = array(
+    'title' => 'Done',
+    'page callback' => '_cybercourse_pattern_close_popup',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;  
+}
+
+/**
+ * Called in hook_menu, to close current browser window (a popup).
+ */
+function _cybercourse_pattern_close_popup() {
+  global $base_url;
+  $path = $base_url . '/' . drupal_get_path('module', 'cybercourse_pattern') 
+      . '/close_popup.js';
+  drupal_add_js( $path );
+  return '<h1>Done</h1>'; //Need to rerun something here.
+}
+
+/**
+ * Implementation of hook_filter_info().
+ */
+//function cybercourse_pattern_filter_info() {
+//  //Define a filter that can replace a reference to an pattern in page with the
+//  //pattern content.
+//  $filters['cybercourse_pattern_insert'] = array(
+//    'title' => t('Insert CyberCourse pattern'),
+//    'description' => t('[[[cycopattern (node_id)]]], to insert the pattern with given NID'),
+//    'process callback' => 'cybercourse_pattern_filter_node_insert_process',
+//    'tips callback'  => 'cybercourse_pattern_filter_node_embed_tips',
+//    'cache' => FALSE,
+//  );
+//  return $filters;
+//}
+
+/**
+ * Process callback for hook_filter. Finds [[[cycopattern (node_id)]]]
+ * and passes match data onto function that will do the insertion.
+ */
+/**
+ * Implements hook_cycomarkup_2_viewhtml().
+ * 
+ * Translate pattern CyCo markup in $content to its 
+ * viewHTML equivalent. 
+ * 
+ * [[[cycopattern 123]]]
+ * 
+ * See SWIM docs for more.
+ */
+function cybercourse_pattern_cycomarkup_2_viewhtml_alter(&$content) {
+  $regex = '/\[\[\[\s*cycopattern\s*(\d+)\s*\]\]\]/';
+      //[[[, optional whitespace, cycopattern, optional whitespace, 
+      //pattern number, optional whitespace, ]]]
+  $content = preg_replace_callback( $regex,
+      '_cybercourse_pattern_make_replacements', $content );
+   
+//  return preg_replace_callback('/\[\[\[\s*cycopattern\s*(\d+)\s*\]\]\]/',
+//      //[[[, optional whitespace, cycopattern, optional whitespace, 
+//      //pattern number, optional whitespace, ]]]
+//      '_cybercourse_pattern_make_replacements', $content);
+}
+
+/**
+ * Process callback for hook_filter. Finds [[[cycopattern (node_id)]]]
+ * and passes match data onto function that will do the insertion.
+ */
+//function cybercourse_pattern_filter_node_insert_process(
+//    $text, $filter, $format, $langcode, $cache, $cache_id) {
+//  return preg_replace_callback('/\[\[\[\s*cycopattern\s*(\d+)\s*\]\]\]/',
+//      //[[[, optional whitespace, cycopattern, optional whitespace, 
+//      //pattern number, optional whitespace, ]]]
+//      '_cybercourse_pattern_make_replacements', $text);
+//}
+
+/**
+ * Tips callback for hook_filter
+ */
+//function cybercourse_pattern_filter_node_embed_tips($filter, $format, $long) {
+//  return t('[[[cycopattern 123]]] - Insert an pattern.');
+//}
+
+/**
+ * Generates the HTML for the pattern.
+ */ 
+function _cybercourse_pattern_make_replacements($matches) {
+  $pattern_nid = $matches[1];
+  $pattern_node = node_load($pattern_nid);
+  //Make sure that this is the right type of node.
+  if (   $pattern_node == FALSE 
+      || !node_access('view', $pattern_node) 
+      || !$pattern_node->status
+      || $pattern_node->type != 'pattern') {
+    $message = t('Invalid pattern id: @id', array('@id' => $pattern_nid) );
+    drupal_set_message($message);
+    watchdog('cybercourse_pattern', $message);
+    return '<p>' . $message . '</p>';
+  }
+  else {
+    //Work out what to link to. Submission add or edit?
+    //Find submission node with uid of logged in user, and pattern reference
+    //to $pattern_node.
+    global $base_url;
+    global $user;
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'node')
+      ->entityCondition('bundle', 'pattern_submission')
+      ->propertyCondition('status', 1)
+      ->fieldCondition('field_pattern', 'target_id', $pattern_nid, '=')
+      ->propertyCondition('uid', $user->uid);
+    $result = $query->execute();
+    if (isset($result['node'])) {
+      //There is already a submission for this pattern for this user.
+      //Show an edit link.
+      $submissions_nids = array_keys($result['node']);
+      if ( sizeof($submissions_nids) != 1 ) {
+        throw new Exception('Too many submission ids: <pre>' 
+            . print_r($submissions_nids, TRUE) . '</pre>'); 
+      }
+      $url = $base_url . '/node/' . $submissions_nids[0] . '/edit';
+    }
+    else {
+      //No submission yet. Show an add link.
+      $url = $base_url . '/node/add/pattern-submission';
+    }
+    //Add pattern id for use by Entity reference prepopulate module.
+    $url .= '?field_pattern=' . $pattern_nid;
+    //Add destination after submission that will close the window.
+    $url .= '&destination=cybercourse-pattern-close-popup';
+    $link = l( t('Work on it'), $url, 
+        array('attributes' =>
+          array(
+            'title' => 'Work on pattern',
+            'rel' => 'scrollbars:1',
+            'class' => array( 'popupwindow', 'pattern-work-on-it-link' ),
+          )
+        )
+    );
+    //Add the Work On It link to the pattern to be rendered.
+//    $pattern_node->body['und'][0]['value'] = 
+//        $pattern_node->body['und'][0]['value'] . $link;
+    //Prep the exer for viewing, with a custom view mode.
+//    $view = node_view($pattern_node, 'cyco_exer', NULL);
+//    $view = node_view($pattern_node, 'cybercourse_pattern_insert', NULL);
+//Hide the link for now.
+//    $view['body'][0]['#markup'] .= $link;
+//    $render = drupal_render($view);
+    
+    //Can't use custom view that I had planned to, because Drupal is
+    //fucked up there.
+    
+    $body_content = $pattern_node->body[LANGUAGE_NONE][0]['safe_value'];
+    
+    $body_content = 
+  '<div class="inserted-pattern">'
+.   '<div class="inserted-pattern-title">pattern: ' . t($pattern_node->title) . '</div>'
+.   '<div class="inserted-pattern-content">' . t($body_content) . '</div>'
+. '</div>';
+
+    
+    return $body_content;
+//    return $render;
+  } 
+} 
+
+/**
+ * Return the theme to use for popup windows, by inspecting the 
+ * destination.
+ */
+function cybercourse_pattern_custom_theme() {
+  if ( ( isset($_GET['destination']) 
+         && $_GET['destination'] == 'cybercourse-pattern-close-popup' )
+       ||
+       current_path() == 'cybercourse-pattern-close-popup'
+      ) {
+    return 'cybercourse_mt';
+  }
+}
+
+/**
+ * When inserting an pattern into a page, use a special template that
+ * strips most of the content away.
+ * @param string $vars
+ */
+function cybercourse_pattern_preprocess_node(&$vars) {
+  if (   $vars['node']->type == 'pattern' 
+      && $vars['view_mode'] == 'cybercourse_pattern_insert' ) {
+    $vars['theme_hook_suggestions'][] = 'node__pattern__cybercourse_pattern_insert';
+  }
+}
+
+/**
+* Implements hook_entity_info_alter().
+ * 
+ * Define a view mode for inserting patterns in regular content.
+*/
+function cybercourse_pattern_entity_info_alter(&$entity_info) {
+//  $entity_info['node']['view modes']['cybercourse_pattern_insert'] = array(
+//    'label' => t('Insert Cybercourse pattern'),
+//    'custom settings' => TRUE,
+//  );
+  $entity_info['node']['view modes']['cyco_exer'] = array(
+    'label' => t('Insert Cybercourse pattern into node'),
+    'custom settings' => TRUE,
+  );  
+}
+
+//function cybercourse_pattern_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
+//  if ( isset( $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+//      ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0'] ) ) {
+//    $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+//      ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+//      ['#weight'] = 4;
+//    $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+//      ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+//      ['#value'] = 'Edit this item';
+//    $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+//      ['add_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+//      ['#weight'] = 8;
+//    $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+//      ['add_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+//      ['#value'] = 'Add a new rubric item';
+//
+//  }
+//}
