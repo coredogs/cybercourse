@@ -1,6 +1,7 @@
 Start
 =====
 
+.. pattern:: 666
 
 .. DANGER::
    Beware killer rabbits!
@@ -10,12 +11,7 @@ Start
    :alt: map to buried treasure
 
    This is the caption of the figure (a simple paragraph).
-
-.. pattern:: The title
-   :situation: This is the situation.
-
-   This is something else.
-   
+ 
 .. sidebar:: Sidebar Title
    :subtitle: Optional Sidebar Subtitle
 

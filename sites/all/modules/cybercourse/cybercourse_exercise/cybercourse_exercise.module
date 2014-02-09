@@ -223,16 +223,16 @@ function cybercourse_exercise_preprocess_node(&$vars) {
  * 
  * Define a view mode for inserting exercises in regular content.
 */
-function cybercourse_exercise_entity_info_alter(&$entity_info) {
-//  $entity_info['node']['view modes']['cybercourse_exercise_insert'] = array(
-//    'label' => t('Insert Cybercourse exercise'),
+//function cybercourse_exercise_entity_info_alter(&$entity_info) {
+////  $entity_info['node']['view modes']['cybercourse_exercise_insert'] = array(
+////    'label' => t('Insert Cybercourse exercise'),
+////    'custom settings' => TRUE,
+////  );
+//  $entity_info['node']['view modes']['cyco_exer'] = array(
+//    'label' => t('Insert Cybercourse exercise into node'),
 //    'custom settings' => TRUE,
-//  );
-  $entity_info['node']['view modes']['cyco_exer'] = array(
-    'label' => t('Insert Cybercourse exercise into node'),
-    'custom settings' => TRUE,
-  );  
-}
+//  );  
+//}
 
 function cybercourse_exercise_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
   if ( isset( $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']

@@ -126,7 +126,7 @@ directives.register_directive('pattern', Pattern)
 #directives.register_directive('swear', Swear)
 
 #Read the content to translate.
-testing = False
+testing = False 
 if testing:
     f = open('in5.txt')
     content = f.readlines()
