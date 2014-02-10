@@ -1,0 +1,6 @@
+name = CyberCourse menu titles
+description = Make title help text visible in control panel menu items.
+package = CyberCourse
+core = 7.x
+version = 7.1
+stylesheets[all][] = css/cybercourse_menu_titles.css
