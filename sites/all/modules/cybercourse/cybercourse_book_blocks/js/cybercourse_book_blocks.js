@@ -3,6 +3,21 @@
 
   $(document).ready(function() {
     
+    /**
+     * Move all items under the first level to the top level. 
+     */
+    $("ul.cycobb").each(function(index, ulTopLevel){
+      var firstLi = $(ulTopLevel).find("li:first");
+//      var bookTitle = $(firstLi).find("a:first").attr("title");
+      var liForChapters = $(firstLi).find("ul:first > li");
+      $(liForChapters).each(function(i, item){
+        $(ulTopLevel).append(item);
+        $(item).removeClass("closed").addClass("open").show();
+      });
+      $(firstLi).remove();
+      //$(ulTopLevel).parents(".block").find(".block-title").text("Contents");
+    });
+    
     $('.tree > ul').attr('role', 'tree').find('ul').attr('role', 'group');
     $('.tree').find('li:has(ul)').addClass('parent_li').attr('role', 'treeitem')
         .find(' > span').attr('title', 'Collapse this branch').on('click',

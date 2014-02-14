@@ -64,3 +64,8 @@ div.view-header {
 .view-comments .views-row .views-field-subject {
   font-size: 120%;
 }
+
+/* Public exercises list. */
+.view-exercises-public .views-row {
+  margin-bottom: 1em;
+}

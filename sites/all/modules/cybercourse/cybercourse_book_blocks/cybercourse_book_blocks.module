@@ -55,7 +55,7 @@ function cybercourse_book_blocks_permission() {
 function cybercourse_book_blocks_block_info() {
   $blocks = array();
   $blocks['courses'] = array(
-    'info' => 'Courses',
+    'info' => 'Contents',
     'cache' => DRUPAL_CACHE_CUSTOM,
   );
   $blocks['blueprints'] = array(
