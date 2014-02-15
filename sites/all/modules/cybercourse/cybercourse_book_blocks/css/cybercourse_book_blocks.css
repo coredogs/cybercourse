@@ -36,6 +36,7 @@ div.tree li::before {
 
 div.tree li {
   list-style-type: none;
+  margin-bottom: 0.2em;
 }
 
 div.tree .currentPage > span + a {
