@@ -265,6 +265,6 @@ li.user-menu a:disabled
 
 #block-menu-menu-tools a:hover {
   text-decoration: underline;
-  padding-bottom: 0;
+  padding-top: 0;
   background-color: transparent;
 }

@@ -1,0 +1,6 @@
+name = CyberCourse collapse term reference widget
+description = Collapse the term reference widget on node edit forms.
+package = CyberCourse
+core = 7.x
+version = 7.1
+stylesheets[all][] = css/cybercourse_collpase_term_ref_widget.css

@@ -1,5 +1,5 @@
 /**
- * Change the text of notification links.
+ * Collapse/expand the left sidebar.
  */
 (function($) {
   Drupal.behaviors.toggleLeftSidebar = {

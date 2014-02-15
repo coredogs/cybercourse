@@ -1,0 +1,21 @@
+<?php
+
+/*
+ * Implements hook_init.
+ * 
+ * Insert JS files to adjust term ref widget on node edit forms.
+ * 
+ * Could do this with a form alter as well.
+ */
+function cybercourse_collpase_term_ref_widget_init() {
+  global $base_url;
+  if ( preg_match('/node\/[0-9]+\/edit/', current_path() ) === 1 ) {
+    drupal_add_js(
+        $base_url . '/' 
+          . drupal_get_path('module', 'cybercourse_collpase_term_ref_widget')
+          . '/js/cybercourse_collpase_term_ref_widget.js'
+    );
+  }
+}
+
+
