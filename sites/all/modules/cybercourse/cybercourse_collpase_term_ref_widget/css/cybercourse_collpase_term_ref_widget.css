@@ -4,7 +4,7 @@ Styles for the CyberCourse term ref widget collpaser.
 .cyco-collapse-term-ref-widget {
   display: inline-block;
   margin-left: 1em;
-  font-size: 80%;
+  /*font-size: 80%;*/
   color: #666;
   line-height: 1.2em;
 }
