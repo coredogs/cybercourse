@@ -9,7 +9,10 @@
  */
 function cybercourse_collpase_term_ref_widget_init() {
   global $base_url;
-  if ( preg_match('/node\/[0-9]+\/edit/', current_path() ) === 1 ) {
+  if ( 
+      ( preg_match('/node\/[0-9]+\/edit/', current_path() ) === 1 )
+      || ( strstr(current_path(), 'node/add/') !== FALSE )
+     ) {
     drupal_add_js(
         $base_url . '/' 
           . drupal_get_path('module', 'cybercourse_collpase_term_ref_widget')
