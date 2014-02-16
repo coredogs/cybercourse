@@ -542,14 +542,16 @@ function theme_cbb_links($variables) {
 //  $parentlink = variable_get('jquerymenu_parentlink', 0);
 
   $icon_class = '';
+  $title_attr = '';
   //Choose one of three icon classes.
   if ( ! $has_children ) {
     $icon_class = 'glyphicon glyphicon-stop';
   }
   else {
     $icon_class = 'glyphicon glyphicon-plus-sign';
+    $title_attr = 'title="Expand this branch"';
   }
-  $output = '<span title="Expand this branch"><i class="' . $icon_class . '"></i></span> ';
+  $output = '<span ' . $title_attr . '><i class="' . $icon_class . '"></i></span> ';
   //Add the unpublished marker if needed.
   $link_text = ( $published == 0 )
         ? '(u) ' . $link_text 

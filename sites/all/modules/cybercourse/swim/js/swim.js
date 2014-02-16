@@ -18,24 +18,25 @@
 //        editor.ui.space( 'contents' )
 //            .setStyle( 'height', $(window).height() * 0.5 + 'px' )
 //            .setStyle( 'width', '100%');
+        //Only setup peek for body, not summary.
         if ( editor.name == 'edit-body-und-0-value' ) {
-          Drupal.behaviors.swim.swimSetup();
+          Drupal.behaviors.swim.swimSetup(editor);
         }
       });
     },
-    swimSetup: function () {    
+    swimSetup: function (editor) {    
       if ( swimDoneOnce ) {
         return;
       }
       swimDoneOnce = true;
-      this.setupBeforeUnload();
-      if ( ! CKEDITOR.instances['edit-body-und-0-value'].commands.peek ) {
+      this.setupBeforeUnload(editor);
+      if ( ! editor.commands.peek ) {
         //Skip the rest if there is no peek command. The command is only
         //created if the user has Drupal's permission to peek.
         return;
       }
       //Disable peek button until ready.
-      CKEDITOR.instances['edit-body-und-0-value'].commands.peek.disable();
+      editor.commands.peek.disable();
       //Compute the URL for the iframe that simulates the device.
       var iframeSrc = Drupal.settings.swim.base_url + "/swim-mt-peek";      
       //Make peek toolbar.
@@ -80,12 +81,12 @@
       $("#swim-peek-device").load(function() {
         if ( ! loadedAlready ) {
           //Do this only once. Sometimes there is more than one load event.
-          thisythis.continueInit();
+          thisythis.continueInit(editor);
           loadedAlready = true;
         }
       });
     }, //End attach.
-    continueInit: function() {
+    continueInit: function(editor) {
       //Make a clone of the HTML to use as a template.
       this.templateBodyHtml 
         = $("#swim-peek-device").contents().children("html").children("body")
@@ -117,12 +118,13 @@
       //Init toolbar display.
       this.selectedPeek = "desktop";
       this.showSelectedButton();
-      $.each(CKEDITOR.instances, function(index, instance) {
+      
+//      $.each(CKEDITOR.instances, function(index, instance) {
         //Turn on the CKEditor peek button, so show all is ready.
-        instance.commands.peek.enable();
+        editor.commands.peek.enable();
         //Add styles for editing with CK.
-        instance.document.appendStyleSheet(Drupal.settings.swim.editing_stylesheet);
-      });
+        editor.document.appendStyleSheet(Drupal.settings.swim.editing_stylesheet);
+//      });
     }, //End continueInit.
       /**
        * Watch the plugin's peek button.
@@ -252,14 +254,13 @@
         element.remove();
       }
     },
-    setupBeforeUnload : function() {
+    setupBeforeUnload : function(editor) {
       //Store starting values of content fields.
-      this.initialBody = 
-         CKEDITOR.instances['edit-body-und-0-value'].document.getBody().getText();
-      if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
-        this.initialSummary = 
-            CKEDITOR.instances['edit-body-und-0-summary'].document.getBody().getText();
-      }
+      this.initialBody =  editor.document.getBody().getText();
+//      if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
+//        this.initialSummary = 
+//            CKEDITOR.instances['edit-body-und-0-summary'].document.getBody().getText();
+//      }
       //Convenience var for closures.
       var swimRef = this;
       //Flag showing whether unload code should check for changes.
@@ -274,17 +275,17 @@
         if ( swimRef.checkForChanges ) {
           var contentChanged = false;
           //Body changed?
-          if ( CKEDITOR.instances['edit-body-und-0-value'].document.getBody().getText()
-               != swimRef.initialBody ) {
+//          if ( CKEDITOR.instances['edit-body-und-0-value'].document.getBody().getText()
+          if ( editor.document.getBody().getText() != swimRef.initialBody ) {
             contentChanged = true;
           }
-          //If summary exists, did it change?
-          if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
-            if ( CKEDITOR.instances['edit-body-und-0-summary'].document.getBody().getText()
-                 != swimRef.initialSummary ) {
-              contentChanged = true;
-            }
-          }
+//          //If summary exists, did it change?
+//          if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
+//            if ( CKEDITOR.instances['edit-body-und-0-summary'].document.getBody().getText()
+//                 != swimRef.initialSummary ) {
+//              contentChanged = true;
+//            }
+//          }
           if ( contentChanged ) {
             return "There are unsaved changes. Are you sure you want to leave?";
           }
