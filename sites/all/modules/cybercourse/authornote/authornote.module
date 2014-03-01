@@ -69,8 +69,18 @@ function authornote_ckeditor_plugin() {
   );
 }
 
+function authornote_swim_load_ck_plugins() {
+  global $base_url;
+  $result = array(
+    'name' => 'authornote',
+    'path' => $base_url . '/' . drupal_get_path('module', 'authornote') 
+        . '/plugin/',
+  );
+  return $result;
+}
+
 /**
- * Implements hook_edithtml_2_directive().
+ * Implements hook_swimx_ckhtml_2_directive_alter().
  * 
  * Translate authornote editHTML in $content to its 
  * authornote directive equivalent. 
@@ -82,7 +92,7 @@ function authornote_ckeditor_plugin() {
  * 
  * See SWIM docs for more.
  */
-//function authornote_edithtml_2_directive_alter( &$content ) { //, &$type) {
+//function authornote_swimx_ckhtml_2_directive_alter( &$content ) { //, &$type) {
 //  //Pattern to find the img tags. Need the ? to make the match lazy, not greedy.
 /*  $pattern = '/<img.*?>/im'; */
 //  $pattern = '/rrrrrrrrrrr/im';
@@ -137,7 +147,7 @@ function authornote_ckeditor_plugin() {
 
 
 /**
- * Implements hook_cycomarkup_2_viewhtml().
+ * Implements hook_swim_betwixt_markup_2_html_alter().
  * 
  * Translate authornote CyCo markup in $content to its 
  * viewHTML equivalent. 
@@ -146,8 +156,7 @@ function authornote_ckeditor_plugin() {
  * 
  * See SWIM docs for more.
  */
-function authornote_cycomarkup_2_viewhtml_alter(&$content) {
-  $d = 0;
+function authornote_swim_betwixt_markup_2_html_alter(&$content) {
   $regex = 
       '/\[\[\[cycoauthornote\s*(.*?)\|\|\|(.*?)\]\]\]/is';
   //? is for lazy match.
@@ -196,10 +205,10 @@ function _authornote_node_postrender( $elements ) {
 }
 
 /**
- * Implements hook_edithtml_2_directive_alter().
+ * Implements hook_swimx_ckhtml_2_directive_alter().
  * @param string $content Content to change.
  */
-function authornote_edithtml_2_directive_alter( &$content ) {
+function authornote_swimx_ckhtml_2_directive_alter( &$content ) {
   $r = 0;
   $regex = 
       '/\<div class\=\"authornote\"\>\s*'

@@ -1,0 +1,163 @@
+<?php
+
+function swim_migrate_menu() {
+  $items = array();
+  $items['admin/swim-migrate'] = array(
+    'title' => 'SWIM migrate',
+    'description' => 'SWIM migration',
+    'page callback' => 'swim_migrate_main_menu',
+    'access arguments' => array('administer content types'),
+  );
+  
+  //Build cache of content.
+  $items['admin/swim-migrate/init-content-type-2-cache-list'] = array(
+    'title' => 'Initialize list of content types to cache',
+    'page callback' => 'swim_migrate_init_list_content_types_to_cache',
+    'access arguments' => array('administer content types'),
+  );
+  $items['admin/swim-migrate/choose-content-type-to-cache'] = array(
+    'title' => 'Choose content type to cache',
+    'page callback' => 'swim_migrate_choose_content_type_to_cache',
+    'access arguments' => array('administer content types'),
+  );
+  $items['admin/swim-migrate/cache-content-type/%'] = array(
+    'title' => 'Caching content type',
+    'page callback' => 'swim_migrate_cache_content_type',
+    'page arguments' => array(3),
+    'access arguments' => array('administer content types'),
+  );
+
+  //Copy cache to final destination.
+  $items['admin/swim-migrate/init-content-type-2-final-list'] = array(
+    'title' => 'Initialize list of content types to copy from cahce to final',
+    'page callback' => 'swim_migrate_init_list_content_types_cache_to_final',
+    'access arguments' => array('administer content types'),
+  );
+  $items['admin/swim-migrate/choose-content-type-to-final'] = array(
+    'title' => 'Choose content type to copy from cache to final',
+    'page callback' => 'swim_migrate_choose_content_type_cache_to_final',
+    'access arguments' => array('administer content types'),
+  );
+  $items['admin/swim-migrate/cache-to-final-content-type/%'] = array(
+    'title' => 'Copy cache of content type to final',
+    'page callback' => 'swim_migrate_cache_to_final_content_type',
+    'page arguments' => array(3),
+    'access arguments' => array('administer content types'),
+  );
+  
+  return $items;
+}
+
+function swim_migrate_main_menu() {
+  $result = 
+        "<p><a href='/admin/swim-migrate/init-content-type-2-cache-list'>"
+      .   "Initialize list of content types to cache</a></p>"
+      . "<p><a href='/admin/swim-migrate/choose-content-type-to-cache'>"
+      .   "Choose a content type to cache</a></p>"
+      . "<p><a href='/admin/swim-migrate/transfer-from-temp-2-final'>Final transfer</a></p>"
+      . "";
+  return $result;
+}
+
+function swim_migrate_init_list_content_types_to_cache() {
+  //List all content types.
+  $content_types = node_type_get_types();
+  $types_to_process = array();
+  foreach ($content_types as $content_type_name => $content_type) {
+    $fields = field_info_instances('node', $content_type_name);
+    if (isset($fields['field_body_ck'])) {
+      $types_to_process[] = $content_type_name;
+    }
+  }
+  $list = implode(',', $types_to_process);
+  variable_set('swim_migrate_types_not_cached', $list);
+  variable_set('swim_migrate_types_cached', '');
+$display_list = str_replace(',', '<br>', $list);
+  return '<p>List initialized to:<br> ' . $display_list . '</p>'
+      . '<a href="/admin/swim-migrate">back</a>';
+}
+
+function swim_migrate_choose_content_type_to_cache() {
+  $list_unprocessed = variable_get('swim_migrate_types_not_cached');
+  $list_processed = variable_get('swim_migrate_types_cached');
+  $types_unprocessed = array_filter(explode(',', $list_unprocessed));
+  $types_processed = array_filter(explode(',', $list_processed));
+  $result = '';
+  $result .= "<h2>Unprocessed</h2>\n<ul>\n";
+  foreach ($types_unprocessed as $type) {
+    $link = '<a href="/admin/swim-migrate/cache-content-type/' . $type . '">'
+        . $type . '</a>';
+    $result .= '  <li>' . $link . "</li>\n";
+  }
+  $result .= "</ul>\n";
+  $result .= "<h2>Processed</h2>\n<ul>\n";
+  foreach ($types_processed as $type) {
+    $result .= '  <li>' . $type . "</li>\n";
+  }
+  $result .= "</ul>\n";
+  $result .= '<a href="/admin/swim-migrate">back</a>';
+  return $result;
+}
+
+function swim_migrate_cache_content_type($type) {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+      ->entityCondition('bundle', $type);
+  $result = $query->execute();
+  $output = '<p>Processing ' . $type . ':</p>';
+  if (!empty($result['node'])) {
+    $nids = array_keys($result['node']);
+    $output .= '</ul>';
+    foreach ($nids as $nid) {
+      $node = node_load($nid, NULL, TRUE);
+      $rest_main = isset( $node->body[LANGUAGE_NONE] )
+          ? $node->body[LANGUAGE_NONE][0]['value']
+          : '';
+      $rest_summary = isset( $node->body[LANGUAGE_NONE] )
+          ? $node->body[LANGUAGE_NONE][0]['summary']
+          : '';
+      $ck_main = isset( $node->field_body_ck[LANGUAGE_NONE] )
+          ? $node->field_body_ck[LANGUAGE_NONE][0]['value']
+          : '';
+      $ck_summary = isset( $node->field_body_ck[LANGUAGE_NONE] )
+          ? $node->field_body_ck[LANGUAGE_NONE][0]['summary']
+          : '';
+      $output .= '<li>' . $nid;
+      try {
+        db_insert('swim_migrate')
+            ->fields(array(
+              'nid' => $nid,
+              'content_type' => $type,
+              'main_rest' => $rest_main,
+              'summary_rest' => $rest_summary,
+              'main_ck' => $ck_main,
+              'summary_ck' => $ck_summary,
+            ))
+            ->execute();
+      } catch (PDOException $e) {
+        $output .= ' EVIL! ' . $e->getMessage();
+      }
+      $output .= "</li>\n";
+    }
+    $output .= "</ul>";
+  }
+  $output .= '<p><a href="/admin/swim-migrate/choose-content-type-to-cache">back</a></p>';
+  //Show what is processed.
+  $list_unprocessed = variable_get('swim_migrate_types_not_cached');
+  $list_processed = variable_get('swim_migrate_types_cached');
+  $types_unprocessed = explode(',', $list_unprocessed);
+  $types_processed = explode(',', $list_processed);
+  foreach( $types_unprocessed as $index => $type_unprocessed ) {
+    if ( $type_unprocessed == $type ) {
+      unset( $types_unprocessed[$index] );
+    }
+  }
+  $types_processed[] = $type;
+  $list = implode(',', $types_unprocessed);
+  variable_set('swim_migrate_types_not_cached', $list);
+  $list = implode(',', $types_processed);
+  variable_set('swim_migrate_types_cached', $list);
+  
+  
+  return $output;
+}

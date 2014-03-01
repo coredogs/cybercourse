@@ -5,7 +5,6 @@
       if (done_once) {
         return;
       }
-//      $(document).ajaxStart($.blockUI).ajaxStop($.unblockUI);
       //Unload CKEditor when ctools modal closes.
       $(document).bind('CToolsDetachBehaviors', function(event, context) {
         Drupal.behaviors.ckeditor.detach(context, {}, 'unload');

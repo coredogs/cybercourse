@@ -5,7 +5,7 @@
  * and passes match data onto function that will do the insertion.
  */
 /**
- * Implements hook_cycomarkup_2_viewhtml().
+ * Implements hook_swim_betwixt_markup_2_html_alter().
  * 
  * Translate pattern CyCo markup in $content to its 
  * viewHTML equivalent. 
@@ -14,7 +14,7 @@
  * 
  * See SWIM docs for more.
  */
-function cybercourse_pattern_cycomarkup_2_viewhtml_alter(&$content) {
+function cybercourse_pattern_swim_betwixt_markup_2_html_alter(&$content) {
   $regex = '/\[\[\[\s*cycopattern\s*(\d+)\s*\]\]\]/';
       //[[[, optional whitespace, cycopattern, optional whitespace, 
       //pattern number, optional whitespace, ]]]

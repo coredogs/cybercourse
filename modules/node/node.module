@@ -2760,11 +2760,10 @@ function node_page_view($node) {
  */
 function node_update_index() {
   $limit = (int)variable_get('search_cron_limit', 100);
-//$fh = fopen('d:/out.txt', 'w');
+
   $result = db_query_range("SELECT n.nid FROM {node} n LEFT JOIN {search_dataset} d ON d.type = 'node' AND d.sid = n.nid WHERE d.sid IS NULL OR d.reindex <> 0 ORDER BY d.reindex ASC, n.nid ASC", 0, $limit, array(), array('target' => 'slave'));
+
   foreach ($result as $node) {
-//  fwrite($fh, 'dog ');
-//  fwrite($fh, $node->nid . "\n");
     _node_index_node($node);
   }
 }

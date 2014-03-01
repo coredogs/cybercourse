@@ -1,0 +1,684 @@
+<?php
+
+
+/**
+ * Implements hook_help().
+ */
+function swimx_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#swimx':
+      return '<p>' . t('Helpy helpy help help, <a href="@jquery">jQuery</a>.', 
+          array(
+            '@jquery' => 'http://jquery.com',
+          )) . '</p>';
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function swimx_permission() {
+  return array(
+    'peek content' => array(
+      'title' => t('Peek at rendered content'),
+      'description' => t('When editing, see what the content looks like on various devices.')
+    ),
+    'access ckHtml field' => array(
+      'title' => t('Access hidden CKEditor HTML field.'),
+      'description' => t(
+          'In case body field gets out of sync with HTML used in CKEditor. '
+        . 'Should not be needed.'    
+      )
+    ),
+  );
+}
+
+/**
+ * Define two field types: swimx, and swimx_with_summary.
+ */
+function swimx_field_info() {
+  $info = array(
+    'swimx' => array(
+      'label' => t('SWIM'),
+      'description' => t('reStructured text and SWIM editor.'),
+      'default_widget' => 'swimx_editor',
+      'default_formatter' => 'swimx_default',
+    ),
+    'swimx_with_summary' => array(
+      'label' => t('SWIM with summary'),
+      'description' => t('reStructured text and SWIM editor with summary.'),
+      'default_widget' => 'swimx_editor_with_summary',
+      'default_formatter' => 'swimx_default',
+    ),
+  );
+  return $info;
+}
+
+//Right? Need last false?
+function swimx_field_is_empty($item, $field) {
+  if ($field['type'] == 'swimx') {
+    $mt = ! $item['main'];
+    return $mt;
+  }
+  if ($field['type'] == 'swimx_with_summary') {
+    $mt = (!$item['main'] ) && (!$item['summary'] );
+    return $mt;
+  }
+  return FALSE;
+}
+
+function swimx_field_validate(
+    $obj_type, $object, $field, $instance, $langcode, &$items, &$errors
+  ) {
+  return TRUE;
+}
+
+/**
+ * Implement hook_field_widget_info().
+ * 
+ * Define two new widgets. Both have 'editor' in its name.
+ */
+function swimx_field_widget_info() {
+  $info = array(
+    'swimx_editor' => array(
+      'label' => t('SWIM editor'),
+      'description' => t(
+          'SWIM anti-WYSIWYG editor.'),
+      'field types' => array('swimx'),
+      'behaviors' => array(
+        'multiple values' => FIELD_BEHAVIOR_DEFAULT,
+        'default value' => FIELD_BEHAVIOR_DEFAULT,
+      ),
+    ),
+    'swimx_editor_with_summary' => array(
+      'label' => t('SWIM editor with summary'),
+      'description' => t(
+          'SWIM anti-WYSIWYG editor with summary.'),
+      'field types' => array('swimx_with_summary'),
+      'behaviors' => array(
+        'multiple values' => FIELD_BEHAVIOR_DEFAULT,
+        'default value' => FIELD_BEHAVIOR_DEFAULT,
+      ),
+    ),
+  );
+  return $info;
+}
+
+function swimx_field_widget_form(
+    &$form, &$form_state, $field, $instance, 
+    $langcode, $items, $delta, $element) {
+  $base = $element;
+  if (
+         $instance['widget']['type'] == 'swimx_editor' 
+      || $instance['widget']['type'] == 'swimx_editor_with_summary') {
+    $with_summary = ( $instance['widget']['type'] == 'swimx_editor_with_summary' );
+    _swimx_add_client_pieces();
+    $element['main'] = array(
+      '#type' => 'textarea',
+      '#title' => t( $element['#title'] ),
+      //Remove grippie.
+      '#resizable' => FALSE,
+      '#default_value' => 
+        isset( $items[$delta]['wysiwyg_rep'] ) 
+          ? $items[$delta]['wysiwyg_rep'] : '',
+      '#attributes' => array(
+        'class' => array('swimx-editor swimx-editor-main'),
+      ),
+    ) + $base;
+    if ( $with_summary ) {
+      $element['summary'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Summary'),
+        '#description' => t('Leave blank to use trimmed value of full text as the summary.'),
+        //Remove grippie.
+        '#resizable' => FALSE,
+        '#default_value' => 
+          isset( $items[$delta]['wysiwyg_rep_summary'] ) 
+            ? $items[$delta]['wysiwyg_rep_summary'] : '',
+        '#attributes' => array(
+          'class' => array('swimx-editor swimx-editor-summary'),
+        ),
+        '#prefix' => '<div class="swimx-summary-wrapper">',
+        '#suffix' => '</div>',
+        '#weight' => -10,
+        '#attached' => array(
+          'js' => array(drupal_get_path('module', 'swimx') 
+                  . '/js/swim_summary_links.js'),
+        ),
+      ) + $base;
+    } //End with_summary
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_libraries_info().
+ * 
+ * Define CKEditor in the libraries.
+ */
+function swimx_libraries_info() {
+  $libraries = array();
+  $libraries['ckeditor'] = array(
+    'name' => 'CKEditor',
+    'vendor url' => 'http://ckeditor.com/',
+    'download url' => 'http://download.cksource.com/CKEditor/CKEditor/CKEditor%204.3.2/ckeditor_4.3.2_standard.zip',
+    'version arguments' => array(
+      'file' => 'ckeditor.js',
+      // version:"4.3"
+      'pattern' => '/version\:\"(\d+\.+\d+)\"/',
+      'lines' => 10,
+    ),
+    'files' => array(
+      'js' => array(
+        'ckeditor.js',
+      ),
+    ),
+  );
+  return $libraries;
+}
+
+/**
+ * 
+ * Add stuff the browser will need.
+ */
+function _swimx_add_client_pieces() {
+  //Only run this once per page.
+  static $already_added = FALSE;
+  if ( $already_added ) {
+    return;
+  }
+  $already_added = TRUE;
+  global $base_url;
+  //Set up UI stuff.
+  drupal_add_library('system', 'ui.dialog');
+  //Load CKEditor.
+  $ckLibraryInfo = libraries_load('ckeditor');
+  $numFilesLoaded = libraries_load_files($ckLibraryInfo);
+  if ( $numFilesLoaded <= 0 ) {
+    $mess = t('SWIM error: no CKEditor files loaded. Is CK installed?');
+    watchdog('SWIM', $mess);
+    drupal_set_message(t($mess), 'error');
+    return;
+  }
+  drupal_add_css( drupal_get_path('module', 'swimx') . '/css/swimx.css' );
+  //Build a list of extra plugins to load.
+  //Array of arrays of form name=>?, path=>?.
+  $plugins = module_invoke_all('swim_load_ck_plugins');
+  //Add peek CK plugin.
+  $plugins['name'][] = 'peek';
+  $plugins['path'][] = $base_url . '/' . drupal_get_path('module', 'swimx') 
+        . '/ck_plugins/peek/';
+  //Add ReST help CK plugin.
+  $plugins['name'][] = 'rest_help';
+  $plugins['path'][] = $base_url . '/' . drupal_get_path('module', 'swimx') 
+        . '/ck_plugins/rest_help/';
+  //Make sure the last char in each path is /.
+  foreach ($plugins['path'] as $key => $value) {
+    if ( substr($value, -1) != '/' ) {
+      $plugins['path'][$key] .= '/';
+    }
+  }
+  //Obscurer code.
+  $obscurer = theme('obscurer');
+  //Send settings to JS.
+  $settings = array(
+    'base_url' => $base_url,
+    'extraPlugins' => $plugins,
+//    'format_name' => 'swim',
+    'can_peek' => user_access('peek content') ? 'yes' : 'no',
+    'editing_stylesheet' => 
+      $base_url . '/' . drupal_get_path('module', 'swimx') . '/css/swimx_editing.css',
+    'peekIconsPath' =>
+      $base_url . '/' . drupal_get_path('module', 'swimx') . '/ck_plugins/peek/icons/',
+    'obscurer' => $obscurer,
+  );
+  drupal_add_js(
+      array('swimx' => $settings),
+      'setting'
+  );
+  //Create extraPlugins string.
+  $extra_plugins = implode(',', $plugins['name'] );
+  //Load SWIM JS.
+  drupal_add_js( drupal_get_path('module', 'swimx') . '/js/swimx_base_config.js' );
+  $js = 'Drupal.swimxCkConfig.extraPlugins="' . $extra_plugins . '";';
+  drupal_add_js($js, 'inline');
+  //Let other modules change things.
+  //It could be changing config, like the line above.
+  //Could be adding other JS settings, CSS, etc.
+  $js_lines = module_invoke_all('swim_add_client_stuff');
+  drupal_add_js( implode(' ', $js_lines), 'inline');  
+  drupal_add_js( drupal_get_path('module', 'swimx') . '/js/swimx.js' );
+}
+
+/**
+ * Implements hook_field_presave(). 
+ * 
+ * Convert from CKEditor's rep of the markup to pure ReST. Store both. 
+ */
+function swimx_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  if ($field['type'] == 'swimx' || $field['type'] == 'swimx_with_summary') {
+    //Convert from CK HTML to pure ReST for storage.
+    $with_summary = ( $field['type'] == 'swimx_with_summary' );
+    foreach ($items as $delta => $item) {
+      //Is aught in the main editor?
+      if ( isset( $item['main'] ) ) {
+        //Convert to ReST and save in ReST field.
+        $items[$delta]['pure_rest'] 
+             = _swimx_ckhtml2rest( $item['main'] );
+        //Save content from editor.
+        $items[$delta]['wysiwyg_rep'] = $item['main'];
+      }
+      else {
+        $items[$delta]['pure_rest'] = '';
+        $items[$delta]['wysiwyg_rep'] = '';
+      }
+      //Is there a summary to process?
+      if ( $with_summary ) {
+        //Is aught in the main editor?
+        if ( isset( $item['summary'] ) ) {
+          //Convert to ReST and save in ReST field.
+          $items[$delta]['pure_rest_summary'] 
+               = _swimx_ckhtml2rest( $item['summary'] );
+          //Save content from editor.
+          $items[$delta]['wysiwyg_rep_summary'] = $item['summary'];
+        }
+        else {
+          $items[$delta]['pure_rest_summary'] = '';
+          $items[$delta]['wysiwyg_rep_summary'] = '';
+        }
+      } //End $with_summary.
+    } //End for loop.
+  } //End process SWIM field. 
+} //End function.
+
+/**
+ * Implements hook_field_formatter_info().
+ * 
+ * Defines formatters for SWIM and SWIM with summary. They have the same
+ * ones as text.module's long text and long text summary, plus another two for 
+ * pure ReST. One of them shows the main content only, the other shows 
+ * summary and main (if there is a summary, of course).
+ */
+function swimx_field_formatter_info() {
+  $info = array(
+    //Default shows main, no summary.
+    'swimx_default' => array(
+      'label' => t('Default'),
+      'field types' => array('swimx', 'swimx_with_summary'),
+    ),
+    //Trimmed version of main, no summary.
+    'swimx_trimmed' => array(
+      'label' => t('Trimmed'),
+      'field types' => array('swimx', 'swimx_with_summary'),
+      'settings' => array('trim_length' => 600),
+    ),
+    //Prefer summary, if not, use trimmed version of main.
+    'swimx_summary_or_trimmed' => array(
+      'label' => t('Summary or trimmed'),
+      'field types' => array('swimx', 'swimx_with_summary'),
+      'settings' => array('trim_length' => 600),
+    ),
+    //ReST markup. Main only, no summary.
+    'swimx_rest' => array(
+      'label' => t('ReST markup'),
+      'field types' => array('swimx', 'swimx_with_summary'),
+    ),
+    //ReST markup. Summary and main.
+    'swimx_rest_with_summary' => array(
+      'label' => t('ReST markup with summary'),
+      'field types' => array('swimx_with_summary'),
+    ),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ * 
+ * Trimmed formats have a trim length.
+ */
+function swimx_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $element = array();
+
+  if (   $display['type'] == 'swimx_trimmed'
+      || $display['type'] == 'swimx_summary_or_trimmed'
+     ) {
+    $element['trim_length'] = array(
+      '#title' => t('Trim length'),
+      '#type' => 'textfield',
+      '#size' => 10,
+      '#default_value' => $settings['trim_length'],
+      '#element_validate' => array('element_validate_integer_positive'),
+      '#required' => TRUE,
+    );
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ * 
+ * Return a short summary of a formatter's settings.
+ */
+function swimx_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $summary = '';
+  if (   $display['type'] == 'swimx_trimmed'
+      || $display['type'] == 'swimx_summary_or_trimmed'
+     ) {
+    $summary = t('Trim length') . ': ' . $settings['trim_length'];
+  }
+  return $summary;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ * 
+ * Compute formatter output.
+ */
+function swimx_field_formatter_view(
+    $obj_type, $object, $field, $instance, 
+    $langcode, $items, $display
+  ) {
+  $element = array();
+  switch ($display['type']) {
+    case 'swimx_default':
+    case 'swimx_trimmed':
+      foreach ($items as $delta => $item) {
+        //Convert from ReST to HTML
+        $output = _swimx_rest2html( $item['pure_rest'] );
+        //$output = check_markup($output, NULL, $langcode);
+        if ($display['type'] == 'swimx_trimmed') {
+          $output = text_summary($output, NULL, $display['settings']['trim_length']);
+        }
+        $element[$delta] = array('#markup' => $output);
+      }
+      break;
+
+    case 'swimx_summary_or_trimmed':
+      foreach ($items as $delta => $item) {
+        if (!empty($item['pure_rest_summary'])) {
+          $output = _swimx_rest2html( $item['pure_rest_summary'] );
+        }
+        else {
+          $output = text_summary($item['pure_rest'], $item['format'], $display['settings']['trim_length']);
+          $output = _swimx_rest2html( $output );
+        }
+        $output = check_markup($output, $item['format'], $langcode);
+        $element[$delta] = array('#markup' => $output);
+      }
+      break;
+
+    case 'swimx_rest':
+      foreach ($items as $delta => $item) {
+        $output_main = check_plain($item['pure_rest'], $item['format'], $langcode);
+        $element[$delta] = array('#markup' => 
+          theme('swimx_rest', 
+              array(
+                'main' => $output_main, 
+              ) //End array().
+          ) // End theme().
+        ); //End array().
+      }
+      break;
+  
+    case 'swimx_rest_summary':
+      foreach ($items as $delta => $item) {
+        if ( isset($item['pure_rest_summary']) ) {
+          $output_summary = check_plain($item['pure_rest_summary'], $item['format'], $langcode);
+          $element[$delta] = array('#markup' => 
+            theme('swimx_rest', 
+                array(
+                  'summary' => $output_summary, 
+                ) //End array().
+            ) // End theme().
+          ); //End array().
+        } // End if there is a summary.
+      }
+      break;
+
+    case 'swimx_rest_main_and_summary':
+      foreach ($items as $delta => $item) {
+        $output_main = check_plain($item['pure_rest'], $item['format'], $langcode);
+        $output_summary = '';
+        if ( isset($item['pure_rest_summary']) ) {
+          $output_summary = check_plain($item['pure_rest_summary'], $item['format'], $langcode);
+        }
+        $element[$delta] = array('#markup' => 
+          theme('swimx_rest', 
+              array(
+                'main' => $output_main, 
+                'summary' => $output_summary
+              ) //End array().
+          ) // End theme().
+        ); //End array().
+      }
+      break;
+  
+  } //end switch
+  
+  return $element;
+}
+
+/**
+ * Translate pure ReST into HTML.
+ * @param string $rest ReST
+ * @return string HTML
+ */
+function _swimx_rest2html( $rest ) {
+  //Run content through ReST translator. Returns mixed ReST and CyCo markup.
+  // descriptor array
+  $desc = array(
+      0 => array('pipe', 'r'), // 0 is STDIN for process
+      1 => array('pipe', 'w'), // 1 is STDOUT for process
+      2 => array('pipe', 'w') // 2 is STDERR for process
+  );
+  //Can't remember where this code was adapted from. Some human did it.
+  //Command to invoke markup engine
+  $py_path = DRUPAL_ROOT . '/' 
+      . drupal_get_path('module', 'swimx') .'/python/convert_rest.py';
+  $command =  'python ' . $py_path;
+  // spawn the process
+  $p = proc_open($command, $desc, $pipes);
+  fwrite($pipes[0], $rest);
+  fclose($pipes[0]);
+  // read the output from the engine
+  $html = stream_get_contents($pipes[1]);
+  $error_messages = stream_get_contents($pipes[2]);
+  // all done! Clean up
+  fclose($pipes[1]);
+  fclose($pipes[2]);
+  proc_close($p);
+  //Show error messages, if any.
+  if ( $error_messages ) {
+    $error_messages = _swimx_format_docutils_errors( $error_messages );
+    drupal_set_message($error_messages, 'error');
+  }
+  
+  //Translate the CyCo directives markup into HTML
+  //Trigger other module's translators.
+  drupal_alter( 'swim_betwixt_markup_2_html', $html );
+  return $html;
+}
+
+/**
+ * Convert content from CKHTML (HTML from CK field) to pure ReST.
+ * Anything the user typed must by HTML encoded, e.g., if the user typed
+ * <, then &lt; should be in the content.
+ * HTML that CK inserted should be as regular tags.
+ * @param string $content Content to convert.
+ */
+function _swimx_ckhtml2rest( $content ) {
+  //Convert to pure swimx.
+  //First, the <br>s/ leaving just the \ns.
+  _swimx_remove_brs( $content );
+  //Replace &nbsp; with real spaces.
+  $content = str_replace('&nbsp;', ' ', $content);
+  //Replace &#39; with real quotes.
+  $content = str_replace('&#39;', '\'', $content);
+  //Handle numeric codes correctly.
+  // See http://www.php.net/manual/en/function.html-entity-decode.php#47371
+//  $content = preg_replace('/&#(\d+);/me',"chr(\\1)",$content); #decimal notation
+//  $content = preg_replace('/&#x([a-f0-9]+);/mei',"chr(0x\\1)",$content);  #hex notation
+  //Trigger other module's translators.
+  drupal_alter( 'swimx_ckhtml_2_directive', $content); //, $type );
+  //Replace image HTML tags with directives.
+  //  These must be after other module's hooks are called, so that other 
+  //  modules have processes the images they own.
+  _swimx_img_2_path( $content );
+  //Strip all remaining HTML tags.
+  //This gets rid of paste errors. I hope!
+  $content = strip_tags($content);
+  //HTML entities to their real characters.
+  $content = html_entity_decode( $content, ENT_QUOTES, 'UTF-8' );
+  //Special chars - particularly #39; -> '.
+  $content = htmlspecialchars_decode( $content );
+  return $content;
+}
+
+/**
+ * Remove <br>s from $content. 
+ * @param type $content Content to remove <br>s from.
+ */
+function _swimx_remove_brs( &$content ) {
+  $content = preg_replace('/\<\s*br\s*\/?\s*\>/i', '', $content);
+}
+
+/**
+ * Replace img tags with just the src attribute.
+ * @param string $content The entire img tag.
+ * @return string The src (path).
+ */
+function _swimx_img_2_path( &$content ) {
+  //Pattern to find the img tags. Need the ? to make the match lazy, not greedy.
+  $pattern = '/<img.*?>/im';
+  $content = preg_replace_callback(
+      $pattern, 
+      function ($matches) {
+        //Got an image tag.
+        //Parse it with QueryPath
+        $src = htmlqp($matches[0], 'img')->attr('src');
+        return $src;
+      },
+      $content
+  );
+}
+
+/**
+ * Return a page with the right media queries and such, and a place to 
+ * put markup. MT otherwise.
+ */
+function _swimx_mt_peek() {
+  //Check perm.
+  if ( !user_access('peek content') ) {
+    return MENU_ACCESS_DENIED;
+  }
+  //Suppress the admin menu.
+  if ( module_exists('admin_menu') ) {
+    module_invoke('admin_menu', 'suppress');
+  }
+  //Return some MT content. The theme system will wrap this in stuff that
+  //the theme usually wraps content in.
+  return '<div id="swimx-mt-content-container"/>';
+}
+
+/**
+ * Return rendered HTML for preview.
+ */
+function _swimx_peek() {
+  //Convert the content to HTML.
+  $content = $_POST['content'];
+  //Convert content to pure ReST, so can call the ReST input filter.
+  $content = _swimx_ckhtml2rest($content);
+  //Convert the ReST content to HTML.
+  $html = _swimx_rest2html($content);
+  //Return rendered content. 
+  drupal_json_output( array( 
+        'status' => 'success',
+        'result' => $html,
+  ));
+  drupal_exit();  
+}
+
+/**
+ * Change error messages from Python's docutils into something that
+ * will look OK for a drupal_set_message(). Sample input:
+ * <string>:5: (ERROR/3) Error in "image" directive:
+ * 1 argument(s) required, 0 supplied.
+ * 
+ * .. image::
+ * 
+ * @param string $docutils_error_messages Error messages returned from Python.
+ * @return string Messages formatted for drupal_set_message().
+ */
+function _swimx_format_docutils_errors( $docutils_error_messages ) {
+  $drupal_message = str_replace('<string>', '', $docutils_error_messages);
+  $drupal_message = preg_replace('/\:[0-9]+\:\ /m', '', $drupal_message);
+  // :, then 1 or more digits, then :, then space.
+  $drupal_message = str_replace("\n", '<br>', $drupal_message);
+  $themed_message = theme(
+      'swim_format_error', 
+      array(
+        'message' => $drupal_message,
+        'help_url' => SWIM_FORMAT_ERROR_HELP_URL,
+      )
+  );
+  return $themed_message;
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function swimx_menu() {
+  $items = array();
+  //Return a page with no content, but all the stylesheets and other 
+  //themeing stuff in place. Used for previews.
+  $items['swimx-mt-peek'] = array(
+    'page callback' => '_swimx_mt_peek',
+    'access callback' => '_swimx_check_peek_perm',
+    'type' => MENU_CALLBACK,
+  );
+  //Return rendered content to show in peek dialog.
+  $items['swimx-peek'] = array(
+    'page callback' => '_swimx_peek',
+    'access callback' => '_swimx_check_peek_perm',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+function _swimx_check_peek_perm() {
+  if ( user_access( 'peek content' ) ) {
+    return TRUE;
+  }
+  //Check if other modules want to grant access.
+  $results = module_invoke_all('swimx_peek_access');
+  $access_granted = FALSE;
+  foreach( $results as $result ) {
+    if ( $result ) {
+      $access_granted = TRUE;
+      break;
+    }
+  }
+  return $access_granted;
+}
+
+function swimx_theme() {
+  global $base_url;
+  $info = array(
+    'obscurer' => array(
+      'template' => 'obscurer',
+      'variables' => array(
+        'obscurer_throbber_path' =>
+          $base_url . '/' . drupal_get_path('module', 'swimx') . '/',
+      ),
+    ),
+  );
+  return $info;
+}
+

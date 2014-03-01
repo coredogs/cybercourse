@@ -68,7 +68,7 @@ function _cybercourse_exercise_close_popup() {
  * and passes match data onto function that will do the insertion.
  */
 /**
- * Implements hook_cycomarkup_2_viewhtml().
+ * Implements hook_swim_betwixt_markup_2_html_alter().
  * 
  * Translate exercise CyCo markup in $content to its 
  * viewHTML equivalent. 
@@ -77,7 +77,7 @@ function _cybercourse_exercise_close_popup() {
  * 
  * See SWIM docs for more.
  */
-function cybercourse_exercise_cycomarkup_2_viewhtml_alter(&$content) {
+function cybercourse_exercise_swim_betwixt_markup_2_html_alter(&$content) {
   $regex = '/\[\[\[\s*cycoexercise\s*(\d+)\s*\]\]\]/';
       //[[[, optional whitespace, cycoexercise, optional whitespace, 
       //exercise number, optional whitespace, ]]]

@@ -3,7 +3,7 @@
  * @todo Create SWIM text format at install.
  */
 
-//URL (from root) of a page on how to fix errors repotredf by docutils (ReST).
+//URL (from root) of a page on how to fix errors reported by docutils (ReST).
 define( 'SWIM_FORMAT_ERROR_HELP_URL', 'swim-format-error-help' );
 
 /**

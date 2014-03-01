@@ -1,0 +1,47 @@
+<?php
+
+function swim_migrate_schema() {
+  $schema['swim_migrate'] = array(
+    'description' => 'Migrate from old to new SWIM format.',
+    'fields' => array(
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'content_type' => array(
+        'description' => 'The {node_type} of this node.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',        
+      ),
+      'summary_rest' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+      'summary_ck' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+      'main_rest' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+      'main_ck' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+    ),
+  );
+  return $schema;
+}
+
+function swim_migrate_uninstall() {
+  variable_del('swim_migrate_types_not_cached');
+  variable_del('swim_migrate_types_cached');
+}

@@ -1,0 +1,4 @@
+name = SWIM migrate
+description = Migrate data from old SWIM format to new.
+package = cybercourse
+core = 7.x

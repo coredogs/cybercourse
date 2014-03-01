@@ -45,14 +45,14 @@ function pseudents_menu() {
   $items['admin/config/pseudents/flush-cache'] = array(
     'title' => 'Flush pseudent cache',
     'description' => 'Rebuild the pseudent cache',
-    'page callback' => 'pseudents_fluch_cache',
+    'page callback' => 'pseudents_flush_cache',
     'access arguments' => array('administer pseudents'),
   );
   return $items;
 }
 
 
-function pseudents_fluch_cache() {
+function pseudents_flush_cache() {
   _pseudents_generate_ck_pseudent_table();
   drupal_set_message( t('Pseudent cache flushed.') );
   drupal_goto('admin/config/pseudents');
@@ -72,6 +72,16 @@ function pseudents_ckeditor_plugin() {
       'path' => drupal_get_path('module', 'pseudents') . '/plugin/',
     )
   );
+}
+
+function pseudents_swim_load_ck_plugins() {
+  global $base_url;
+  $result = array(
+    'name' => 'insert_pseudent',
+    'path' => $base_url . '/' . drupal_get_path('module', 'pseudents') 
+        . '/ck_plugins/insert_pseudent/',
+  );
+  return $result;
 }
 
 /**
@@ -242,21 +252,39 @@ function _pseudents_load_client_side_stuff() {
 }
 
 /**
- * Implements hook_edithtml_2_directive_alter().
+ * Implement hook_swim_add_client_stuff().
+ * 
+ * SWIM calls this to let modules load their own client-side stuff.
+ */
+function pseudents_swim_add_client_stuff() {
+  _pseudents_load_client_side_stuff();
+}
+
+
+/**
+ * Implements hook_swimx_ckhtml_2_directive_alter().
  * @param string $content Content to change.
  */
-function pseudents_edithtml_2_directive_alter( &$content ) {
+function pseudents_swimx_ckhtml_2_directive_alter( &$content ) {
   $regex = 
-      '/\<div class\=\"pseudent\"\>\s*'
-      .   '\<div class\=\"pseudent\-image\-container\"\>\s*'
-      .       '\<img.*?data\-pseudent\-id\=\"(.*?)\".*?\>\s*'
-      .       '\<div class\=\"pseudent-image-caption\"\>.*?' 
-      .       '\<\/div\>\s*'
-      .   '\<\/div\>\s*'
-      .   '\<div class=\"pseudent\-content\"\>(.*?)\<\/div\>\s*'
-      .'\<\/div\>/is';
-    //? forl azy eval.
-    //s option to include new lines.
+      '/\<div class\=\"pseudent\".*?data\-pseudent\-id\=\"(.*?)\"*.\>\s*'
+      .  '\<div class\=\"pseudent\-image\-container\"\>\s*'
+      .    '\<img.*?\>\s*'
+      .    '\<div class\=\"pseudent-image-caption\"\>.*?\<\/div\>\s*'
+      .  '\<\/div\>\s*'
+      .  '\<div class=\"pseudent\-content\"\>(.*?)\<\/div\>\s*'
+      . '\<\/div\>/is';
+      
+//      '/\<div class\=\"pseudent\"\>\s*'
+//      .   '\<div class\=\"pseudent\-image\-container\"\>\s*'
+//      .       '\<img.*?data\-pseudent\-id\=\"(.*?)\".*?\>\s*'
+//      .       '\<div class\=\"pseudent-image-caption\"\>.*?' 
+//      .       '\<\/div\>\s*'
+//      .   '\<\/div\>\s*'
+//      .   '\<div class=\"pseudent\-content\"\>(.*?)\<\/div\>\s*'
+//      .'\<\/div\>/is';
+    //? for lazy eval.
+    //s option to include new lines in whitespace matches.
   $content
     = preg_replace_callback($regex, '_pseudents_make_directive_replacements', $content);
 }
@@ -274,7 +302,7 @@ function _pseudents_make_directive_replacements($matches) {
 }
 
 /**
- * Implements hook_cycomarkup_2_viewhtml().
+ * Implements swim_betwixt_markup_2_html().
  * 
  * Translate pseudent CyCo markup in $content to its 
  * viewHTML equivalent. 
@@ -283,7 +311,7 @@ function _pseudents_make_directive_replacements($matches) {
  * 
  * See SWIM docs for more.
  */
-function pseudents_cycomarkup_2_viewhtml_alter(&$content) {
+function pseudents_swim_betwixt_markup_2_html_alter(&$content) {
   $regex = 
       '/\[\[\[cycopseudent\s*(\d*?)\|\|\|(.*?)\]\]\]/is';
   //? is for lazy match.

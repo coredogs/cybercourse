@@ -2,36 +2,74 @@
 Styles for the pseudents module.
 */
 
+#pseudent-grid-container {
+  padding: 0.5em;
+  background-color: #eee;
+  vertical-align: top;
+  text-align: center;
+  border: 1px solid #888;
+  float: left;
+}
+
+#pseudent-grid-container .pseudent-cell {
+  width: 100px;
+  display: inline-block;
+  float:left;
+  height: 100px;
+  text-align: center;
+  padding: 1em;
+  border: #e4e4e4 solid 1px;
+}
+
+#pseudent-grid-container .pseudent-cell .pseudent-preview-title {
+  text-align: center;
+}
+
+.pseudent-cell:hover {
+  cursor: pointer;
+  background-color: #ddd;
+}
+
+.pseudent-cell.selected {
+  background-color: #ffffe0;
+}
+
+.pseudent-cell img {
+  max-width: 80px;
+  max-height: 80px;
+  display: inline;
+}
+
 /*table#pseudent-choose-table th,*/
-table#pseudent-choose-table td {
+/*table#pseudent-choose-table td {
   padding: 0.5em;
   vertical-align: middle;
   background-color: #eee;
   vertical-align: top;
   text-align: center;
   border: 1px solid #888;
-}
+}*/
 
-table#pseudent-choose-table td .pseudent-preview-title {
+/*table#pseudent-choose-table td .pseudent-preview-title {
   font-size: 130%;
 }
 
 table#pseudent-choose-table td img {
   max-width: 80px;
-}
+}*/
 
 /*table#pseudent-choose-table tr {
   background-color: #eee;
 }*/
 
-table#pseudent-choose-table td:hover {
+/*table#pseudent-choose-table td:hover {
   cursor: pointer;
   background-color: #ddd;
 }
 
 table#pseudent-choose-table td.selected {
   background-color: #ffffe0;
-}
+}*/
 
 
 /* For the admin table. */

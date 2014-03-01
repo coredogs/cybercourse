@@ -38,7 +38,8 @@ CKEDITOR.plugins.add('authornote', {
       label: 'Insert an author note',
       command: 'authornote',
       state: CKEDITOR.TRISTATE_ENABLED,
-      icon: this.path + 'icons/authornote.png'
+      icon: this.path + 'icons/authornote.png',
+      toolbar: 'others'
     });
   }
 });
