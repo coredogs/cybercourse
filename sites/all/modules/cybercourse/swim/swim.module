@@ -1,5 +1,8 @@
 <?php
 
+//URL (from root) of a page on how to fix errors reported by docutils (ReST).
+define( 'SWIM_FORMAT_ERROR_HELP_URL', 'swim-format-error-help' );
+
 
 /**
  * Implements hook_help().
