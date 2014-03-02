@@ -8,12 +8,12 @@
       icons: 'peek',
       init: function( editor ) {
         //Check peek permission.
-        if ( Drupal.settings.swimx.can_peek != "yes" ) {
+        if ( Drupal.settings.swim.can_peek != "yes" ) {
           return;
         }
         editor.addCommand( 'peek', {
           exec: function( editor ) {
-            Drupal.behaviors.swimx.peekButtonClicked( editor );
+            Drupal.behaviors.swim.peekButtonClicked( editor );
           }
         });
         editor.ui.addButton( 'Peek', {

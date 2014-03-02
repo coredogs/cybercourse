@@ -1,99 +1,118 @@
 (function ($) {
   
-  var swimDoneOnce = false;
   Drupal.behaviors.swim = {
     attach: function() {
       //Setup code to run after CKEDITOR instances have been created.
       CKEDITOR.on("instanceReady", function(evnt) {
         var editor = evnt.editor;
         editor.document.appendStyleSheet( Drupal.settings.swim.editing_stylesheet );
-        //Size the editor.
-        if ( editor.name == "edit-body-und-0-value" ) {
-          editor.resize('100%', '500');
-          //$(window).height() * 0.5
-        }
-        if ( editor.name == "edit-body-und-0-summary" ) {
-          editor.resize('100%', '120');
-        }
-//        editor.ui.space( 'contents' )
-//            .setStyle( 'height', $(window).height() * 0.5 + 'px' )
-//            .setStyle( 'width', '100%');
-        //Only setup peek for body, not summary.
-        if ( editor.name == 'edit-body-und-0-value' ) {
-          Drupal.behaviors.swim.swimSetup(editor);
+//        //Size the editor.
+//        if ( editor.name == "edit-body-und-0-value" ) {
+//          editor.resize('100%', '500');
+//        }
+//        if ( editor.name == "edit-body-und-0-summary" ) {
+//          editor.resize('100%', '120');
+//        }
+        Drupal.behaviors.swim.swimSetup(editor);
+        //Add a class for customization of the body.
+        $(editor.document.$.body).addClass("swim_body");
+        
+        //Flag the editor as initialized.
+        $( "#" + editor.id ).attr("data-swim-init", "yes");
+      });
+      //Check that the config exists.
+      if ( ! Drupal.swimCkConfig ) {
+        console.log("Missing config");
+        return;
+      }
+      //Add plugins.
+//      CKEDITOR.plugins.addExternal( 'rest_help', 
+//      '/sites/all/modules/cybercourse/swim/ck_plugins/rest_help/' );
+      if ( Drupal.settings.swim.extraPlugins.name ) {
+        $.each( Drupal.settings.swim.extraPlugins.name, function(index, pluginName) {
+          CKEDITOR.plugins.addExternal( 
+            pluginName, 
+            Drupal.settings.swim.extraPlugins.path[index] 
+          ); //End addExternal.
+        } ); //End each.
+      } //End if there are extraPlugins.
+      //Replace the textareas with CKEditors.
+      //This will trigger instanceReady above.
+      var textAreas = $(".swim-editor");
+      $(textAreas).each(function(index, element) {
+        //Make sure element has not already been initialized.
+        if ( ! $(element).attr("data-swim-init") ) {
+          CKEDITOR.replace(element, Drupal.swimCkConfig);
         }
       });
-    },
+    }, //End attach.
     swimSetup: function (editor) {    
-      if ( swimDoneOnce ) {
-        return;
-      }
-      swimDoneOnce = true;
       this.setupBeforeUnload(editor);
-      if ( ! editor.commands.peek ) {
-        //Skip the rest if there is no peek command. The command is only
-        //created if the user has Drupal's permission to peek.
-        return;
+      if ( editor.commands.peek ) {
+        this.swimPeekSetup(editor);
       }
+    },
+    swimPeekSetup: function(editor) {  
       //Disable peek button until ready.
       editor.commands.peek.disable();
       //Compute the URL for the iframe that simulates the device.
       var iframeSrc = Drupal.settings.swim.base_url + "/swim-mt-peek";      
       //Make peek toolbar.
-      var iconPath = Drupal.settings.swim.icon_path;
+      var iconPath = Drupal.settings.swim.peekIconsPath;
+      //Define the toolbar for this instance. Include an id.
       var toolbarHtml
-      = "<div id='swim-peek-toolbar' class='cke_top'>"
+      = "<div id='" + editor.id + "-toolbar' class='swim-peek-toolbar cke_top'>"
       +   "<span class='cke_toolgroup' role='presentation'>"
-      +     "<a id='swim-peek-as-desktop' "
-      +        "class='cke_button cke_button_off swim-button'><img "
+      +     "<a id='" + editor.id + "-swim-peek-as-desktop' "
+      +        "class='swim-peek-as-desktop cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "desktop.png' title='Laptop'>"
       +     "</a>"
-      +     "<a id='swim-peek-as-tablet' "
-      +        "class='cke_button cke_button_off swim-button'><img "
+      +     "<a id='" + editor.id + "-swim-peek-as-tablet' "
+      +        "class='swim-peek-as-tablet cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "tablet.png' title='Tablet'>"
       +     "</a>"
-      +     "<a id='swim-peek-as-phone' "
-      +        "class='cke_button cke_button_off swim-button'><img "
+      +     "<a id='" + editor.id + "-swim-peek-as-phone' "
+      +        "class='swim-peek-as-phone cke_button cke_button_off swim-button'><img "
       +        "src='" + iconPath + "phone.png' title='Phone'>"
       +     "</a>"
       +   "</span>"
-      +   "<span class='cke_toolgroup' role='presentation'>"
-      +     "<a id='swim-peek-refresh' "
-      +        "class='cke_button cke_button_off swim-button'><img "
-      +        "src='" + iconPath + "refresh.png' title='Refresh'>"
-      +     "</a>"
-      +   "</span>"
+//      +   "<span class='cke_toolgroup' role='presentation'>"
+//      +     "<a id='" + editor.id + "-refresh' "
+//      +        "class='swim-peek-refresh cke_button cke_button_off swim-button'><img "
+//      +        "src='" + iconPath + "refresh.png' title='Refresh'>"
+//      +     "</a>"
+//      +   "</span>"
       + "</div>";
       var peekHtml = 
-        "<div id='swim-peek-outer'>" //Everything in the dialog.
+        "<div id='" + editor.id + "-swim-peek-outer' class='swim-peek-outer'>" //Everything in the dialog.
       +   toolbarHtml
-      +   "<div id='swim-peek-inner'>"
+      +   "<div class='swim-peek-inner'>"
             //The device.
-      +     "<iframe id='swim-peek-device'></iframe>"
+      +     "<iframe id='" + editor.id + "-swim-peek-device' class='swim-peek-device'></iframe>"
       +   "</div>" //End inner.
       + "</div>"; //End outer.
       $("body").append( peekHtml );
       //Hide what was just added.
-      $("#swim-peek-outer").hide();
-      $("#swim-peek-device").attr("src", iframeSrc);
-      var thisythis = this;
-      var loadedAlready = false;
-      $("#swim-peek-device").load(function() {
-        if ( ! loadedAlready ) {
-          //Do this only once. Sometimes there is more than one load event.
+      $("#" + editor.id + "-swim-peek-outer").hide();
+      $("#" + editor.id + "-swim-peek-device").attr("src", iframeSrc);
+      this.loadedAlready = false;
+      var thisythis = this; //For closure.
+      $("#" + editor.id + "-swim-peek-device").load(function() {
+        //Do this only once. Sometimes there is more than one load event?
+        if ( ! thisythis.loadedAlready ) {
           thisythis.continueInit(editor);
-          loadedAlready = true;
         }
       });
     }, //End attach.
     continueInit: function(editor) {
       //Make a clone of the HTML to use as a template.
+      //KRM - Do this once for all editors on the page?
+      //      They should have the same template HTML. 
       this.templateBodyHtml 
-        = $("#swim-peek-device").contents().children("html").children("body")
-          .clone();
-              //this.prepareIframeContent();
+        = $("#" + editor.id + "-swim-peek-device").contents()
+          .children("html").children("body").clone();
       //Prep the dialog.
-      $( "#swim-peek-outer" )
+      $( "#" + editor.id + "-swim-peek-outer" )
         .dialog({
           title: 'Peek',
           autoOpen : false,
@@ -101,62 +120,56 @@
         });
       //Set up events on the peek buttons.
       //Now the peek processing code.
+      //KRM - do this once for all editors on the page?
       var swimBehavior = this; //Convenience for closures.
-      $("#swim-peek-as-desktop").click( function() {
-        swimBehavior.deviceButtonClicked("desktop");
+      $( "#" + editor.id + "-swim-peek-as-desktop").click( function() {
+        swimBehavior.deviceButtonClicked(editor, "desktop");
       } );
-      $("#swim-peek-as-tablet").click( function() {
-        swimBehavior.deviceButtonClicked("tablet");
+      $("#" + editor.id + "-swim-peek-as-tablet").click( function() {
+        swimBehavior.deviceButtonClicked(editor, "tablet");
       } );
-      $("#swim-peek-as-phone").click( function() {
-        swimBehavior.deviceButtonClicked("phone");
+      $("#" + editor.id + "-swim-peek-as-phone").click( function() {
+        swimBehavior.deviceButtonClicked(editor, "phone");
       } );
       //Set up the refresh button.
-      $("#swim-peek-refresh").click( function() {
-        swimBehavior.showPeek();
+      $("#" + editor.id + "-peek-refresh").click( function() {
+        swimBehavior.showPeek(editor);
       } );
       //Init toolbar display.
-      this.selectedPeek = "desktop";
-      this.showSelectedButton();
-      
-//      $.each(CKEDITOR.instances, function(index, instance) {
-        //Turn on the CKEditor peek button, so show all is ready.
-        editor.commands.peek.enable();
-        //Add styles for editing with CK.
-        editor.document.appendStyleSheet(Drupal.settings.swim.editing_stylesheet);
-//      });
+      editor.selectedPeek = "desktop";
+      this.showSelectedButton( editor );
+      //Enable the peek function now that it is setup.
+      editor.commands.peek.enable();
+      //Add styles for editing with CK.
+//      editor.document.appendStyleSheet(Drupal.settings.swim.editing_stylesheet);
     }, //End continueInit.
-      /**
-       * Watch the plugin's peek button.
-       */
+    /**
+    * Watch the plugin's peek button.
+    */
     peekButtonClicked : function ( editor ) {
         //Add an obscuring thing.
-        var obscurer = 
-  "<h1 style='margin:0;padding:0;background-color:white;position:absolute;"
-  +   "width:100%;height:100%;top:0;left:0;'>"
-  + "Working..."
-  + "</h1>";
-        $("#swim-peek-device").contents().find("body").first()
+        var obscurer = Drupal.settings.swim.obscurer;
+        $("#" + editor.id + "-swim-peek-device").contents().find("body").first()
                 .html( obscurer );
-        if ( ! $( "#swim-peek-outer" ).dialog( "isOpen" ) ) {
-          $( "#swim-peek-outer" ).dialog( "open" );
+        if ( ! $( "#" + editor.id + "-swim-peek-outer" ).dialog( "isOpen" ) ) {
+          $( "#" + editor.id + "-swim-peek-outer" ).dialog( "open" );
         }
         //Show the current peek.
         Drupal.behaviors.swim.showPeek( editor );
-      },
-    deviceButtonClicked : function( buttonClicked ) {
-      this.selectedPeek = buttonClicked;
-      this.showPeek();
-      this.showSelectedButton();
+    },
+    deviceButtonClicked : function( editor, buttonClicked ) {
+      editor.selectedPeek = buttonClicked; //Right? Should be string? See next fn.
+      this.showPeek( editor );
+      this.showSelectedButton( editor );
     },
     /**
      * Adjust toolbar to show whichever button is pressed.
      */
-    showSelectedButton : function() {
-      $("#swim-peek-as-desktop").removeClass("cke_button_on").addClass("cke_button_off");
-      $("#swim-peek-as-tablet").removeClass("cke_button_on").addClass("cke_button_off");
-      $("#swim-peek-as-phone").removeClass("cke_button_on").addClass("cke_button_off");
-      $( "#swim-peek-as-" + this.selectedPeek )
+    showSelectedButton : function( editor ) {
+      $("#" + editor.id + "-swim-peek-as-desktop").removeClass("cke_button_on").addClass("cke_button_off");
+      $("#" + editor.id + "-swim-peek-as-tablet").removeClass("cke_button_on").addClass("cke_button_off");
+      $("#" + editor.id + "-swim-peek-as-phone").removeClass("cke_button_on").addClass("cke_button_off");
+      $( "#" + editor.id + "-swim-peek-as-" + editor.selectedPeek )
           .removeClass("cke_button_off").addClass("cke_button_on");
     },
     /**
@@ -164,83 +177,95 @@
      */
     showPeek : function( editor ) {
       //Position edges of device below toolbar.
-      var toolbarHeight = $("#swim-peek-toolbar").outerHeight();
-      $("#swim-peek-device").css("top", toolbarHeight );
+      var toolbarHeight = $("#" + editor.id + "-toolbar").outerHeight();
+      $("#" + editor.id + "-swim-peek-device").css("top", toolbarHeight );
       //Set up the peek to mimic the device.
-      $( "#swim-peek-device" ).css("width", "").css("height", "");
-      $( "#swim-peek-device" )
+      $( "#" + editor.id + "-swim-peek-device" ).css("width", "").css("height", "");
+      $( "#" + editor.id + "-swim-peek-device" )
         .removeClass("swim-peek-device-desktop "
             + "swim-peek-device-tablet "
             + "swim-peek-device-phone")
-        .addClass("swim-peek-device-" + this.selectedPeek);
-      var toolbarHeight = $('#swim-peek-toolbar').outerHeight();
-      var dialogTitleHeight = $(".ui-dialog-titlebar").outerHeight();
-      if ( this.selectedPeek == 'desktop') {
+        .addClass("swim-peek-device-" + editor.selectedPeek);
+      var toolbarHeight = $("#" + editor.id + "-toolbar").outerHeight();
+      var dialogTitleHeight = $(".ui-dialog-titlebar:first").outerHeight(); 
+      //KRM - is this right? Probably - height the same for all editors.
+      if ( editor.selectedPeek == 'desktop') {
         //Base size of dialog on what sizing the user has done. 
         var h = $(window).height() * 0.75;
         var w = $(window).width() * 0.75;
-        $( "#swim-peek-device" ).css("height", h).css("width", w);
-        $( "#swim-peek-outer" )
+        $( "#" + editor.id + "-swim-peek-device" ).css("height", h).css("width", w);
+        $( "#" + editor.id + "-swim-peek-outer" )
             .dialog( "option", "width", w + 40 )
             .dialog( "option", "height", 
               h + toolbarHeight + dialogTitleHeight + 40 
             )
             .dialog( "option", "title", "Peek (Desktop/laptop)");
       }
-      else if (    this.selectedPeek == 'phone' 
-                || this.selectedPeek == 'tablet' ) {
+      else if (    editor.selectedPeek == 'phone' 
+                || editor.selectedPeek == 'tablet' ) {
         //Base size of dialog on device size. 
-        $( "#swim-peek-outer" )
+        $( "#" + editor.id + "-swim-peek-outer" )
             .dialog( "option", "width", 
-              $('#swim-peek-device').outerWidth() + 20
+              $("#" + editor.id + "-swim-peek-device").outerWidth() + 20
             )
             .dialog( "option", "height", 
-                $("#swim-peek-device").outerHeight() 
+                $("#" + editor.id + "-swim-peek-device").outerHeight() 
               + toolbarHeight + dialogTitleHeight + 40
             )
             .dialog( "option", "title", 
-                (this.selectedPeek == 'phone')
+                (editor.selectedPeek == 'phone')
                 ? "Peek (iPhone 1 to 4S, landscape)"
                 : "Peek (iPad 1 and 2, portrait)"
         );
       }
       else {
-        throw "showpeek: bad selectedpeek: *" + this.selectedPeek + "*";
+        throw "showpeek: bad selectedpeek: *" + editor.selectedPeek + "*";
       }
-      //Get content from server.
-//      var editor = CKEDITOR.instances["edit-body-und-0-value"];
+      //Get editor's current content.
       var markup = editor.getData();
-      var swimBehavior = this; //Convenience for closures.
-      $.ajax({
-        async: false,
-        type: "POST",
-        url: Drupal.settings.basePath + 'swim-peek',
-        data: {
-          'content': markup
-        },
-        success: function(data, textStatus, jqXHR) {
-          if ( data.status == 'success' ) {
-            //Restore body template content.
-            //Get the template code.
-            var templateCode = swimBehavior.templateBodyHtml.clone();
-            //Erase contents of the MT container, if any.
-            templateCode = $(templateCode).find("#cyco-mt-content-container").first().html('');
-            //Insert the MT template code into the preview iframe.
-            $("#swim-peek-device").contents().find("body").first()
-                .html( templateCode );
-            //Insert new content.
-            $("#swim-peek-device").contents().find("body").find("#cyco-mt-content-container")
-                .append(data.result);
+      //Get rendering from server.
+      var promise = $.ajax(
+        Drupal.settings.basePath + 'swim-peek',
+        {
+          type: "POST",
+          data: {
+            'content': markup
           }
-          else {
-            throw "showPeek: Ajax preview call failed.";
-          } // end data.status not success.
-        }, //End success function.
-        fail: function(jqXHR, textStatus) {
-          throw new Exception( "Ajax preview request failed: " + textStatus );
-        }
       });
+      //Keep a ref to the editor this applies to.
+      promise.editor = editor;
+      var thisRef = this;
+      promise.done( function (data) {
+        thisRef.peekDataReturned(data, promise.editor);
+      });
+      promise.fail( this.peekFailed );
+      promise.always( this.peekFinished );
+//      this.showThrobber(, "Loading");
     }, // end showpeek.
+    peekDataReturned : function( data, editor ) {
+      if ( data.status == 'success' ) {
+        //Restore body template content.
+        //Get the template code.
+        var templateCode = this.templateBodyHtml.clone();
+        //Erase contents of the MT container, if any.
+        templateCode = $(templateCode).find("#swim-mt-content-container").first().html('');
+        //Insert the MT template code into the preview iframe.
+        $("#" + editor.id + "-swim-peek-device").contents().find("body").first()
+            .html( templateCode );
+        //Insert new content.
+        $("#" + editor.id + "-swim-peek-device").contents().find("body").find("#swim-mt-content-container")
+            .append(data.result);
+      }
+      else {
+        throw "showPeek: Ajax preview call failed.";
+      } // end data.status not success.      
+    },
+    peekFailed : function( textStatus ) {
+      throw new Exception( "Ajax preview request failed: " + textStatus );
+    },
+    peekFinished: function() {
+      
+    },
     showThrobber : function( afterThisElement, message ) {
       if ( ! message ) {
         message = "";
@@ -256,11 +281,7 @@
     },
     setupBeforeUnload : function(editor) {
       //Store starting values of content fields.
-      this.initialBody =  editor.document.getBody().getText();
-//      if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
-//        this.initialSummary = 
-//            CKEDITOR.instances['edit-body-und-0-summary'].document.getBody().getText();
-//      }
+      //this.initialBody =  editor.document.getBody().getText();
       //Convenience var for closures.
       var swimRef = this;
       //Flag showing whether unload code should check for changes.
@@ -275,17 +296,10 @@
         if ( swimRef.checkForChanges ) {
           var contentChanged = false;
           //Body changed?
-//          if ( CKEDITOR.instances['edit-body-und-0-value'].document.getBody().getText()
-          if ( editor.document.getBody().getText() != swimRef.initialBody ) {
+          if ( editor.checkDirty() ) {
+//          if ( editor.document.getBody().getText() != swimRef.initialBody ) {
             contentChanged = true;
           }
-//          //If summary exists, did it change?
-//          if ( CKEDITOR.instances['edit-body-und-0-summary'] ) {
-//            if ( CKEDITOR.instances['edit-body-und-0-summary'].document.getBody().getText()
-//                 != swimRef.initialSummary ) {
-//              contentChanged = true;
-//            }
-//          }
           if ( contentChanged ) {
             return "There are unsaved changes. Are you sure you want to leave?";
           }

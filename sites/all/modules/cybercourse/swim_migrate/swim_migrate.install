@@ -14,7 +14,7 @@ function swim_migrate_schema() {
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'default' => '',        
+        'default' => '',
       ),
       'summary_rest' => array(
         'type' => 'text',
@@ -44,4 +44,6 @@ function swim_migrate_schema() {
 function swim_migrate_uninstall() {
   variable_del('swim_migrate_types_not_cached');
   variable_del('swim_migrate_types_cached');
+  variable_del('swim_migrate_types_not_restored');
+  variable_del('swim_migrate_types_restored');
 }

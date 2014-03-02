@@ -8,14 +8,14 @@
 
 Drupal.behaviors.textSummary = {
   attach: function (context, settings) {
-    $('.swimx-editor-summary', context).once('swimx-editor-summary', function () {
-      var $widget = $(this).closest('div.field-type-swimx-with-summary');
-      var $summaries = $widget.find('div.swimx-summary-wrapper');
+    $('.swim-editor-summary', context).once('swim-editor-summary', function () {
+      var $widget = $(this).closest('div.field-type-swim-with-summary');
+      var $summaries = $widget.find('div.swim-summary-wrapper');
 
-      $summaries.once('swimx-summary-wrapper').each(function(index) {
+      $summaries.once('swim-summary-wrapper').each(function(index) {
         var $summary = $(this);
         var $summaryLabel = $summary.find('label');
-        var $full = $widget.find('.swimx-editor-main').eq(index).closest('.form-item');
+        var $full = $widget.find('.swim-editor-main').eq(index).closest('.form-item');
         var $fullLabel = $full.find('label');
 
         // Create a placeholder label when the field cardinality is
@@ -39,7 +39,7 @@ Drupal.behaviors.textSummary = {
         ).appendTo($summaryLabel);
 
         // If no summary is set, hide the summary field.
-        if ($(this).find('.swimx-editor-summary').val() == '') {
+        if ($(this).find('.swim-editor-summary').val() == '') {
           $link.click();
         }
         return;

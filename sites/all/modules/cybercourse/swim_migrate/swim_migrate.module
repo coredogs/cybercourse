@@ -30,7 +30,7 @@ function swim_migrate_menu() {
   //Copy cache to final destination.
   $items['admin/swim-migrate/init-content-type-2-final-list'] = array(
     'title' => 'Initialize list of content types to copy from cahce to final',
-    'page callback' => 'swim_migrate_init_list_content_types_cache_to_final',
+    'page callback' => '_sm_init_list_content_types_cache_to_final',
     'access arguments' => array('administer content types'),
   );
   $items['admin/swim-migrate/choose-content-type-to-final'] = array(
@@ -38,9 +38,9 @@ function swim_migrate_menu() {
     'page callback' => 'swim_migrate_choose_content_type_cache_to_final',
     'access arguments' => array('administer content types'),
   );
-  $items['admin/swim-migrate/cache-to-final-content-type/%'] = array(
-    'title' => 'Copy cache of content type to final',
-    'page callback' => 'swim_migrate_cache_to_final_content_type',
+  $items['admin/swim-migrate/restore-content-type/%'] = array(
+    'title' => 'Restore content type',
+    'page callback' => 'swim_migrate_restore_content_type',
     'page arguments' => array(3),
     'access arguments' => array('administer content types'),
   );
@@ -54,8 +54,11 @@ function swim_migrate_main_menu() {
       .   "Initialize list of content types to cache</a></p>"
       . "<p><a href='/admin/swim-migrate/choose-content-type-to-cache'>"
       .   "Choose a content type to cache</a></p>"
-      . "<p><a href='/admin/swim-migrate/transfer-from-temp-2-final'>Final transfer</a></p>"
-      . "";
+      . "<p></p>"
+      . "<p><a href='/admin/swim-migrate/init-content-type-2-final-list'>"
+      .   "Initialize list of content types to restore</a></p>"
+      . "<p><a href='/admin/swim-migrate/choose-content-type-to-final'>"
+      .   "Choose a content type to restore</a></p>";
   return $result;
 }
 
@@ -159,5 +162,142 @@ function swim_migrate_cache_content_type($type) {
   variable_set('swim_migrate_types_cached', $list);
   
   
+  return $output;
+}
+
+
+function _sm_init_list_content_types_cache_to_final() {
+
+//  $node = node_load(123, NULL, TRUE);
+//  $node->field_body = array(
+//    LANGUAGE_NONE => array(
+//      array(
+//        'pure_rest' => 'main thing *dog*',
+//        'pure_rest_summary' => 'summary thing *cat*',
+//        'wysiwyg_rep' => 'main thing <em>dog</em>',
+//        'wysiwyg_rep_summary' => 'summary thing <em>cat</em>',
+//      ),
+//    )
+//  );
+//  field_attach_update('node', $node);  
+//  return 'DOGZ';
+  
+  
+  define( 'FIELD_2_CHECK', 'field_body' );
+  $output = '';
+  //Get all content type names listed in cache table.
+  $content_type_names = _sm_fetch_content_type_names();
+  //For each one, check that the content type has a field called FIELD_2_CHECK.
+  $missing_list = '';
+  foreach ( $content_type_names as $content_type_name ) {
+    if ( ! _sm_cont_type_has_field( $content_type_name, FIELD_2_CHECK ) ) {
+      $missing_list .= ' ' . $content_type_name;
+    }
+  }
+  if ( $missing_list ) {
+    $output .= '<p>These content types have no field with a machine name of '
+        . FIELD_2_CHECK . ': ' . $missing_list . '</p>';
+  }
+  else {
+    //Set up variables to show which content types have been restored, 
+    //and which have not.
+    $list = implode(',', $content_type_names);
+    variable_set('swim_migrate_types_not_restored', $list);
+    variable_set('swim_migrate_types_restored', '');
+  }
+  //Show done link.
+  $output .= '<p><a href="/admin/swim-migrate">back</a></p>';
+  return $output;
+}
+
+function _sm_fetch_content_type_names() {
+  //Get all content type names listed in cache table.
+  $content_type_names = array();
+  $result = db_query( 'select distinct content_type from swim_migrate' );
+  foreach( $result as $row ) {
+    $content_type_names[] = $row->content_type;
+  }
+  return $content_type_names;
+}
+
+//Does the given content type have a field with the given name?
+function _sm_cont_type_has_field( $content_type_name, $field_name ) {
+  $fields = field_info_instances('node', $content_type_name);
+  return isset( $fields[ $field_name ] );
+}
+
+function swim_migrate_choose_content_type_cache_to_final() {
+  $list_unrestored = variable_get('swim_migrate_types_not_restored');
+  $list_restored = variable_get('swim_migrate_types_restored');
+  $types_unrestored = array_filter(explode(',', $list_unrestored));
+  $types_restored = array_filter(explode(',', $list_restored));
+  $result = '';
+  $result .= "<h2>Unprocessed (not restored)</h2>\n<ul>\n";
+  foreach ($types_unrestored as $type) {
+    $link = '<a href="/admin/swim-migrate/restore-content-type/' . $type . '">'
+        . $type . '</a>';
+    $result .= '  <li>' . $link . "</li>\n";
+  }
+  $result .= "</ul>\n";
+  $result .= "<h2>Processed</h2>\n<ul>\n";
+  foreach ($types_restored as $type) {
+    $result .= '  <li>' . $type . "</li>\n";
+  }
+  $result .= "</ul>\n";
+  $result .= '<p><a href="/admin/swim-migrate">back</a></p>';
+  return $result;
+}
+
+function swim_migrate_restore_content_type( $content_type_name ) {
+  define( 'FIELD_2_RESTORE_TO', 'field_body' );
+  $output = '';
+  //Fetch records of the content type from cache table.
+  
+  $output .= '<ul>';
+  //For each record...
+  $query = 'select * from swim_migrate where content_type=\'' 
+      . $content_type_name . '\'';
+  $result = db_query( $query );
+  foreach( $result as $row ) {
+    $nid = $row->nid;
+    //Load the node.
+    $node = node_load($nid, NULL, TRUE);
+    //Update field data.
+    $node->field_body = array(
+      LANGUAGE_NONE => array(
+        array(
+          'pure_rest' => $row->main_rest,
+          'pure_rest_summary' => $row->summary_rest,
+          'wysiwyg_rep' => $row->main_ck,
+          'wysiwyg_rep_summary' => $row->summary_ck,
+        ),
+      )
+    );
+    //Save the field data.
+    field_attach_update('node', $node);    
+    //Output nid.
+    $output .= '<li>' . $nid . '</li>';
+  }
+  
+  $output .= '</ul>';
+  //Output back link.
+  $output .= '<p><a href="/admin/swim-migrate/choose-content-type-to-final">back</a></p>';  
+
+  //Show what is processed.
+  $list_unrestored = variable_get('swim_migrate_types_not_restored');
+  $list_restored = variable_get('swim_migrate_types_restored');
+  $types_unrestored = explode(',', $list_unrestored);
+  $types_restored = explode(',', $list_restored);
+  foreach( $types_unrestored as $index => $type_unrestored ) {
+    if ( $type_unrestored == $content_type_name ) {
+      unset( $types_unrestored[$index] );
+    }
+  }
+  $types_restored[] = $content_type_name;
+  $list = implode(',', $types_unrestored);
+  variable_set('swim_migrate_types_not_restored', $list);
+  $list = implode(',', $types_restored);
+  variable_set('swim_migrate_types_restored', $list);
+
   return $output;
 }

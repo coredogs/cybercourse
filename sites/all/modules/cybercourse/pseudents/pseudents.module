@@ -262,10 +262,10 @@ function pseudents_swim_add_client_stuff() {
 
 
 /**
- * Implements hook_swimx_ckhtml_2_directive_alter().
+ * Implements hook_swim_ckhtml_2_directive_alter().
  * @param string $content Content to change.
  */
-function pseudents_swimx_ckhtml_2_directive_alter( &$content ) {
+function pseudents_swim_ckhtml_2_directive_alter( &$content ) {
   $regex = 
       '/\<div class\=\"pseudent\".*?data\-pseudent\-id\=\"(.*?)\"*.\>\s*'
       .  '\<div class\=\"pseudent\-image\-container\"\>\s*'

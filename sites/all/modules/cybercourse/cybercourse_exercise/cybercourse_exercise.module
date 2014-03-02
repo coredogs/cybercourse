@@ -175,10 +175,9 @@ function _cybercourse_exercise_make_replacements($matches) {
 //    $view['body'][0]['#markup'] .= $link;
 //    $render = drupal_render($view);
     
-    //Can't use custom view that I had planned to, because Drupal is
-    //fucked up there.
-    
-    $body_content = $exercise_node->body[LANGUAGE_NONE][0]['safe_value'];
+    $body_content = swim_rest2html(
+        $exercise_node->field_body[LANGUAGE_NONE][0]['pure_rest']
+    );
     
     $body_content = 
   '<div class="inserted-exercise">'

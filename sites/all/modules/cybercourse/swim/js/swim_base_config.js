@@ -1,7 +1,7 @@
 /**
  *  Base config file for CKEditor instances. 
  */
-Drupal.swimxCkConfig = {
+Drupal.swimCkConfig = {
   basicEntities : true, //Entity encode <, >.
   disableNativeSpellChecker : false,
   //What the Enter key does.

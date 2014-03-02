@@ -1,16 +1,17 @@
 /* 
-Styles for doing editing with SWIM.
+Styles for doing editing with swim.
 */
 
 @import url("ck_changes.css");
 
+
 /* Move field after the form down a bit. */
-#edit-field-keywords {
+/*#edit-field-keywords {
   clear: left;
   padding-top: 1em;
-}
+}*/
 
-#swim-peek-outer {
+.ui-dialog .ui-dialog-content.swim-peek-outer {
   margin:0;
   padding:0;
   width: 100%;
@@ -18,7 +19,7 @@ Styles for doing editing with SWIM.
   overflow: hidden;
 }
 
-#swim-peek-toolbar {
+.swim-peek-toolbar {
   margin: 0;
   padding: 5px;
   background-color: grey;
@@ -28,11 +29,11 @@ Styles for doing editing with SWIM.
   /*height: 30px;*/
 }
 
-#swim-peek-toolbar img {
+.swim-peek-toolbar img {
   vertical-align: inherit;
 }
 
-#swim-peek-inner {
+.swim-peek-inner {
   overflow:auto;
   width: 100%;
   height: 100%;
@@ -42,7 +43,7 @@ Styles for doing editing with SWIM.
 /* Styles for id=swim-peek-device. Black border for portables,
 MT for desktop. */
 
-#swim-peek-device {
+.swim-peek-device {
   padding: 5px;
   margin: 0;
   overflow: auto;

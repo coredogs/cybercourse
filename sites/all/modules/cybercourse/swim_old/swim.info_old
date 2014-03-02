@@ -1,0 +1,13 @@
+name = SWIM
+description = Creates a Show-What-I-Mean (SWIM) editor.
+package = CyberCourse
+core = 7.x
+dependencies[] = block
+dependencies[] = ckeditor
+dependencies[] = features
+dependencies[] = libraries
+features[ckeditor_profile][] = SWIM
+features[features_api][] = api:2
+features[filter][] = swim
+features[user_permission][] = peek content
+stylesheets[all][] = css/swim.css

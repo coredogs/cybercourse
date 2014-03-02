@@ -1,15 +1,14 @@
-@import url("swimx_editing.css");
+@import url("swim_editing.css");
 @import url("rest/html4css1.css");
 @import url("rest/math.css");
 @import url("rest_overrides.css");
-@import url("swimx_rest_classes.css");
-
+@import url("cyco_rest_classes.css");
 
 /*h3 {
   text-shadow: 3px 3px 6px rgba(150, 150, 150, 1);;
 }*/
-body.swimx .main-container blockquote, 
-body.swimx .main-container blockquote p {
+body.swim .main-container blockquote, 
+body.swim .main-container blockquote p {
   font-size: 100% !important;
   line-height: 1.5 !important;
   color: #666 !important;
@@ -35,12 +34,12 @@ div.field-name-body div.document img {
   margin-bottom: 1em;
 }
 
-.swimx-indent-image,
-.swimx-indent-caption {
+.swim-indent-image,
+.swim-indent-caption {
   margin-left: 4em;
 }
 
-.swimx-indent-caption {
+.swim-indent-caption {
   color: #777;
 }
 
@@ -56,14 +55,14 @@ div.field-name-body div.document .system-message {
     text-shadow: none;
   }*/
   
-  aside.swimx {
+  aside.swim {
     float: none;
     margin: 1em 0 1em 0;
     background-color: inherit;
   }
   
-  .swimx-indent-image,
-  .swimx-indent-caption {
+  .swim-indent-image,
+  .swim-indent-caption {
     margin-left: 0;
   }
   
