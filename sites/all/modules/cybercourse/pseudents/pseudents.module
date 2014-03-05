@@ -130,7 +130,7 @@ function _pseudents_generate_ck_pseudent_table() {
     foreach ( $query_result['node'] as $nid => $value ) {
       $node = node_load($nid);
       $title = $node->title;
-      $notes = $node->body[LANGUAGE_NONE][0]['summary'];
+      $notes = swim_render_field( $node, 'field_body', 'summary-or-trimmed');
       //Caption is not a required field.
       if ( isset($node->field_caption[LANGUAGE_NONE][0]['safe_value']) ) {
         $caption = $node->field_caption[LANGUAGE_NONE][0]['safe_value'];
@@ -215,7 +215,7 @@ function pseudents_form_alter(&$form, &$form_state, $form_id) {
     $form['pseudent_pose_link'] = array(
         '#type' => 'markup',
         '#markup' => _pseudents_make_link2list(),
-        '#weight' => ( $form['body']['#weight'] + 1 ),
+        '#weight' => ( $form['field_body']['#weight'] + 1 ),
     );    
   }
 }
@@ -237,6 +237,12 @@ function _pseudents_make_link2list() {
  * Add client-side stuff the pseudent code needs.
  */
 function _pseudents_load_client_side_stuff() {
+  //Only run this once per page.
+  static $already_added = FALSE;
+  if ( $already_added ) {
+    return;
+  }
+  $already_added = TRUE;
   drupal_add_css(drupal_get_path('module', 'pseudents') . '/css/pseudents.css' );
   global $base_url;
   $css_path = $base_url . '/' . drupal_get_path('module', 'pseudents') . '/css/';
@@ -274,15 +280,6 @@ function pseudents_swim_ckhtml_2_directive_alter( &$content ) {
       .  '\<\/div\>\s*'
       .  '\<div class=\"pseudent\-content\"\>(.*?)\<\/div\>\s*'
       . '\<\/div\>/is';
-      
-//      '/\<div class\=\"pseudent\"\>\s*'
-//      .   '\<div class\=\"pseudent\-image\-container\"\>\s*'
-//      .       '\<img.*?data\-pseudent\-id\=\"(.*?)\".*?\>\s*'
-//      .       '\<div class\=\"pseudent-image-caption\"\>.*?' 
-//      .       '\<\/div\>\s*'
-//      .   '\<\/div\>\s*'
-//      .   '\<div class=\"pseudent\-content\"\>(.*?)\<\/div\>\s*'
-//      .'\<\/div\>/is';
     //? for lazy eval.
     //s option to include new lines in whitespace matches.
   $content
@@ -304,12 +301,12 @@ function _pseudents_make_directive_replacements($matches) {
 /**
  * Implements swim_betwixt_markup_2_html().
  * 
- * Translate pseudent CyCo markup in $content to its 
- * viewHTML equivalent. 
+ * Translate intermediate (betwixt) markup in $content (as inserted by
+ * custom ReST directive) to its HTML equivalent. Sample betwixt markup:
  * 
- * [[[cycopseudent 666|||note]]]
+ * [[[animal 666|||note]]]
  * 
- * See SWIM docs for more.
+ * See SWIM docs for more. Check pseudent and authornote modules for examples.
  */
 function pseudents_swim_betwixt_markup_2_html_alter(&$content) {
   $regex = 
@@ -372,7 +369,7 @@ function pseudents_node_view($node, $view_mode, $langcode) {
     if ( $view_mode == 'full' ) {
           $node->content['pseudent_pose_link'] = array(
               '#markup' => _pseudents_make_link2list(),
-              '#weight' => ( $node->content['body']['#weight'] + 1 ),
+              '#weight' => ( $node->content['field_body']['#weight'] + 1 ),
           );
           $node->content['pseudent_pose_add_link'] = array(
               '#markup' =>
@@ -382,7 +379,7 @@ function pseudents_node_view($node, $view_mode, $langcode) {
                       $base_url . '/node/add/pseudent-pose'
                     )
                 . '</div>', 
-              '#weight' => ( $node->content['body']['#weight'] + 2 ),
+              '#weight' => ( $node->content['field_body']['#weight'] + 2 ),
           );
     }
   }

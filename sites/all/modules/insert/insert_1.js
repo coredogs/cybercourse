@@ -22,6 +22,10 @@ Drupal.behaviors.insert.attach = function(context) {
 
   // Add the click handler to the insert button.
   $('.insert-button:not(.insert-processed)', context).addClass('insert-processed').click(insert);
+  var thisythis = this;
+  $('textarea.swim-editor', context).each( function(index, element) {
+    $(element).focus( function() { thisythis.insertSetActive(element) } ).blur( insertRemoveActive );
+  });
 
   function insertSetActive() {
     insertTextarea = this;
@@ -120,20 +124,14 @@ Drupal.insert = {
    */
   insertIntoActiveEditor: function(content) {
     var editorElement;
-    //KRM.
-    //Prevent inserting when textarea has lost focus.
-//    if ( ! insertTextarea || ! insertTextarea.insertHasFocus ) {
-//      return;
-//    }
-    
+
     // Always work in normal text areas that currently have focus.
-//    if (insertTextarea && insertTextarea.insertHasFocus) {
-//      editorElement = insertTextarea;
-//      Drupal.insert.insertAtCursor(insertTextarea, content);
-//    }
+    if (insertTextarea && insertTextarea.insertHasFocus) {
+      editorElement = insertTextarea;
+      Drupal.insert.insertAtCursor(insertTextarea, content);
+    }
     // Direct tinyMCE support.
-//else
-     if (typeof(tinyMCE) != 'undefined' && tinyMCE.activeEditor) {
+    else if (typeof(tinyMCE) != 'undefined' && tinyMCE.activeEditor) {
       editorElement = document.getElementById(tinyMCE.activeEditor.editorId);
       Drupal.insert.activateTabPane(editorElement);
       tinyMCE.activeEditor.execCommand('mceInsertContent', false, content);

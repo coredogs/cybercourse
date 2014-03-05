@@ -1,10 +1,24 @@
 (function ($) {
   
   Drupal.behaviors.swim = {
+    done: false,
     attach: function() {
+      if ( this.done ) {
+        return;
+      }
+      this.done = true;
+//      console.log("Running attach");
       //Setup code to run after CKEDITOR instances have been created.
       CKEDITOR.on("instanceReady", function(evnt) {
         var editor = evnt.editor;
+        //When editor gains/loses focus, trigger underlying textarea events.
+        //Needed for insert module to work.
+        editor.on('focus',function(evnt) {
+          $(editor.element.$).trigger('focus');
+        });
+        editor.on('blur',function(evnt) {
+          $(editor.element.$).trigger('blur');
+        });
         editor.document.appendStyleSheet( Drupal.settings.swim.editing_stylesheet );
 //        //Size the editor.
 //        if ( editor.name == "edit-body-und-0-value" ) {

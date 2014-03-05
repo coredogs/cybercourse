@@ -125,7 +125,7 @@ function swim_field_widget_form(
         isset( $items[$delta]['wysiwyg_rep'] ) 
           ? $items[$delta]['wysiwyg_rep'] : '',
       '#attributes' => array(
-        'class' => array('swim-editor swim-editor-main'),
+        'class' => array('swim-editor swim-editor-main text-full'),
       ),
     ) + $base;
     if ( $with_summary ) {
@@ -207,6 +207,8 @@ function _swim_add_client_pieces() {
   //Build a list of extra plugins to load.
   //Array of arrays of form name=>?, path=>?.
   $plugins = module_invoke_all('swim_load_ck_plugins');
+  //The array is flat if there is only one plugin. Unflatten it, if needed.
+  $plugins = _swim_unflatten( $plugins );
   //Add peek CK plugin.
   $plugins['name'][] = 'peek';
   $plugins['path'][] = $base_url . '/' . drupal_get_path('module', 'swim') 
@@ -251,6 +253,22 @@ function _swim_add_client_pieces() {
   $js_lines = module_invoke_all('swim_add_client_stuff');
   drupal_add_js( implode(' ', $js_lines), 'inline');  
   drupal_add_js( drupal_get_path('module', 'swim') . '/js/swim.js' );
+}
+
+/**
+ * Unflatten plugins array, if needed.
+ * @param array $plugins Original array.
+ * @return array Unflattened array.
+ */
+function _swim_unflatten ( $plugins ) {
+  if ( is_array($plugins['name']) ) {
+    return $plugins;
+  }
+  $new_array = array(
+    'name' => array( $plugins['name'] ),
+    'path' => array( $plugins['path'] ),
+  );
+  return $new_array;
 }
 
 /**
@@ -465,6 +483,61 @@ function swim_field_formatter_view(
   } //end switch
   
   return $element;
+}
+
+/**
+ * Render a SWIM field using a specified formatter.
+ * @param stdClass $entity Entity containing the field.
+ * @param string $field_name Field name, e.g., field_body.
+ * @param string $format Format: 
+ *  default - main.
+ *  summary - summary.
+ *  summary-or-trimmed - summary if not MT, else trimmed main.
+ * @param integer $trim_length Trim length.
+ * @param string $lang Language.
+ * @param integer $delta Delta, i.e., which value in a multivalued field.
+ * @return string Rendered content.
+ */
+function swim_render_field( $entity, $field_name, $format = 'default', 
+    $trim_length = 600, $lang = LANGUAGE_NONE, $delta = 0 ) {
+  $html = '';
+  try {
+    //Pick data to render.
+    if ( ! isset( $entity->$field_name ) ) {
+      throw new Exception('Entity does not have field ' . $field_name . '.');
+    }
+    $to_render = '';
+    //May be no data in the field.
+    if ( ! isset( $entity->{$field_name}[$lang][$delta] ) ) {
+      //Nothing to do.
+    }
+    else if ( $format == 'default' ) {
+      $to_render = $entity->{$field_name}[$lang][$delta]['pure_rest'];
+    }
+    else if ( $format == 'summary' || $format == 'summary-or-trimmed' ) {
+      //Is there a summary?
+    if ( isset( $entity->{$field_name}[$lang][$delta]['pure_rest_summary'] ) ) {
+        //There is a summary.
+        $to_render = $entity->{$field_name}[$lang][$delta]['pure_rest_summary'];
+      }
+      else {
+        //No summary. Trim main.
+        //Call the text module's summary function.
+        $to_render = text_summary(
+          $entity->${field_name}[$lang][$delta]['pure_rest'], NULL, $trim_length
+        );
+      }
+    }
+    else {
+      throw new Exception('Unknown format: ' . $format);
+    }
+    //Render it.
+    $html = swim_rest2html( $html );
+  } catch ( Exception $exc ) {
+    watchdog( 'swim', $exc->getMessage() );
+    drupal_set_message( $exc->getMessage(), 'error' );
+  }
+  return $html;
 }
 
 /**

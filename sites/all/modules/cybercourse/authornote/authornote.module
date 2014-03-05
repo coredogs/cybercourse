@@ -56,18 +56,18 @@ function authornote_init() {
 /**
  * Implements hook_ckeditor_plugin().
  */
-function authornote_ckeditor_plugin() {
-  return array(
-    'authornote' => array(
-      // Plugin name.
-      'name' => 'authornote',
-      // Plugin description - it will be displayed in the plugins management section of the profile settings.
-      'desc' => t('SWIM: Plugin to add author notes to pages'),
-      // The full path to the CKEditor plugin directory, trailing slash included.
-      'path' => drupal_get_path('module', 'authornote') . '/plugin/',
-    )
-  );
-}
+//function authornote_ckeditor_plugin() {
+//  return array(
+//    'authornote' => array(
+//      // Plugin name.
+//      'name' => 'authornote',
+//      // Plugin description - it will be displayed in the plugins management section of the profile settings.
+//      'desc' => t('SWIM: Plugin to add author notes to pages'),
+//      // The full path to the CKEditor plugin directory, trailing slash included.
+//      'path' => drupal_get_path('module', 'authornote') . '/plugin/',
+//    )
+//  );
+//}
 
 function authornote_swim_load_ck_plugins() {
   global $base_url;

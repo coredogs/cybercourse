@@ -3,4 +3,5 @@ description = A field using reStructuredText, with a SWIM editor.
 package = Fields
 core = 7.x
 dependencies[] = libraries
+dependencies[] = text
 stylesheets[all][] = css/swim.css
