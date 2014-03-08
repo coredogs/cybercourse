@@ -3,43 +3,53 @@
   Drupal.behaviors.swim = {
     done: false,
     attach: function() {
+//console.log('attach');//return;
       if ( this.done ) {
         return;
       }
       this.done = true;
-//      console.log("Running attach");
+//      CKEDITOR.on("instanceCreated", function(evnt) {
+//        f=4;
+//      });
       //Setup code to run after CKEDITOR instances have been created.
       CKEDITOR.on("instanceReady", function(evnt) {
+//console.log('armeshlew');//return;
         var editor = evnt.editor;
         //When editor gains/loses focus, trigger underlying textarea events.
         //Needed for insert module to work.
+//console.log('spider');//return;
         editor.on('focus',function(evnt) {
           $(editor.element.$).trigger('focus');
         });
         editor.on('blur',function(evnt) {
           $(editor.element.$).trigger('blur');
         });
+//console.log('turtles all the way down');//return;
         editor.document.appendStyleSheet( Drupal.settings.swim.editing_stylesheet );
-//        //Size the editor.
-//        if ( editor.name == "edit-body-und-0-value" ) {
-//          editor.resize('100%', '500');
-//        }
-//        if ( editor.name == "edit-body-und-0-summary" ) {
-//          editor.resize('100%', '120');
-//        }
+        //Size the editor.
+        var heightFrac = 0.70;
+        if ( editor.name.search('summary') != -1 ) {
+          heightFrac = 0.20;
+        }
+        editor.resize('100%', window.innerHeight * heightFrac);
+//console.log('and kittens');//return;
         Drupal.behaviors.swim.swimSetup(editor);
         //Add a class for customization of the body.
+//console.log('snaaakes');//return;
         editor.document.getBody().addClass('swim_body')
 //        $(editor.document.$.body).addClass("swim_body");
         
         //Flag the editor as initialized.
         $( "#" + editor.id ).attr("data-swim-init", "yes");
+//console.log('ostriches');return;
       });
+//console.log('dog');//return;
       //Check that the config exists.
       if ( ! Drupal.swimCkConfig ) {
         console.log("Missing config");
         return;
       }
+//console.log('cat');//return;
       //Add plugins.
 //      CKEDITOR.plugins.addExternal( 'rest_help', 
 //      '/sites/all/modules/cybercourse/swim/ck_plugins/rest_help/' );
@@ -53,13 +63,16 @@
       } //End if there are extraPlugins.
       //Replace the textareas with CKEditors.
       //This will trigger instanceReady above.
-      var textAreas = $(".swim-editor");
+//console.log('llama');//return;
+      var textAreas = $("textarea.swim-editor");
       $(textAreas).each(function(index, element) {
+//console.log('zebra');//return;
         //Make sure element has not already been initialized.
         if ( ! $(element).attr("data-swim-init") ) {
-          CKEDITOR.replace(element, Drupal.swimCkConfig);
+          CKEDITOR.replace(element.id, Drupal.swimCkConfig);
         }
       });
+//console.log('cow');return;
     }, //End attach.
     swimSetup: function (editor) {    
       this.setupBeforeUnload(editor);
@@ -323,5 +336,5 @@
     }
   };
   //Selector that will find content in the document fetched to act as a template.
-  Drupal.behaviors.swim.contentContainerClass = "document";
+//  Drupal.behaviors.swim.contentContainerClass = "document";
 }(jQuery));

@@ -218,6 +218,20 @@ function cybercourse_exercise_preprocess_node(&$vars) {
 }
 
 /**
+ * Implements hook_node_view().
+ * 
+ * If the user can edit course pages, then add the id of the exercise
+ * to the end of the title. 
+ */
+function cybercourse_exercise_node_view($node, $view_mode, $langcode) {
+  if ( $node->type == 'exercise' && $view_mode == 'full' ) {
+    if ( user_access('edit any course_page') ) {
+      drupal_set_title( $node->title . ' (' . $node->nid . ')' );
+    }
+  }
+}
+
+/**
 * Implements hook_entity_info_alter().
  * 
  * Define a view mode for inserting exercises in regular content.

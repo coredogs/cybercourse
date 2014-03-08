@@ -101,3 +101,17 @@ function cybercourse_pattern_theme() {
   );
   return $result;
 }
+
+/**
+ * Implements hook_node_view().
+ * 
+ * If the user can edit course pages, then add the id of the pattern
+ * to the end of the title. 
+ */
+function cybercourse_pattern_node_view($node, $view_mode, $langcode) {
+  if ( $node->type == 'pattern' && $view_mode == 'full' ) {
+    if ( user_access('edit any course_page') ) {
+      drupal_set_title( $node->title . ' (' . $node->nid . ')' );
+    }
+  }
+}

@@ -82,6 +82,10 @@
                 }
                 this.setupClickEvents( widget );
               },
+              onHide: function( x ) {
+                console.log('hiding');
+                $(".pseudent-cell").unbind('click');
+              },
               commit: function( widget ) {
                 widget.setData( "pseudentId", this.selectedPseudentId );
               },
@@ -107,8 +111,11 @@
                       event.target.click();
                       //Click on the OK button.
                       var dlg = CKEDITOR.dialog.getCurrent();
-                      var okBtn = dlg.getButton('ok');
-                      okBtn.click();
+                      //Test hides an error. Works, don't know why.
+                      if ( dlg ) {
+                        var okBtn = dlg.getButton('ok');
+                        okBtn.click();
+                      }
                       //Stop other processing.
                       return false;
                     });

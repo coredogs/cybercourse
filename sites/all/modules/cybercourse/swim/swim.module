@@ -169,6 +169,8 @@ function swim_libraries_info() {
       'file' => 'ckeditor.js',
       // version:"4.3"
       'pattern' => '/version\:\"(\d+\.+\d+)\"/',
+//      // version:"4.3"
+//      'pattern' => '/version\:\"(\d+\.+\d+)\"/',
       'lines' => 10,
     ),
     'files' => array(
@@ -196,13 +198,16 @@ function _swim_add_client_pieces() {
   drupal_add_library('system', 'ui.dialog');
   //Load CKEditor.
   $ckLibraryInfo = libraries_load('ckeditor');
+//  return;
   $numFilesLoaded = libraries_load_files($ckLibraryInfo);
+//return;
   if ( $numFilesLoaded <= 0 ) {
     $mess = t('SWIM error: no CKEditor files loaded. Is CK installed?');
     watchdog('SWIM', $mess);
     drupal_set_message(t($mess), 'error');
     return;
   }
+//  return;
   drupal_add_css( drupal_get_path('module', 'swim') . '/css/swim.css' );
   //Build a list of extra plugins to load.
   //Array of arrays of form name=>?, path=>?.
@@ -223,13 +228,13 @@ function _swim_add_client_pieces() {
       $plugins['path'][$key] .= '/';
     }
   }
+//  return;
   //Obscurer code.
   $obscurer = theme('obscurer');
   //Send settings to JS.
   $settings = array(
     'base_url' => $base_url,
     'extraPlugins' => $plugins,
-//    'format_name' => 'swim',
     'can_peek' => user_access('peek content') ? 'yes' : 'no',
     'editing_stylesheet' => 
       $base_url . '/' . drupal_get_path('module', 'swim') . '/css/swim_editing.css',
@@ -250,8 +255,10 @@ function _swim_add_client_pieces() {
   //Let other modules change things.
   //It could be changing config, like the line above.
   //Could be adding other JS settings, CSS, etc.
+//  return;
   $js_lines = module_invoke_all('swim_add_client_stuff');
   drupal_add_js( implode(' ', $js_lines), 'inline');  
+//  return;
   drupal_add_js( drupal_get_path('module', 'swim') . '/js/swim.js' );
 }
 
@@ -261,6 +268,9 @@ function _swim_add_client_pieces() {
  * @return array Unflattened array.
  */
 function _swim_unflatten ( $plugins ) {
+  if ( ! isset( $plugins['name'] ) ) {
+    return $plugins;
+  }
   if ( is_array($plugins['name']) ) {
     return $plugins;
   }

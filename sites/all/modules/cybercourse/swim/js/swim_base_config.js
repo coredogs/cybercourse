@@ -31,6 +31,8 @@ Drupal.swimCkConfig = {
   removeButtons : "Bold,Italic,Underline,Strike,Superscript,Subscript" +
           ",ShowBlocks,Save,NewPage,DocProps,Preview,Print,Templates," +
           ",About",
+  //These should not be there anyway, given the limited CK instance
+  //that is used.
   removePlugins : "scayt,elementspath,list,liststyle,tabletools,contextmenu,about,"
     + "blockquote,indentlist,indentblock,"
     + "colorbutton,colordialog,flash,font,indent,forms.horizontalrule"
