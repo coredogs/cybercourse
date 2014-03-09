@@ -38,10 +38,22 @@ function _cybercourse_pattern_make_replacements($matches) {
     watchdog('cybercourse_pattern', $message);
     return '<p>' . $message . '</p>';
   }
-  $situation = $pattern_node->field_situation[LANGUAGE_NONE][0]['value'] ?
-      $pattern_node->field_situation[LANGUAGE_NONE][0]['value'] : '';
-  $actions = $pattern_node->field_actions[LANGUAGE_NONE][0]['value'] ?
-      $pattern_node->field_actions[LANGUAGE_NONE][0]['value'] : '';
+  $situation = 
+      isset( 
+        $pattern_node->field_situation[LANGUAGE_NONE][0]['pure_rest']
+      ) 
+      ? swim_rest2html(
+          $pattern_node->field_situation[LANGUAGE_NONE][0]['pure_rest']
+        )
+      : '';
+  $actions = 
+      isset( 
+        $pattern_node->field_actions[LANGUAGE_NONE][0]['pure_rest'] 
+      )
+      ? swim_rest2html( 
+          $pattern_node->field_actions[LANGUAGE_NONE][0]['pure_rest']
+        )
+      : '';
   //Make pattern category links.
   $pattern_category_links = array();
   $pattern_category_links_rendered = '';
@@ -71,12 +83,6 @@ function _cybercourse_pattern_make_replacements($matches) {
         'more_link_destination' => '/node/' . $pattern_nid,
         'pattern_node' => $pattern_node,
       )
-  );
-  //Add CSS.
-  global $base_url;
-  drupal_add_css(
-      $base_url . '/' . drupal_get_path('module', 'cybercourse_pattern') 
-        . '/css/cybercourse_pattern.css'
   );
   return $result;
 } 

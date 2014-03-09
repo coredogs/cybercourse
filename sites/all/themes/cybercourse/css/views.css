@@ -69,3 +69,9 @@ div.view-header {
 .view-exercises-public .views-row {
   margin-bottom: 1em;
 }
+
+/* Public patterns list. */
+.view-patterns.view-display-id-page .views-field-title div.categories {
+  font-size: 80%;
+  padding-left: 1em;
+}
