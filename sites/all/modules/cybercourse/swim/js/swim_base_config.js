@@ -3,6 +3,9 @@
  */
 Drupal.swimCkConfig = {
   basicEntities : true, //Entity encode <, >.
+  forcePasteAsPlainText : true,
+//  enableTabKeyTools: false,
+  tabSpaces: 4,
   disableNativeSpellChecker : false,
   //What the Enter key does.
   enterMode : 2 , //CKEDITOR.ENTER_BR

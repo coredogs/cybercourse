@@ -38,6 +38,38 @@ function cybercourse_tweaks_form_book_admin_edit_alter(&$form, &$form_state) {
 }
 
 /**
+ * Implements hook_form_alter().
+ * 
+ * Collapse file attachment fields, so harder to use it by accident, when 
+ * trying to add images.
+ * 
+ */
+function cybercourse_tweaks_form_alter(&$form, &$form_state, $form_id) {
+  if ( isset( $form['field_attachments'] ) ) {
+    //Create the fieldset
+    $form['attachments_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Attach files'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+    );
+    if ( isset( $form['field_attachments']['#weight'] ) ) {
+      $form['attachments_fieldset']['#weight'] = $form['field_attachments']['#weight'];
+    }
+    //Move the field into the fieldset
+    $form['attachments_fieldset']['field_attachments'] = $form['field_attachments'];
+    //Unset the original field
+    unset($form['field_attachments']);
+    //Are there hidden attachments?
+    if ( isset( $form['field_hidden_attachments'] ) ) {
+      $form['attachments_fieldset']['field_hidden_attachments'] 
+          = $form['field_hidden_attachments'];
+      unset( $form['field_hidden_attachments'] );
+    }
+  }
+}
+
+/**
  * Implements hook_form_FORM_alter().
  * Remove the delete button from blueprint form.
  * Tell admin user to use control panel delete link instead.
