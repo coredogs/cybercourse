@@ -3,7 +3,12 @@
  */
 (function($) {
   Drupal.behaviors.cybercourse_collpase_term_ref_widget = {
+    once: false,
     attach: function(context, settings) {
+      if ( this.once ) {
+        return;
+      }
+      this.once = true;
       //Define toggle widget.
       var widgetCode =
               "<span class='glyphicon glyphicon-circle-arrow-down "
