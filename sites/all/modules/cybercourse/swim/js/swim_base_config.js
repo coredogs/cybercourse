@@ -2,8 +2,11 @@
  *  Base config file for CKEditor instances. 
  */
 Drupal.swimCkConfig = {
+  	disableObjectResizing : true,
   basicEntities : true, //Entity encode <, >.
   forcePasteAsPlainText : true,
+  mathJaxClass : 'math',
+  mathJaxLib : 'https:\/\/c328740.ssl.cf1.rackcdn.com\/mathjax\/latest\/MathJax.js\?config\=TeX\-AMS\-MML\_HTMLorMML',
 //  enableTabKeyTools: false,
   tabSpaces: 4,
   disableNativeSpellChecker : false,
@@ -17,18 +20,18 @@ Drupal.swimCkConfig = {
   //Toolbar config
   toolbarGroups : [
     { name: 'clipboard',   groups: [ 'clipboard', 'undo' ] },
-//    { name: 'editing',     groups: [ 'find', 'selection', 'spellchecker' ] },
-//    { name: 'links' },
-//    { name: 'insert' },
-//    { name: 'forms' },
+//      { name: 'editing',     groups: [ 'find', 'selection', 'spellchecker' ] },
+//      { name: 'links' },
+      { name: 'insert' },
+//      { name: 'forms' },
     { name: 'tools' },
-    { name: 'document',    groups: [ 'mode', 'document', 'doctools' ] },
-    { name: 'others' },
+    { name: 'document',    groups: [ 'mode', 'document', 'doctools' ] },////
+//    { name: 'others' },
 //    '/',
-    { name: 'basicstyles', groups: [ 'cleanup' ] },
-//    { name: 'paragraph',   groups: [ 'list', 'indent', 'blocks', 'align' ] },
-//    { name: 'styles' },
-//    { name: 'colors' },
+//    { name: 'basicstyles', groups: [ 'cleanup' ] },
+//      { name: 'paragraph',   groups: [ 'list', 'indent', 'blocks', 'align' ] },
+//      { name: 'styles' },
+//      { name: 'colors' },
     { name: 'about' }
   ],
   removeButtons : "Bold,Italic,Underline,Strike,Superscript,Subscript" +

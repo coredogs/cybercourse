@@ -1,10 +1,3 @@
-#Python 2
-import sys
-# setdefaultencoding is removed during Python start. Get it back.
-# See http://stackoverflow.com/questions/2276200/changing-default-encoding-of-python
-reload(sys)  # Reload does the trick!
-sys.setdefaultencoding('utf-8')
-
 from docutils import nodes, core, io
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.body import *
@@ -126,9 +119,9 @@ directives.register_directive('pattern', Pattern)
 #directives.register_directive('swear', Swear)
 
 #Read the content to translate.
-testing = False 
+testing = False
 if testing:
-    f = open('in5.txt')
+    f = open('in_math.txt')
     content = f.readlines()
     f.close()
     data_in = ''.join(content)
@@ -138,5 +131,10 @@ else:
         data_in += line
 
 #Parse some content.
-doc = core.publish_parts(data_in, writer_name='html')['html_body']
+#Use settings in docutils.conf.
+#overrides = {'output_encoding': 'utf-8', 'output_encoding': 'latin-1'}
+#overrides = {'math_output': 'MathJax'}
+#doc = core.publish_parts(data_in, writer_name='html4css1', 
+#  settings_overrides=overrides)['html_body']
+doc = core.publish_parts(data_in, writer_name='html4css1')['html_body']
 print (doc)

@@ -6,3 +6,4 @@ version = VERSION
 core = 7.x
 version = "7.1"
 regions[content] = Content
+scripts[] = http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
