@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+#from __future__ import absolute_import
 from docutils import nodes, core, io
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.body import *
