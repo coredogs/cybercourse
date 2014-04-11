@@ -21,6 +21,6 @@
 <div class="main-container container-fluid">
   <section class="col-sm-12">
       <a id="main-content"></a>
-      <?php print render($page['content']); ?>        
+      <?php print render($page['content']); ?>
   </section>  
 </div>

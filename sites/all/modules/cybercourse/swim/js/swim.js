@@ -272,6 +272,9 @@
     }, // end showpeek.
     peekDataReturned : function( data, editor ) {
       if ( data.status == 'success' ) {
+        
+//        data.result += "<script>jQuery(document).ready(function(){jQuery(this).find('body').html('Squee');});</script>";
+        
         //Restore body template content.
         //Get the template code.
         var templateCode = this.templateBodyHtml.clone();
@@ -309,7 +312,7 @@
     },
     setupBeforeUnload : function(editor) {
       //Store starting values of content fields.
-      //this.initialBody =  editor.document.getBody().getText();
+      this.initialBody =  editor.document.getBody().getText();
       //Convenience var for closures.
       var swimRef = this;
       //Flag showing whether unload code should check for changes.
@@ -322,13 +325,7 @@
           });
       window.onbeforeunload = function() {
         if ( swimRef.checkForChanges ) {
-          var contentChanged = false;
-          //Body changed?
-          if ( editor.checkDirty() ) {
-//          if ( editor.document.getBody().getText() != swimRef.initialBody ) {
-            contentChanged = true;
-          }
-          if ( contentChanged ) {
+          if ( editor.document.getBody().getText() != swimRef.initialBody ) {
             return "There are unsaved changes. Are you sure you want to leave?";
           }
         }
