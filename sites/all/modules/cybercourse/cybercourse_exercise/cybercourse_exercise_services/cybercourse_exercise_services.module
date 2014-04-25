@@ -1,0 +1,314 @@
+<?php
+
+/**
+* Implements of hook_services_resources().
+*/
+function cybercourse_exercise_services_resources() {
+  $api = array(
+    
+    /** Rubric item **/
+    'rubric_item' => array(
+      'operations' => array(
+       'retrieve' => array(
+         'help' => 'Retrieves a rubric item',
+         'callback' => '_exri_retrieve',
+         'access callback' => '_exri_access',
+         'access arguments' => array('view'),
+         'access arguments append' => TRUE,
+         'args' => array(
+           array(
+             'name' => 'id',
+             'type' => 'int',
+             'description' => 'The id of the rubric item to get',
+             'source' => array('path' => '0'),
+             'optional' => FALSE,
+           ),
+         ),
+       ),
+       'create' => array(
+         'help' => 'Creates a rubric item',
+         'callback' => '_exri_create',
+         'access callback' => '_exri_access',
+         'access arguments' => array('create'),
+         'access arguments append' => FALSE,
+         'args' => array(
+           array(
+             'name' => 'data',
+             'type' => 'struct',
+             'description' => 'The rubric item object',
+             'source' => 'data',
+             'optional' => FALSE,
+           ),
+         ),
+       ),
+       'update' => array(
+         'help' => 'Updates a rubric item',
+         'callback' => '_exri_update',
+         'access callback' => '_exri_access',
+         'access arguments' => array('update'),
+         'access arguments append' => TRUE,
+         'args' => array(
+           array(
+             'name' => 'id',
+             'type' => 'int',
+             'description' => 'The id of the rubric item to update',
+             'source' => array('path' => '0'),
+             'optional' => FALSE,
+           ),
+           array(
+             'name' => 'data',
+             'type' => 'struct',
+             'description' => 'The rubric item data object',
+             'source' => 'data',
+             'optional' => FALSE,
+           ),
+         ),
+       ),
+       'delete' => array(
+         'help' => 'Deletes a rubric item',
+         'callback' => '_exri_delete',
+         'access callback' => '_exri_access',
+         'access arguments' => array('delete'),
+         'access arguments append' => TRUE,
+         'args' => array(
+           array(
+             'name' => 'nid',
+             'type' => 'int',
+             'description' => 'The id of the rubric item to delete',
+             'source' => array('path' => '0'),
+             'optional' => FALSE,
+           ),
+         ),
+       ),
+       'index' => array(
+         'help' => 'Retrieves a listing of rubric items',
+         'callback' => '_exri_index',
+         'access callback' => '_exri_access',
+         'access arguments' => array('access content'),
+         'access arguments append' => FALSE,
+         'args' => array(array(
+             'name' => 'page',
+             'type' => 'int',
+             'description' => '',
+             'source' => array(
+               'param' => 'page',
+             ),
+             'optional' => TRUE,
+             'default value' => 0,
+           ),
+           array(
+             'name' => 'parameters',
+             'type' => 'array',
+             'description' => '',
+             'source' => 'param',
+             'optional' => TRUE,
+             'default value' => array(),
+           ),
+         ),
+       ),
+     ),
+    ),
+    
+    /** Exercise **/
+    'exercise' => array(
+      'operations' => array(
+       'retrieve' => array(
+         'help' => 'Retrieves an exercise',
+         'callback' => '_exex_retrieve',
+         'access callback' => '_exex_access',
+         'access arguments' => array('view'),
+         'access arguments append' => TRUE,
+         'args' => array(
+           array(
+             'name' => 'id',
+             'type' => 'int',
+             'description' => 'The id of the exercise to get',
+             'source' => array('path' => '0'),
+             'optional' => FALSE,
+           ),
+         ),
+       ),
+     ),
+    ), // End exercise
+    
+    /** Rubic item categories **/
+    'rubric_item_categories' => array(
+      'actions' => array(
+        'getTree' => array(
+          'help'   => t('Returns a full list of taxonomy terms.'),
+          'access arguments' => array('access content'),
+          'callback' => '_cycoex_get_tree',
+        ),
+      ),
+    ), //End rubric_item_categories
+    
+  );
+  return $api;
+}
+
+/********************************************
+* Rubric items
+*********************************************/
+
+/**
+ * Check user access to rubric items. Called during Ajax.
+ * @global stdCls $user Current user.
+ * @param string $operation What to do, e.g., view, edit, delete.
+ * @param array $args Arguments passed in.
+ * @return boolean True if access allowed, else false.
+ */
+function _exri_access($operation, $args) {
+  global $user;
+  $access = FALSE;
+  $nid = $args[0];
+  $node = node_load($nid);
+  $access = node_access($operation, $node);
+  return access;
+  switch ($operation) {
+    case 'view':
+      //View access check depends on content_access module.
+      $access = user_access('view any rubric_item content');
+      $access = $access 
+          || ( $node->uid == $user->uid && user_access('view own rubric item') );
+      break;
+    case 'update':
+      $access = user_access('edit any rubric item');
+      $access = $access 
+          || ( $node->uid == $user->uid && user_access('edit own rubric item') );
+      break;
+    case 'delete':
+      $note = noteresource_get_note($args[0]);
+      $access = user_access('delete any rubric item');
+      $access = $access 
+          || $note->uid == $user->uid && user_access('delete own rubric item');
+      break;
+  }
+  return $access;
+}
+
+function _exri_retrieve( $nid ){
+  $thing = new stdClass();
+  $thing->heads = 7;
+  return $thing;
+//  return json_encode($thing);
+  
+  $node = node_load($nid);
+  if ( ! $node || $node->type != 'rubric_item') {
+    services_error('Not a rubric item', 666, $nid);
+  }
+  $rubric_item = new stdClass();
+  $rubric_item->type = $node->type;
+  $rubric_item->title = $node->title;
+  $rubric_item->body = $node->body[LANGUAGE_NONE][0]['value'];
+  return  $rubric_item;
+}
+
+function _exri_create(){}
+
+function _exri_update(){}
+
+function _exri_delete(){}
+
+function _exri_index(){}
+
+/********************************************
+* Rubric item categories
+*********************************************/
+
+
+function _exric_access() {
+  return TRUE;
+}
+
+function _exric_retrieve( $tid ){
+  $thing = new stdClass();
+  $thing->heads = 7;
+  return $thing;
+//  return json_encode($thing);
+  
+  $node = node_load($nid);
+  if ( ! $node || $node->type != 'rubric_item') {
+    services_error('Not a rubric item', 666, $nid);
+  }
+  $rubric_item = new stdClass();
+  $rubric_item->type = $node->type;
+  $rubric_item->title = $node->title;
+  $rubric_item->body = $node->body[LANGUAGE_NONE][0]['value'];
+  return  $rubric_item;
+}
+
+/**
+ * Return terms from the rubric item categories vocab.
+ */
+function _exric_index() {
+  $rubric_item_tree = new stdClass();
+  $rubric_item_tree->type = 'evil';
+  return $rubric_item_tree;  
+}
+
+/**
+ * Check user access to exercises. Called during Ajax.
+ * @global stdCls $user Current user.
+ * @param string $operation What to do, e.g., view, edit, delete.
+ * @param array $args Arguments passed in.
+ * @return boolean True if access allowed, else false.
+ */
+function _exex_access($operation, $args) {
+  global $user;
+  $access = FALSE;
+  $nid = $args[0];
+  $node = node_load($nid);
+  switch ($operation) {
+    case 'view':
+      //View access check depends on content_access module.
+      $access = user_access('view any exercise');
+      $access = $access 
+          || ( $node->uid == $user->uid && user_access('view own exercise') );
+      break;
+    case 'update':
+      $access = user_access('edit any exercise');
+      $access = $access 
+          || ( $node->uid == $user->uid && user_access('edit own exercise') );
+      break;
+    case 'delete':
+      $note = noteresource_get_note($args[0]);
+      $access = user_access('delete any exercise');
+      $access = $access 
+          || $note->uid == $user->uid && user_access('delete own exercise');
+      break;
+  }
+  return $access;
+}
+
+function _exex_retrieve(){}
+
+function _exex_create(){}
+
+function _exex_update(){}
+
+function _exex_delete(){}
+
+function _exex_index(){}
+
+function _cycoex_get_tree() {
+//  services_error('Not a rubric item', 666, $nid);
+  //Get the vid of the Feedback items categoes vocab.
+  $vocab = taxonomy_vocabulary_machine_name_load('rubric_item_categories');
+  if ( $vocab === FALSE ) {
+    services_error('Cannot find vocab rubric_item_categories.', 666);
+  }
+  $terms = taxonomy_get_tree($vocab->vid);
+  $tree = array();
+  foreach ( $terms as $term ) {
+    $term_data = new stdClass();
+    $term_data->tid = $term->tid;
+    $term_data->title = $term->name;
+    $term_data->parent_tid = $term->parents[0];
+    $tree[] = $term_data;
+  }
+  return $tree;
+}
+
+function _cycoex_attach_2_parent( $tree, $child, $parent_id ) {
+  
+}

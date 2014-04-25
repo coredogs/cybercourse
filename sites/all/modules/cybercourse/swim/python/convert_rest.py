@@ -6,6 +6,7 @@ from docutils.parsers.rst.roles import set_classes
 from docutils.utils.code_analyzer import Lexer, LexerError, NumberLines
 
 """
+https://gist.github.com/dbrgn/2922648
 ReST directive for embedding Youtube and Vimeo videos.
  
 There are two directives added: ``youtube`` and ``vimeo``. The only

@@ -1,0 +1,7 @@
+name = X
+description = The CyberCourse exercise system - of DOOM!
+package = CyberCourse
+core = 7.x
+version = 7.1
+dependencies[] = services
+

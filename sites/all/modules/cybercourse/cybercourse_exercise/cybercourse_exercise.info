@@ -1,6 +1,9 @@
 name = CyberCourse exercise
-description = The CyberCourse exercise system.
+description = The CyberCourse exercise system - of DOOM!
 package = CyberCourse
 core = 7.x
 version = 7.1
+dependencies[] = services
+dependencies[] = content_access
 stylesheets[all][] = css/cybercourse_exercise.css
+files[] = cybercourse_exercise_services.inc

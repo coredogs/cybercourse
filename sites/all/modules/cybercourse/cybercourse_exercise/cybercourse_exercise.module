@@ -44,7 +44,7 @@ function _cybercourse_exercise_close_popup() {
   $path = $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise') 
       . '/close_popup.js';
   drupal_add_js( $path );
-  return '<h1>Done</h1>'; //Need to rerun something here.
+  return '<h1>Done</h1>'; //Need to return something here.
 }
 
 /**
@@ -264,4 +264,40 @@ function cybercourse_exercise_field_attach_form($entity_type, $entity, &$form, &
       ['#value'] = 'Add a new rubric item';
 
   }
+}
+
+function cybercourse_exercise_form_exercise_node_form_alter(&$form, $form_state) {
+  drupal_set_message('in ex form alter');
+}
+
+/**
+ * Implements hook_libraries_info().
+ * 
+ * Define Fancytree in the libraries.
+ */
+function cybercourse_exercise_libraries_info() {
+  $libraries = array();
+  $libraries['fancytree'] = array(
+    'name' => 'Fancytree',
+    'vendor url' => 'https://github.com/mar10/fancytree',
+    'download url' => 'https://github.com/mar10/fancytree',
+    'path' => 'dist',
+    'version arguments' => array(
+      'file' => 'package.json',
+      // "version": "2.0.0-10"
+      'pattern' => '/\"version\"\:\s*\"(.*)\"/',
+//      // version:"4.3"
+//      'pattern' => '/version\:\"(\d+\.+\d+)\"/',
+      'lines' => 10,
+    ),
+    'files' => array(
+      'js' => array(
+        'jquery.fancytree-all.js',
+      ),
+      'css' => array(
+        'skin-win8/ui.fancytree.min.css',
+      )
+    ),
+  );
+  return $libraries;
 }

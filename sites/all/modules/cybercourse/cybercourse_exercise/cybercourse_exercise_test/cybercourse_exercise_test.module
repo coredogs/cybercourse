@@ -1,0 +1,79 @@
+<?php
+
+/**
+ * Implements hook_menu.
+ */
+function cybercourse_exercise_test_menu() {
+  $items = array();
+  $items['cyco-et1'] = array(
+    'title' => 'Exercise test 1',
+    'page callback' => 'cyco_et1',
+    'access callback' => '_cybercourse_exercise_test_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['cyco-et2'] = array(
+    'title' => 'Exercise test 2',
+    'page callback' => 'cyco_et2',
+    'access callback' => '_cybercourse_exercise_test_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['cyco-et3'] = array(
+    'title' => 'Exercise test 3',
+    'page callback' => 'cyco_et3',
+    'access callback' => '_cybercourse_exercise_test_access',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+//Return true if the user can access tests.
+function _cybercourse_exercise_test_access() {
+  global $user;
+  $admin_key = array_search('administrator', $user->roles);
+  return $admin_key !== FALSE;
+}
+
+/**
+ * Test function.
+ */
+function cyco_et1() {
+  global $base_url;
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et1.js'
+  );
+  return '<div id="t1"></div>';
+}
+
+/**
+ * Test function.
+ */
+function cyco_et2() {
+  global $base_url;
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et2.js'
+  );
+  return '<div id="t2"></div>';
+}
+
+/**
+ * Test function.
+ */
+function cyco_et3() {
+  drupal_add_library('system', 'ui.dialog');
+  //Load Fancytree.
+  $ftLibraryInfo = libraries_load('fancytree');
+  $numFilesLoaded = libraries_load_files($ftLibraryInfo);
+//return;
+  if ( $numFilesLoaded <= 0 ) {
+    $mess = t('Error: no Fancytree files loaded. Is Fancytree installed?');
+    watchdog('cybercourse_exercise', $mess);
+    services_error($mess, 666);
+  }
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et3.js'
+  );
+  return '<div id="t3">asdf</div>';
+}

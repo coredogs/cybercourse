@@ -1,0 +1,12 @@
+<?php
+drupal_set_message("X.module - start, outside anything");
+/* 
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+function x_services_resources() {
+  drupal_set_message("X.module - in services resources");
+
+}
