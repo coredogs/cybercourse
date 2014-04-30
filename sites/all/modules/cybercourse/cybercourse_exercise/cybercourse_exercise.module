@@ -266,8 +266,60 @@ function cybercourse_exercise_field_attach_form($entity_type, $entity, &$form, &
   }
 }
 
+/**
+ * Implements hook_form_alter().
+ * 
+ * Hide the rubric items field, and add the replacement UI.
+ * @param type $form
+ * @param type $form_state
+ */
 function cybercourse_exercise_form_exercise_node_form_alter(&$form, $form_state) {
-  drupal_set_message('in ex form alter');
+  $form['#submit'][] = '_cybercourse_exercise_form_submit';
+  //Hide the standard field for rubric item creation.
+  $form['field_rubric_items']['#type'] = 'hidden';
+  //Pass nids of current rubric items to client in a hidden form field.
+  $rubric_items = array();
+  if ( isset($form_state['node']->field_rubric_items[LANGUAGE_NONE]) ) {
+    foreach ( $form_state['node']->field_rubric_items[LANGUAGE_NONE] as $key => $value) {
+      $rubric_items[] = intval( $value['target_id'] );
+    }
+  }
+  $form['cyco_current_items'] = array(
+    '#type' => 'hidden',
+    '#value' => json_encode($rubric_items),
+  );
+  //Load the client UI stuff.
+  drupal_add_library('system', 'ui.dialog');
+  //Load Fancytree.
+  $ftLibraryInfo = libraries_load('fancytree');
+  $numFilesLoaded = libraries_load_files($ftLibraryInfo);
+  if ( $numFilesLoaded <= 0 ) {
+    $mess = t('Error: no Fancytree files loaded. Is Fancytree installed?');
+    watchdog('cybercourse_exercise', $mess);
+    services_error($mess, 666);
+  }
+  //Add JS and CSS for the UI.
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise')
+        . '/js/cybercourse_exercise_select_rubrics_ui.js'
+  );
+  drupal_add_css(
+      drupal_get_path('module', 'cybercourse_exercise')
+        . '/css/cybercourse_exercise_select_rubrics_ui.css'
+  );
+  //Grab HTML for UI from a template.
+  $ui_html = theme( 'select_rubric_item' );
+  $form['ui_html'] = array(
+    '#type' => 'markup',
+    '#markup' => $ui_html,
+    '#weight' => $form['field_rubric_items']['#weight'],
+  );
+}
+
+function _cybercourse_exercise_form_submit($form, &$form_state) {
+//  $form_state['values']['field_rubric_items'][LANGUAGE_NONE][0]['target_id'] = $nid;
+//  $form_state['values']['field_rubric_items'][LANGUAGE_NONE][1]['target_id'] = $nid;
+  $r=5;
 }
 
 /**
@@ -300,4 +352,18 @@ function cybercourse_exercise_libraries_info() {
     ),
   );
   return $libraries;
+}
+
+/**
+ * Implement hook_theme().
+ * @return array
+ */
+function cybercourse_exercise_theme() {
+  $result = array(
+    //HTML for rubric selection UI.
+    'select_rubric_item' => array(
+      'template' => 'templates/cybercourse-exercise-select-rubric-item',
+   ),
+  );
+  return $result;
 }

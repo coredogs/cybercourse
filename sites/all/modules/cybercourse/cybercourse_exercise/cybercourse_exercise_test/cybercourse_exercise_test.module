@@ -23,6 +23,24 @@ function cybercourse_exercise_test_menu() {
     'access callback' => '_cybercourse_exercise_test_access',
     'type' => MENU_CALLBACK,
   );
+  $items['cyco-et4'] = array(
+    'title' => 'Exercise test 4',
+    'page callback' => 'cyco_et4',
+    'access callback' => '_cybercourse_exercise_test_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['cyco-et5'] = array(
+    'title' => 'Exercise test 5',
+    'page callback' => 'cyco_et5',
+    'access callback' => '_cybercourse_exercise_test_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['cyco-et6'] = array(
+    'title' => 'Exercise test 6',
+    'page callback' => 'cyco_et6',
+    'access callback' => '_cybercourse_exercise_test_access',
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -77,3 +95,81 @@ function cyco_et3() {
   );
   return '<div id="t3">asdf</div>';
 }
+
+/**
+ * Test function.
+ */
+function cyco_et4() {
+  drupal_add_library('system', 'ui.dialog');
+  //Load Fancytree.
+  $ftLibraryInfo = libraries_load('fancytree');
+  $numFilesLoaded = libraries_load_files($ftLibraryInfo);
+//return;
+  if ( $numFilesLoaded <= 0 ) {
+    $mess = t('Error: no Fancytree files loaded. Is Fancytree installed?');
+    watchdog('cybercourse_exercise', $mess);
+    services_error($mess, 666);
+  }
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et4.js'
+  );
+  drupal_add_css(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/css/cyco_et4.css'
+  );
+  return '<div id="t4">asdf</div>';
+}
+
+/**
+ * Test function.
+ */
+function cyco_et5() {
+  drupal_add_library('system', 'ui.dialog');
+  //Load Fancytree.
+  $ftLibraryInfo = libraries_load('fancytree');
+  $numFilesLoaded = libraries_load_files($ftLibraryInfo);
+//return;
+  if ( $numFilesLoaded <= 0 ) {
+    $mess = t('Error: no Fancytree files loaded. Is Fancytree installed?');
+    watchdog('cybercourse_exercise', $mess);
+    services_error($mess, 666);
+  }
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et5.js'
+  );
+  drupal_add_css(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/css/cyco_et5.css'
+  );
+  return '<div id="t5">asdf</div>';
+}
+
+/**
+ * Test function.
+ */
+function cyco_et6() {
+  drupal_add_library('system', 'ui.dialog');
+  //Load Fancytree.
+  $ftLibraryInfo = libraries_load('fancytree');
+  $numFilesLoaded = libraries_load_files($ftLibraryInfo);
+  if ( $numFilesLoaded <= 0 ) {
+    $mess = t('Error: no Fancytree files loaded. Is Fancytree installed?');
+    watchdog('cybercourse_exercise', $mess);
+    services_error($mess, 666);
+  }
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et6.js'
+  );
+  drupal_add_css(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/css/cyco_et6.css'
+  );
+  $html = theme( 'select_rubric_item' );
+  $html = '<p id="t6">asdf</p>' . $html;
+  return $html;
+}
+
+

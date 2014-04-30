@@ -107,6 +107,16 @@ function cybercourse_exercise_services_resources() {
          ),
        ),
      ),
+     'actions' => array(
+       //For rubric select interface on exercise forms.
+       'getTitlesCategories' => array(
+         'help' => 'Get all rubric item titles and their categories',
+         'callback' => '_exri_titles_cats',
+         'access callback' => '_exri_access',
+         'access arguments' => array('access content'),
+         'access arguments append' => TRUE,
+       ),
+     ),
     ),
     
     /** Exercise **/
@@ -211,6 +221,43 @@ function _exri_delete(){}
 
 function _exri_index(){}
 
+/**
+ * Return all rubric item titles and their categories.
+ */
+function _exri_titles_cats() {
+  //Get all the nids of the published rubric items.
+  $query = new EntityFieldQuery;
+  $query
+    ->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'rubric_item')
+    ->propertyCondition('status', 1)
+    ->propertyOrderBy('title');
+  $query_result = $query->execute();
+  //Create the pseudent HTML.
+  $nids = array();
+  foreach ( $query_result['node'] as $nid => $value ) {  
+    $nids[] = $nid;
+  }
+  $nodes = node_load_multiple($nids);
+  $result = array();
+  foreach ( $nodes as $node ) {
+    $nid = intval( $node->nid );
+    $title = $node->title;
+    $categories = array();
+    if ( isset($node->field_categories[LANGUAGE_NONE]) ) {
+      foreach ( $node->field_categories[LANGUAGE_NONE] as $key => $tid ) {
+        $categories[] = intval($tid['tid']);
+      }
+    }
+    $result[] = array(
+      'nid' => $nid,
+      'title' => $title,
+      'categories' => $categories,
+    );
+  }
+  return $result;
+}
+
 /********************************************
 * Rubric item categories
 *********************************************/
@@ -301,9 +348,9 @@ function _cycoex_get_tree() {
   $tree = array();
   foreach ( $terms as $term ) {
     $term_data = new stdClass();
-    $term_data->tid = $term->tid;
+    $term_data->tid = intval($term->tid);
     $term_data->title = $term->name;
-    $term_data->parent_tid = $term->parents[0];
+    $term_data->parent_tid = intval($term->parents[0]);
     $tree[] = $term_data;
   }
   return $tree;
