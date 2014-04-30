@@ -15,7 +15,7 @@
     Rubric items
   </label>
 <?php /* Collection of existing item templates goes here. See part 2. */ ?>
-  <div id="rubric-select-link-item-container">
+  <div id="rubric-select-link-item-container" class="form-item form-group">
     <button id="rubric-select-link-item" type="button"
             title="Link to a rubric item">Add rubric item link</button>
   </div>
@@ -31,10 +31,10 @@
 ?>
   <div class="rubric-select-current-item-container" data-nid="">
     <span class="rubric-select-current-item-title"></span>
-    <button class="rubric-select-current-item-edit" type="button"
-            title="View/edit this rubric item">Edit</button>
     <button class="rubric-select-current-item-unlink" type="button"
             title="Unlink this item from the exercise">Unlink</button>
+    <button class="rubric-select-current-item-edit" type="button"
+            title="View/edit this rubric item">Edit</button>
   </div>
 
 <?php

@@ -17,18 +17,18 @@
       $(".rubric-select-current-item-container").hide();
       uiNamespace.showAjaxThrobber();
       $.when(
-        Drupal.behaviors.cycoSelectRubricUi.getCsrfToken()
+        uiNamespace.getCsrfToken()
       )
       .then(function() {
         //Grab vocab terms and rubric items from server.
         $.when( 
-          Drupal.behaviors.cycoSelectRubricUi.fetchTerms(),
-          Drupal.behaviors.cycoSelectRubricUi.fetchRubrics()
+          uiNamespace.fetchTerms(),
+          uiNamespace.fetchRubrics()
         )
         .then(function() {
           //Prep the UI.
-          Drupal.behaviors.cycoSelectRubricUi.prepareUi();
-          Drupal.behaviors.cycoSelectRubricUi.hideAjaxThrobber();
+          uiNamespace.prepareUi();
+          uiNamespace.hideAjaxThrobber();
         })
         .fail(function() {
           alert("The voles died.");
@@ -53,7 +53,7 @@
           dataType: "text"
       })
         .done(function(token){
-          Drupal.behaviors.cycoSelectRubricUi.token = token;
+          uiNamespace.token = token;
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
           console.log('Token request failed! ' + textStatus + errorThrown); 
@@ -113,6 +113,26 @@
     prepareUi: function() {
       //Show the rubric items already associated with the exercise.
       uiNamespace.showExistingItems();
+      //Set up events for Edit and Unlink buttons.
+      $("#rubric-select-current-items-ui").click(function(event) {
+        var $target = $(event.target);
+        if ( $target.prop("tagName") == "BUTTON" ) {
+          //User clicked on a button.
+          //Is there an nid?
+          var nid = $target.parent().attr("data-nid");
+          if ( nid ) {
+            //There is an nid, so it's either the Edit or Unlink button.
+            var caption = $target.text();
+            if ( caption == "Unlink" ){
+              uiNamespace.unlinkItem( nid );
+            }
+            else if ( caption == "Edit" ){
+              
+            }
+          }//End there is a nid
+        }
+      });
+      
       //Create the UI for linking additional items.
       uiNamespace.createUi4LinkingItems();
       //Create the dialog for viewing/adding/editing rubric items.
@@ -122,6 +142,30 @@
       uiNamespace.setupAddItemLinkButton();
       //Show the existing terms interface.
       $("#rubric-select-current-items-ui").show("fast");
+    },
+    /*
+     * Unlink an item from the exercise.
+     * @param {type} nid Nid of the item to unlink.
+     */
+    unlinkItem: function( nid ) {
+      //Remove item from list of linked items.
+      //See http://stackoverflow.com/questions/3954438/remove-item-from-array-by-value
+      //nid must be numeric.
+      nid = parseInt(nid);
+      var index = $.inArray( nid, uiNamespace.linkedItems );
+      if ( index === -1 ) {
+        alert("bad things!");
+        return;
+      }
+      uiNamespace.linkedItems.splice(index, 1);
+      //Remove the display.
+      $(".rubric-select-current-item-container[data-nid='" + nid + "']")
+          .remove();
+      //Update Drupal's hidden field that has a JSON array of linked items.
+      uiNamespace.updateDrupalItemList( uiNamespace.linkedItems );
+    },
+    updateDrupalItemList: function( itemNids ) {
+      $('[name="cyco_current_items"]').val( "[" + itemNids.toString() + "]" );
     },
     /**
      * Show the rubric items already associated with the exercise.
@@ -138,7 +182,7 @@
       for ( i = 0; i < uiNamespace.linkedItems.length; i++ ) {
         itemNid = uiNamespace.linkedItems[i];
         uiNamespace.displayLinkedItem( itemNid );
-      }      
+      }
     },
     /*
      * Create the UI for linking a rubric item to an exercise.
@@ -149,13 +193,13 @@
       //Create the tree.
       uiNamespace.createTreeDisplay( treeNodes );
       //Add all rubric items to the filtered list initially.
-      uiNamespace.addAllItemsToFilteredList();
+      uiNamespace.filteredNids = uiNamespace.getAllItemsIds();
       //Remove from the list of filtered (matching) items those
       //items that already have been linked to the exercise.
       uiNamespace.filteredNids = uiNamespace.removeAlreadyLinkedItems( 
           uiNamespace.filteredNids, uiNamespace.linkedItems
       );
-      //Show the filtered items.
+      //Show the items.
       uiNamespace.updateFilteredItemDisplay();
       //Set up button events.
       uiNamespace.setupAddItemUiButtons();
@@ -222,16 +266,17 @@
       });
     },
     /*
-     * Add all of the rubric items to the filtered list. Done at initialization.
+     * Add all of the rubric items to the filtered list. 
      */
-    addAllItemsToFilteredList: function() {
-      //Add all rubric items to the filtered list initially.
+    getAllItemsIds: function() {
+      var items = new Array();
       var nid, i;
       for (i = 0; i < uiNamespace.rubricsServerData.length; i++) {
         nid = uiNamespace.rubricsServerData[i].nid;
         //Remember that this item is in the filtered list.
-        uiNamespace.filteredNids.push( nid );
+        items.push( nid );
       }
+      return items;
     },
     /*
      * Set up the buttons in the bottom right of the add item UI.
@@ -247,20 +292,40 @@
             if ( uiNamespace.selectedItemNid ) {
               //Link the selected item.
               uiNamespace.linkItem( uiNamespace.selectedItemNid );
-              //Hide the UI.
-              $("#rubric-select-ui").hide();
             }
           });
+      //Handler for the cancel button.
+      $("#rubric-select-cancel").click(function() {
+        //Hide the add item UI.
+        $("#rubric-select-ui").hide();
+        //Show the button that shows the add item UI.
+        $("#rubric-select-link-item").show();
+        //Scroll to the rubric area.
+        $('html, body').animate({
+            scrollTop: $("#rubric-select-current-items-ui-title")
+                         .offset().top - 100
+        }, 200);
+      });
     },
     /*
      * Link a rubric item to the exercise (client-side).
      * @param int itemNid nid of the item.
      */
     linkItem: function( itemNid ) {
+      //Hide the add item UI.
+      $("#rubric-select-ui").hide();
       //Add new item to linked item list.
       uiNamespace.linkedItems.push( itemNid );
+      //Update Drupal's hidden field that has a JSON array of linked items.
+      uiNamespace.updateDrupalItemList( uiNamespace.linkedItems );
       //Create a display for it.
-      uiNamespace.displayLinkedItem( itemNid );
+      var itemDisplay = uiNamespace.displayLinkedItem( itemNid );
+      //Show the button that shows the add item UI.
+      $("#rubric-select-link-item").show();
+      //Scroll to the new item.
+      $('html, body').animate({
+          scrollTop: itemDisplay.offset().top - 100
+      }, 200);
     },
     /*
      * Make a display for a linked item.
@@ -270,14 +335,14 @@
       //Clone the item template.
       var itemDisplay = $(uiNamespace.existingItemTemplate).clone();
       //Adjust the clone for the current item.
-      itemDisplay.find(".rubric-select-current-item-container")
-          .attr("data-nid", itemNid);
+      itemDisplay.attr("data-nid", itemNid);
       var itemTitle = uiNamespace.findRubricItem( itemNid ).title;
       itemDisplay.find(".rubric-select-current-item-title").text(itemTitle);
       //Insert into DOM.
-      $("button#rubric-select-link-item").before( itemDisplay );
+      $("#rubric-select-link-item-container").before( itemDisplay );
       //Show it.
       itemDisplay.show("fast");
+      return itemDisplay;
     },
     /**
      * Set up the button that, when clicked, shows the UI for linking
@@ -296,14 +361,20 @@
       //No item is selected.
       uiNamespace.selectedItemNid = null;
       $("." + uiNamespace.selectedItemClass )
-        .removeClass(uiNamespace.selectedItemClass)
+        .removeClass(uiNamespace.selectedItemClass);
+      //Disable the Link and Edit buttons until the user selects an item.
+      $("#rubric-select-edit").attr("disabled", "disabled");
+      $("#rubric-select-link").attr("disabled", "disabled");
       //If there are no terms checked, then show all items.
-      alsgfn alskf 
-
-      //Filter rubric items with checked terms.
-      uiNamespace.filteredNids = uiNamespace.findMatchingItems(
-          uiNamespace.checkedTermIds
-      );
+      if ( uiNamespace.checkedTermIds.length == 0 ) {
+        uiNamespace.filteredNids = uiNamespace.getAllItemsIds();
+      }
+      else {
+        //Filter rubric items with checked terms.
+        uiNamespace.filteredNids = uiNamespace.findMatchingItems(
+            uiNamespace.checkedTermIds
+        );
+      }
       //Remove from the list of filtered (matching) items those
       //items that already have been linked to the exercise.
       uiNamespace.filteredNids = uiNamespace.removeAlreadyLinkedItems( 

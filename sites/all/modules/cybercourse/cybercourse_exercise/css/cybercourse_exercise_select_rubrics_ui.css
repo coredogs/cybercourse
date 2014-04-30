@@ -2,7 +2,12 @@
 
 .rubric-select-current-item-container {
   width: 42em;
-  padding: 1em;
+  padding: 0.5em;
+  border: 1px black solid;
+  margin-bottom: 1em;
+}
+
+.rubric-select-current-item-title {
 }
 
 .rubric-select-current-item-container button {
@@ -28,20 +33,26 @@
 #term-tree-container {
   display: table-cell;
   width: 20em;
-  max-height: 20em;
+  
+}
+
+#term-tree-container .fancytree-container {
+  max-height: 25em;
+  overflow: auto;
 }
 
 #filtered-terms-container {
   display: table-cell;
   width: 20em;
   padding-left: 1em;
-  max-height: 20em;
   cursor: pointer;
 }
 
 #filtered-terms-container ul {
   list-style-type: none;
   margin: 0;
+  max-height: 25em;
+  overflow: auto;
 }
 
 /* Borders separated out to prevent double inner borders. */

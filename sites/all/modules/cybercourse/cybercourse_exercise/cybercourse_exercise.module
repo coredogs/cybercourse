@@ -319,7 +319,12 @@ function cybercourse_exercise_form_exercise_node_form_alter(&$form, $form_state)
 function _cybercourse_exercise_form_submit($form, &$form_state) {
 //  $form_state['values']['field_rubric_items'][LANGUAGE_NONE][0]['target_id'] = $nid;
 //  $form_state['values']['field_rubric_items'][LANGUAGE_NONE][1]['target_id'] = $nid;
-  $r=5;
+  $linked_items = $_POST['cyco_current_items'];
+  $linked_items = json_decode($linked_items);
+  $form_state['values']['field_rubric_items'][LANGUAGE_NONE] = array();
+  foreach ( $linked_items as $key => $nid ) {
+    $form_state['values']['field_rubric_items'][LANGUAGE_NONE][$key]['target_id'] = $nid;
+  }
 }
 
 /**
