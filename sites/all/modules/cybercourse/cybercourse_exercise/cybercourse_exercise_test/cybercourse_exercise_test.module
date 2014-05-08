@@ -41,6 +41,24 @@ function cybercourse_exercise_test_menu() {
     'access callback' => '_cybercourse_exercise_test_access',
     'type' => MENU_CALLBACK,
   );
+  $items['cyco-et7'] = array(
+    'title' => 'Exercise test 7',
+    'page callback' => 'cyco_et7',
+    'access callback' => '_cybercourse_exercise_test_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['cyco-et8'] = array(
+    'title' => 'Exercise test 8',
+    'page callback' => 'cyco_et8',
+    'access callback' => '_cybercourse_exercise_test_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['cyco-et9'] = array(
+    'title' => 'Exercise test 9',
+    'page callback' => 'cyco_et9',
+    'access callback' => '_cybercourse_exercise_test_access',
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -172,4 +190,61 @@ function cyco_et6() {
   return $html;
 }
 
+/**
+ * Test function.
+ */
+function cyco_et7() {
+  drupal_add_library('system', 'ui.dialog');
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et7.js'
+  );
+  drupal_add_css(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/css/cyco_et7.css'
+  );
+  $html = <<<EOT
+<div id="t7">
+    nid: <input type="text" id="nid"><br>
+    title: <input type="text" id="title"><br>
+    <button id="test">Test</button>
+</div>
+EOT;
+  return $html;
+}
 
+/**
+ * Test function.
+ */
+function cyco_et8() {
+  drupal_add_library('system', 'ui.dialog');
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et8.js'
+  );
+  $html = <<<EOT
+<div id="t8">
+    nid: <input type="text" id="nid"><br>
+    title: <input type="text" id="title"><br>
+    <button id="test">Test</button>
+</div>
+EOT;
+  return $html;
+}
+
+/**
+ * Test function.
+ */
+function cyco_et9() {
+//  drupal_add_library('system', 'ui.dialog');
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et9.js'
+  );
+  $html = <<<EOT
+<div id="t9">
+  <a href="/node/add/exercise-submission" data-target="popup">Test</a>
+</div>
+EOT;
+  return $html;
+}

@@ -1,8 +1,8 @@
 <?php
 
 
-require_once drupal_get_path('module', 'cybercourse_tweaks') 
-    . '/includes/attainment_modals.php';
+//require_once drupal_get_path('module', 'cybercourse_tweaks') 
+//    . '/includes/attainment_modals.php';
 
 /*
  * If notifications module is active, change link text.

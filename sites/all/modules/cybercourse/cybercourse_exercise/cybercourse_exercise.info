@@ -5,5 +5,6 @@ core = 7.x
 version = 7.1
 dependencies[] = services
 dependencies[] = content_access
+dependencies[] = cybercourse_base
 stylesheets[all][] = css/cybercourse_exercise.css
 files[] = cybercourse_exercise_services.inc

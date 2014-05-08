@@ -28,6 +28,8 @@
         .then(function() {
           //Prep the UI.
           uiNamespace.prepareUi();
+          //Prep the add new item UI.
+          Drupal.behaviors.cycoCreateRubricUi.startMeUp();
           uiNamespace.hideAjaxThrobber();
         })
         .fail(function() {
@@ -43,7 +45,7 @@
      * @returns {unresolved} Promise.
      */
     getCsrfToken: function(){
-      console.log("Getting token");
+//      console.log("Getting token");
       //Connect and get user details.
       var webServiceUrl = Drupal.settings.basePath + "services/session/token";
 //      $("#activity").show();
@@ -113,7 +115,7 @@
     prepareUi: function() {
       //Show the rubric items already associated with the exercise.
       uiNamespace.showExistingItems();
-      //Set up events for Edit and Unlink buttons.
+      //Set up events for Edit and Unlink buttons fo existing items.
       $("#rubric-select-current-items-ui").click(function(event) {
         var $target = $(event.target);
         if ( $target.prop("tagName") == "BUTTON" ) {
@@ -127,10 +129,19 @@
               uiNamespace.unlinkItem( nid );
             }
             else if ( caption == "Edit" ){
-              
+              Drupal.behaviors.cycoCreateRubricUi.showCreateItemUi( nid );
             }
           }//End there is a nid
         }
+      });
+      //Set up the Create button.
+      $("#rubric-select-create").click(function() {
+        Drupal.behaviors.cycoCreateRubricUi.showCreateItemUi( 0 );
+      });
+      //Set up the Edit button.
+      $("#rubric-select-edit").click(function() {
+        Drupal.behaviors.cycoCreateRubricUi
+            .showCreateItemUi( uiNamespace.selectedItemNid );
       });
       
       //Create the UI for linking additional items.
@@ -187,11 +198,11 @@
     /*
      * Create the UI for linking a rubric item to an exercise.
      */
-    createUi4LinkingItems: function() {     
+    createUi4LinkingItems: function() {
       //Create data structure for tree.
-      var treeNodes = uiNamespace.createTreeDataStructure();
+      uiNamespace.treeNodes = uiNamespace.createTreeDataStructure();
       //Create the tree.
-      uiNamespace.createTreeDisplay( treeNodes );
+      uiNamespace.createTreeDisplay( uiNamespace.treeNodes );
       //Add all rubric items to the filtered list initially.
       uiNamespace.filteredNids = uiNamespace.getAllItemsIds();
       //Remove from the list of filtered (matching) items those
@@ -385,6 +396,30 @@
       //Show the UI.
       $("#rubric-select-ui").show("fast");
     },
+    returnFromAddItemUi: function( item ) {
+      var itemNid = item.nid;
+      var itemTitle = item.title;
+      //Loop across item list. If find item with same nid, update title.
+      //If not, add a new entry to the list.
+      var elementNid;
+      var foundIt = false;
+      $("#filtered-terms li").each(function(index, element){
+        elementNid = $(element).attr("data-nid");
+        if ( elementNid == itemNid ) {
+          element.text( itemTitle );
+          foundIt = true;
+        }
+      });
+      if ( ! foundIt ) {
+        //Add the data to the server data array.
+        //From http://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-clone-an-object
+        var itemClone = $.extend(true, {}, item);
+        uiNamespace.rubricsServerData.push( itemClone );
+        //Add a new item.
+        $("#filtered-terms").append("<li data-nid='" + itemNid + "'>" 
+            + itemTitle + "</li>");
+      }
+    },
     /*
      * User checked a term in the tree.
      * @param {type} event
@@ -554,10 +589,10 @@
       return null;
     },
     showAjaxThrobber: function() {
-      $("#rubric-select-loading-throbber").show();
+      $("#rubric-select-loading-throbber").show("fast");
     },
     hideAjaxThrobber: function() {
-      $("#rubric-select-loading-throbber").hide();
+      $("#rubric-select-loading-throbber").hide("fast");
     }
   };
 }(jQuery));

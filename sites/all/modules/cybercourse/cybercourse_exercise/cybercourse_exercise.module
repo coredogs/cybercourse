@@ -5,15 +5,16 @@
  * 
  * Insert JS files to make a popup.
  */
+
 function cybercourse_exercise_init() {
   global $base_url;
   drupal_add_js(
       $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
-        . '/js/popup/jquery.popupwindow.js'
+      . '/js/popup/jquery.popupwindow.js'
   );
   drupal_add_js(
-      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise') 
-        . '/js/cybercourse_exercise.js'
+      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
+      . '/js/cybercourse_exercise.js'
   );
 //  drupal_add_css(
 //      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise') 
@@ -33,7 +34,25 @@ function cybercourse_exercise_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  return $items;  
+  $items['admin/config/cybercourse/exercise'] = array(
+    'title' => 'Exercise settings',
+    'description' => 'Configuration of the Cybercourse exercise module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cybercourse_exercise_settings_form'),
+    'access arguments' => array('admininster site configuration'),
+    'file' => 'cybercourse_exercise.admin.inc',
+    'file path' => drupal_get_path('module', 'cybercourse_exercise'),
+    );
+  return $items;
+}
+
+function cybercourse_exercise_permission() {
+  return array(
+    'administer exercise settings' => array(
+      'title' => t('Administer exercise settings'),
+      'restrict access' => TRUE,
+    ),
+  );
 }
 
 /**
@@ -41,9 +60,9 @@ function cybercourse_exercise_menu() {
  */
 function _cybercourse_exercise_close_popup() {
   global $base_url;
-  $path = $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise') 
-      . '/close_popup.js';
-  drupal_add_js( $path );
+  $path = $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
+      . '/js/close_popup.js';
+  drupal_add_js($path);
   return '<h1>Done</h1>'; //Need to return something here.
 }
 
@@ -67,6 +86,7 @@ function _cybercourse_exercise_close_popup() {
  * Process callback for hook_filter. Finds [[[cycoexercise (node_id)]]]
  * and passes match data onto function that will do the insertion.
  */
+
 /**
  * Implements hook_swim_betwixt_markup_2_html_alter().
  * 
@@ -79,11 +99,10 @@ function _cybercourse_exercise_close_popup() {
  */
 function cybercourse_exercise_swim_betwixt_markup_2_html_alter(&$content) {
   $regex = '/\[\[\[\s*cycoexercise\s*(\d+)\s*\]\]\]/';
-      //[[[, optional whitespace, cycoexercise, optional whitespace, 
-      //exercise number, optional whitespace, ]]]
-  $content = preg_replace_callback( $regex,
-      '_cybercourse_exercise_make_replacements', $content );
-   
+  //[[[, optional whitespace, cycoexercise, optional whitespace, 
+  //exercise number, optional whitespace, ]]]
+  $content = preg_replace_callback($regex, '_cybercourse_exercise_make_replacements', $content);
+
 //  return preg_replace_callback('/\[\[\[\s*cycoexercise\s*(\d+)\s*\]\]\]/',
 //      //[[[, optional whitespace, cycoexercise, optional whitespace, 
 //      //exercise number, optional whitespace, ]]]
@@ -111,21 +130,17 @@ function cybercourse_exercise_swim_betwixt_markup_2_html_alter(&$content) {
 
 /**
  * Generates the HTML for the exercise.
- */ 
+ */
 function _cybercourse_exercise_make_replacements($matches) {
   $exercise_nid = $matches[1];
   $exercise_node = node_load($exercise_nid);
   //Make sure that this is the right type of node.
-  if (   $exercise_node == FALSE 
-      || !node_access('view', $exercise_node) 
-      || !$exercise_node->status
-      || $exercise_node->type != 'exercise') {
-    $message = t('Invalid exercise id: @id', array('@id' => $exercise_nid) );
+  if ($exercise_node == FALSE || !node_access('view', $exercise_node) || !$exercise_node->status || $exercise_node->type != 'exercise') {
+    $message = t('Invalid exercise id: @id', array('@id' => $exercise_nid));
     drupal_set_message($message);
     watchdog('cybercourse_exercise', $message);
     return '<p>' . $message . '</p>';
-  }
-  else {
+  } else {
     //Work out what to link to. Submission add or edit?
     //Find submission node with uid of logged in user, and exercise reference
     //to $exercise_node.
@@ -133,22 +148,21 @@ function _cybercourse_exercise_make_replacements($matches) {
     global $user;
     $query = new EntityFieldQuery();
     $query->entityCondition('entity_type', 'node')
-      ->entityCondition('bundle', 'exercise_submission')
-      ->propertyCondition('status', 1)
-      ->fieldCondition('field_exercise', 'target_id', $exercise_nid, '=')
-      ->propertyCondition('uid', $user->uid);
+        ->entityCondition('bundle', 'exercise_submission')
+        ->propertyCondition('status', 1)
+        ->fieldCondition('field_exercise', 'target_id', $exercise_nid, '=')
+        ->propertyCondition('uid', $user->uid);
     $result = $query->execute();
     if (isset($result['node'])) {
       //There is already a submission for this exercise for this user.
       //Show an edit link.
       $submissions_nids = array_keys($result['node']);
-      if ( sizeof($submissions_nids) != 1 ) {
-        throw new Exception('Too many submission ids: <pre>' 
-            . print_r($submissions_nids, TRUE) . '</pre>'); 
+      if (sizeof($submissions_nids) != 1) {
+        throw new Exception('Too many submission ids: <pre>'
+        . print_r($submissions_nids, TRUE) . '</pre>');
       }
       $url = $base_url . '/node/' . $submissions_nids[0] . '/edit';
-    }
-    else {
+    } else {
       //No submission yet. Show an add link.
       $url = $base_url . '/node/add/exercise-submission';
     }
@@ -156,53 +170,91 @@ function _cybercourse_exercise_make_replacements($matches) {
     $url .= '?field_exercise=' . $exercise_nid;
     //Add destination after submission that will close the window.
     $url .= '&destination=cybercourse-exercise-close-popup';
-    $link = l( t('Work on it'), $url, 
-        array('attributes' =>
-          array(
-            'title' => 'Work on exercise',
-            'rel' => 'scrollbars:1',
-            'class' => array( 'popupwindow', 'exercise-work-on-it-link' ),
-          )
-        )
-    );
+    $link = l(t('Work on it'), $url, array('attributes' =>
+      array(
+        'title' => 'Work on exercise',
+//        'rel' => 'scrollbars:1',
+        'class' => array('exercise-work-on-it-link'),
+        'data-target' => 'popup',
+      )
+    ));
     //Add the Work On It link to the exercise to be rendered.
-//    $exercise_node->body['und'][0]['value'] = 
-//        $exercise_node->body['und'][0]['value'] . $link;
-    //Prep the exer for viewing, with a custom view mode.
-//    $view = node_view($exercise_node, 'cyco_exer', NULL);
-//    $view = node_view($exercise_node, 'cybercourse_exercise_insert', NULL);
-//Hide the link for now.
-//    $view['body'][0]['#markup'] .= $link;
+//    $view = node_view($exercise_node);
+//    $view['field_body'][0]['#markup'] .= $link;
 //    $render = drupal_render($view);
-    
+
     $body_content = swim_rest2html(
         $exercise_node->field_body[LANGUAGE_NONE][0]['pure_rest']
     );
-    
-    $body_content = 
-  '<div class="inserted-exercise">'
-.   '<div class="inserted-exercise-title">Exercise: ' . t($exercise_node->title) . '</div>'
-.   '<div class="inserted-exercise-content">' . t($body_content) . '</div>'
-. '</div>';
 
+    $body_content = '<div class="inserted-exercise">'
+        . '<div class="inserted-exercise-title">Exercise: ' . t($exercise_node->title) . '</div>'
+        . '<div class="inserted-exercise-content">' . t($body_content . $link) . '</div>'
+        . '</div>';
+    //Load JS to render exer submission links in new window.
+    drupal_add_js(
+        $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
+        . '/js/cybercourse_exercise_open_submission_form.js'
+    );
     
+
     return $body_content;
 //    return $render;
-  } 
-} 
+  }
+}
 
 /**
  * Return the theme to use for popup windows, by inspecting the 
  * destination.
  */
 function cybercourse_exercise_custom_theme() {
-  if ( ( isset($_GET['destination']) 
-         && $_GET['destination'] == 'cybercourse-exercise-close-popup' )
-       ||
-       current_path() == 'cybercourse-exercise-close-popup'
-      ) {
-    return 'cybercourse_mt';
+//  if (( isset($_GET['destination']) 
+//      && $_GET['destination'] == 'cybercourse-exercise-close-popup' ) ||
+//      current_path() == 'cybercourse-exercise-close-popup'
+//  ) {
+  if (_cybercourse_exercise_is_submission_page_in_popup() ) {
+    return _cybercourse_exercise_get_submission_theme();
   }
+}
+
+
+/**
+ * Return true if the current page is an exercise submission shown in a popup.
+ */
+function _cybercourse_exercise_is_submission_page_in_popup() {
+  $is_submission_popup = FALSE;
+  //Is the page in a popup?
+  if ((    isset($_GET['destination']) 
+        && $_GET['destination'] == 'cybercourse-exercise-close-popup' ) ) {
+    //Is this a submission add form?
+    $current_path = current_path();
+    if ( $current_path == 'node/add/exercise-submission' ) {
+      //It's an add form.
+      $is_submission_popup = TRUE;
+    }
+    else if (preg_match('/node\/(\d+)\/edit/', $current_path, $matches) ) {
+      //Is this an edit form?
+      $nid = $matches[1];
+      $node = node_load($nid);
+      $is_submission_popup = ( $node->type == 'exercise_submission' );
+    }
+  }
+  return $is_submission_popup;
+}
+
+/**
+ * Get the machine name of the theme to use for the exercise submission form.
+ * @global string $theme Machine name of current default theme.
+ * @return string Machine theme name.
+ */
+function _cybercourse_exercise_get_submission_theme() {
+  $theme_to_use = variable_get('cybercourse_exercise_submission_theme', 'default');
+  if ( $theme_to_use == 'default' ) {
+    //Grab the current default theme.
+    global $theme;
+    $theme_to_use = $theme;
+  }
+  return $theme_to_use;
 }
 
 /**
@@ -210,32 +262,32 @@ function cybercourse_exercise_custom_theme() {
  * strips most of the content away.
  * @param string $vars
  */
-function cybercourse_exercise_preprocess_node(&$vars) {
-  if (   $vars['node']->type == 'exercise' 
-      && $vars['view_mode'] == 'cybercourse_exercise_insert' ) {
-    $vars['theme_hook_suggestions'][] = 'node__exercise__cybercourse_exercise_insert';
-  }
-}
+//function cybercourse_exercise_preprocess_node(&$vars) {
+//  if ($vars['node']->type == 'exercise' && $vars['view_mode'] == 'cybercourse_exercise_insert') {
+//    $vars['theme_hook_suggestions'][] = 'node__exercise__cybercourse_exercise_insert';
+//  }
+//}
 
 /**
  * Implements hook_node_view().
  * 
  * If the user can edit course pages, then add the id of the exercise
- * to the end of the title. 
+ * to the end of the title. Helps when inserting exercise 
+ * references in a course page.
  */
 function cybercourse_exercise_node_view($node, $view_mode, $langcode) {
-  if ( $node->type == 'exercise' && $view_mode == 'full' ) {
-    if ( user_access('edit any course_page') ) {
-      drupal_set_title( $node->title . ' (' . $node->nid . ')' );
+  if ($node->type == 'exercise' && $view_mode == 'full') {
+    if (user_access('edit any course_page')) {
+      drupal_set_title($node->title . ' (' . $node->nid . ')');
     }
   }
 }
 
 /**
-* Implements hook_entity_info_alter().
+ * Implements hook_entity_info_alter().
  * 
  * Define a view mode for inserting exercises in regular content.
-*/
+ */
 //function cybercourse_exercise_entity_info_alter(&$entity_info) {
 ////  $entity_info['node']['view modes']['cybercourse_exercise_insert'] = array(
 ////    'label' => t('Insert Cybercourse exercise'),
@@ -248,21 +300,20 @@ function cybercourse_exercise_node_view($node, $view_mode, $langcode) {
 //}
 
 function cybercourse_exercise_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
-  if ( isset( $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
-      ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0'] ) ) {
+  if (isset($form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
+          ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0'])) {
     $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
-      ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
-      ['#weight'] = 4;
+        ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+        ['#weight'] = 4;
     $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
-      ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
-      ['#value'] = 'Edit this item';
+        ['edit_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+        ['#value'] = 'Edit this item';
     $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
-      ['add_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
-      ['#weight'] = 8;
+        ['add_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+        ['#weight'] = 8;
     $form['field_rubric_items'][LANGUAGE_NONE][0]['field_rubric_item']
-      ['add_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
-      ['#value'] = 'Add a new rubric item';
-
+        ['add_entityconnect__field_rubric_item_all_field_rubric_items-und-0']
+        ['#value'] = 'Add a new rubric item';
   }
 }
 
@@ -279,9 +330,9 @@ function cybercourse_exercise_form_exercise_node_form_alter(&$form, $form_state)
   $form['field_rubric_items']['#type'] = 'hidden';
   //Pass nids of current rubric items to client in a hidden form field.
   $rubric_items = array();
-  if ( isset($form_state['node']->field_rubric_items[LANGUAGE_NONE]) ) {
-    foreach ( $form_state['node']->field_rubric_items[LANGUAGE_NONE] as $key => $value) {
-      $rubric_items[] = intval( $value['target_id'] );
+  if (isset($form_state['node']->field_rubric_items[LANGUAGE_NONE])) {
+    foreach ($form_state['node']->field_rubric_items[LANGUAGE_NONE] as $key => $value) {
+      $rubric_items[] = intval($value['target_id']);
     }
   }
   $form['cyco_current_items'] = array(
@@ -293,7 +344,7 @@ function cybercourse_exercise_form_exercise_node_form_alter(&$form, $form_state)
   //Load Fancytree.
   $ftLibraryInfo = libraries_load('fancytree');
   $numFilesLoaded = libraries_load_files($ftLibraryInfo);
-  if ( $numFilesLoaded <= 0 ) {
+  if ($numFilesLoaded <= 0) {
     $mess = t('Error: no Fancytree files loaded. Is Fancytree installed?');
     watchdog('cybercourse_exercise', $mess);
     services_error($mess, 666);
@@ -301,14 +352,22 @@ function cybercourse_exercise_form_exercise_node_form_alter(&$form, $form_state)
   //Add JS and CSS for the UI.
   drupal_add_js(
       drupal_get_path('module', 'cybercourse_exercise')
-        . '/js/cybercourse_exercise_select_rubrics_ui.js'
+      . '/js/cybercourse_exercise_select_rubrics_ui.js'
   );
   drupal_add_css(
       drupal_get_path('module', 'cybercourse_exercise')
-        . '/css/cybercourse_exercise_select_rubrics_ui.css'
+      . '/css/cybercourse_exercise_select_rubrics_ui.css'
+  );
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise')
+      . '/js/cybercourse_exercise_create_rubric_ui.js'
+  );
+  drupal_add_css(
+      drupal_get_path('module', 'cybercourse_exercise')
+      . '/css/cybercourse_exercise_create_rubric_ui.css'
   );
   //Grab HTML for UI from a template.
-  $ui_html = theme( 'select_rubric_item' );
+  $ui_html = theme('select_rubric_item');
   $form['ui_html'] = array(
     '#type' => 'markup',
     '#markup' => $ui_html,
@@ -322,7 +381,7 @@ function _cybercourse_exercise_form_submit($form, &$form_state) {
   $linked_items = $_POST['cyco_current_items'];
   $linked_items = json_decode($linked_items);
   $form_state['values']['field_rubric_items'][LANGUAGE_NONE] = array();
-  foreach ( $linked_items as $key => $nid ) {
+  foreach ($linked_items as $key => $nid) {
     $form_state['values']['field_rubric_items'][LANGUAGE_NONE][$key]['target_id'] = $nid;
   }
 }
@@ -363,12 +422,26 @@ function cybercourse_exercise_libraries_info() {
  * Implement hook_theme().
  * @return array
  */
-function cybercourse_exercise_theme() {
-  $result = array(
-    //HTML for rubric selection UI.
-    'select_rubric_item' => array(
-      'template' => 'templates/cybercourse-exercise-select-rubric-item',
-   ),
-  );
-  return $result;
+//function cybercourse_exercise_theme() {
+//  $result = array(
+//    //HTML for rubric selection UI.
+//    'select_rubric_item' => array(
+//      'template' => 'templates/cybercourse-exercise-select-rubric-item',
+//    ),
+//  );
+//  return $result;
+//}
+
+/**
+ * Implements hook_form_alter() for exercise submission form.
+ * 
+ * If form is opened from "Work on it" link, add some stuff.
+ */
+function cybercourse_exercise_form_exercise_submission_node_form_alter(&$form, $form_state) {
+  //Check whether this is a new-window submission.
+  if (_cybercourse_exercise_is_submission_page_in_popup() ) {
+    //Aye.
+    module_invoke('admin_menu', 'suppress');
+    
+  }
 }

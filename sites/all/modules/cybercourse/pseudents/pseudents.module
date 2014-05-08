@@ -31,31 +31,29 @@ function pseudents_help($path, $arg) {
 
 function pseudents_menu() {
   $items = array();
-  $items['admin/config/pseudents'] = array(
+  $items['admin/config/cybercourse/pseudents'] = array(
     'title' => 'Pseudents',
     'description' => 'Pseudents configuration',
-    'position' => 'right',
-    'weight' => 5,
-    'page callback' => 'system_admin_menu_block_page',
-    'access arguments' => array('administer pseudents'),
-    'file' => 'system.admin.inc',
-    'file path' => drupal_get_path('module', 'system'),
-  );
-  // Need at least one child item before your section will appear.
-  $items['admin/config/pseudents/flush-cache'] = array(
-    'title' => 'Flush pseudent cache',
-    'description' => 'Rebuild the pseudent cache',
-    'page callback' => 'pseudents_flush_cache',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('pseudents_admin_form'),
     'access arguments' => array('administer pseudents'),
   );
   return $items;
 }
 
+function pseudents_admin_form($form, &$form_state) {
+  $form['clear_cache'] = array(
+    '#type' => 'submit',
+    '#value' => t('Clear pseudent cache'),
+    '#submit' => array('pseudents_flush_cache'),
+  );  
+  return $form;
+}
 
 function pseudents_flush_cache() {
   _pseudents_generate_ck_pseudent_table();
-  drupal_set_message( t('Pseudent cache flushed.') );
-  drupal_goto('admin/config/pseudents');
+  drupal_set_message( t('Pseudent cache cleared.') );
+  drupal_goto('admin/config/cybercourse/pseudents');
 }
 
 /**

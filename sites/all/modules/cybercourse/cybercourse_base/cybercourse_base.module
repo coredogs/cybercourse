@@ -1,0 +1,52 @@
+<?php
+
+/* 
+* Defines some basic CyCo stuff.
+ */
+
+/**
+ * Implements hook_menu.
+ */
+function cybercourse_base_menu() {
+  $items = array();
+  $items['admin/config/cybercourse'] = array(
+    'title' => 'Cybercourse',
+    'description' => 'Configuration of the Cybercourse system.',
+      'page callback' => 'system_admin_menu_block_page',
+      'access arguments' => array('administer site configuration'),
+      'file' => 'system.admin.inc',
+      'file path' => drupal_get_path('module', 'system'),
+  );
+  $items['admin/config/cybercourse/base'] = array(
+    'title' => 'Cybercourse base settings',
+    'description' => 'Base configuration of the Cybercourse system.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cybercourse_base_settings_form'),
+    'access arguments' => array('administer site configuration'),
+//    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission.
+ */
+//function cybercourse_exercise_permission() {
+//  return array(
+//    'administer cybercourse' => array(
+//      'title' => t('Administer Cybercourse'),
+//      'restrict access' => TRUE,
+//    ),
+//  );
+//}
+//
+/**
+ * Define base config form.
+ */
+function cybercourse_base_settings_form($form, &$form_state) {
+  $form['nothing'] = array(
+    '#type' => 'markup',
+    '#markup' => 'Nothing',
+  );
+  return $form;
+}
