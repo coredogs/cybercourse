@@ -4,7 +4,7 @@ For control panel menus, show the title text after each link.
 (function ($) {
   Drupal.behaviors.cybercourse_menu_titles = {
     attach: function() {
-      $("ul.menu.nav a").each( function(index, link) {
+      $("body.page-control-panel ul.menu a").each( function(index, link) {
 //      $(".panels-flexible-region ul.menu.nav a").each( function(index, link) {
         //link is a menu <a>.
         var $link = $(link);
@@ -14,7 +14,7 @@ For control panel menus, show the title text after each link.
           var title = $link.attr("title");
           $link.html(
             $link.html() 
-              + "<br><span class='cyco-menu-title'>" + title + "</span>"
+              + "<br><span class='cyco-cp-menu-title'>" + title + "</span>"
           );
         } //End if
       }); //End each

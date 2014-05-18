@@ -1,0 +1,43 @@
+<?php
+
+/*
+ * Defines some basic CyCo stuff.
+ */
+
+/**
+ * Implements hook_menu.
+ */
+//function cybercourse_groups_menu() {
+//  $items = array();
+//  $items['admin/config/cybercourse'] = array(
+//    'title' => 'Cybercourse',
+//    'description' => 'Configuration of the Cybercourse system.',
+//    'page callback' => 'system_admin_menu_block_page',
+//    'access arguments' => array('administer site configuration'),
+//    'file' => 'system.admin.inc',
+//    'file path' => drupal_get_path('module', 'system'),
+//  );
+//  $items['admin/config/cybercourse/base'] = array(
+//    'title' => 'Cybercourse base settings',
+//    'description' => 'Base configuration of the Cybercourse system.',
+//    'page callback' => 'drupal_get_form',
+//    'page arguments' => array('cybercourse_base_settings_form'),
+//    'access arguments' => array('administer site configuration'),
+////    'type' => MENU_DEFAULT_LOCAL_TASK,
+//  );
+//  return $items;
+//}
+
+function cybercourse_groups_render_basic_list() {
+//  $html = views_embed_view('cybercourse_user_groups', 'user_groups_for_cp');
+  $name = 'cybercourse_user_groups';
+  $display_id = 'user_groups_for_cp';  
+  $view = views_get_view($name);
+  if (!$view || !$view->access($display_id)) {
+    return '<p>Not found or access denied</p>';
+  }
+  $view_content = $view->preview($display_id);
+  $title = $view->get_title();
+  $html = '<h2>' . $title . '</h2>' . $view_content;
+  return $html;
+}

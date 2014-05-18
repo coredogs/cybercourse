@@ -1,0 +1,7 @@
+name = Cybercourse groups
+description = Code for groups.
+package = CyberCourse
+core = 7.x
+dependencies[] = cybercourse_base
+dependencies[] = og
+dependencies[] = views

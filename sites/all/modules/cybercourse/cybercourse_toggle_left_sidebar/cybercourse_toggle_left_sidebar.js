@@ -13,7 +13,7 @@
     regionSelector: ".region-sidebar-first",
     //The class the main region has when the sidebar is expanded
     mainRegionClassWhenSidebarCollapsed: "col-sm-12",
-    //The class the main region has when the sodebar is collapse.
+    //The class the main region has when the sidebar is collapse.
     mainRegionClassWhenSidebarExpanded: "col-sm-9",
     //Code to show the widget.
     widgetCode: "<span class='glyphicon glyphicon-circle-arrow-left' "
