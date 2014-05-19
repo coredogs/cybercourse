@@ -1,0 +1,17 @@
+/* 
+    Created on : May 18, 2014, 4:39:26 PM
+    Author     : mathieso
+    Custom styles, overriding default ones.
+*/
+
+h1 {
+  font-size: 1.4em;
+}
+
+#navigation {
+  display: none;
+}
+
+#main {
+  padding-top: 0;
+}

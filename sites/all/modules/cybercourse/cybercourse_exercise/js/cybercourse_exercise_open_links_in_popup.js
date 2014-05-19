@@ -7,7 +7,7 @@
         windowObjectReference = window.open(
                 $(this).attr("href"),
                 "Work on your exercise",
-                "resizable,scrollbars"
+                "resizable,scrollbars,height=600,width=600"
                 );
         return false; //Cancel standard action.
       });

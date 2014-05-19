@@ -27,7 +27,10 @@
 //console.log('turtles all the way down');//return;
         editor.document.appendStyleSheet( Drupal.settings.swim.editing_stylesheet );
         //Size the editor.
-        var heightFrac = 0.70;
+        var heightFrac = 0.70; //Default.
+        if ( Drupal.settings.swim.heightFraction ) {
+          heightFrac = Drupal.settings.swim.heightFraction;
+        }
         if ( editor.name.search('summary') != -1 ) {
           heightFrac = 0.20;
         }

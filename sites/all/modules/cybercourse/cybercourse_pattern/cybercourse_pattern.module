@@ -89,7 +89,6 @@ function _cybercourse_pattern_make_replacements($matches) {
 
 /**
  * Implement hook_theme().
- * @return array
  */
 function cybercourse_pattern_theme() {
   $result = array(
