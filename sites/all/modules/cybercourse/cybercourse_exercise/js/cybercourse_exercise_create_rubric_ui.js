@@ -303,7 +303,8 @@
       var promise = $.ajax({
         type: "GET",
         contentType: "application/json; charset=utf-8",
-        dataType: "json", url: webServiceUrl,
+        dataType: "json", 
+        url: webServiceUrl,
         beforeSend: function (request) {
           request.setRequestHeader("X-CSRF-Token", 
             Drupal.behaviors.cycoSelectRubricUi.token);

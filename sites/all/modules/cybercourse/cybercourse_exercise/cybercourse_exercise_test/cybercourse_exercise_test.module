@@ -59,6 +59,12 @@ function cybercourse_exercise_test_menu() {
     'access callback' => '_cybercourse_exercise_test_access',
     'type' => MENU_CALLBACK,
   );
+  $items['cyco-et10'] = array(
+    'title' => 'Exercise test 10',
+    'page callback' => 'cyco_et10',
+    'access callback' => '_cybercourse_exercise_test_authenticated_user',
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -68,6 +74,14 @@ function _cybercourse_exercise_test_access() {
   $admin_key = array_search('administrator', $user->roles);
   return $admin_key !== FALSE;
 }
+
+//Return true if the user is authenticated.
+function _cybercourse_exercise_test_authenticated_user() {
+  global $user;
+  $key = array_search('authenticated user', $user->roles);
+  return $key !== FALSE;
+}
+
 
 /**
  * Test function.
@@ -244,6 +258,26 @@ function cyco_et9() {
   $html = <<<EOT
 <div id="t9">
   <a href="/node/add/exercise-submission" data-target="popup">Test</a>
+</div>
+EOT;
+  return $html;
+}
+
+/**
+ * Test function.
+ */
+function cyco_et10() {
+  drupal_add_library('system', 'ui.dialog');
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et10.js'
+  );
+  $html = <<<EOT
+<div id="t10">
+    student uid: <input type="text" id="student"><br>
+    exer nid: <input type="text" id="exercise"><br>
+    <button id="test">Test</button>
+      <p id="loading">Loading...</p>
 </div>
 EOT;
   return $html;

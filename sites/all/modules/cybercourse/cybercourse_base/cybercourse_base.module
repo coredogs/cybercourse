@@ -4,6 +4,11 @@
  * Defines some basic CyCo stuff.
  */
 
+//Load the error handler.
+require_once 'cybercourse_error_handler.inc';
+//Load utilities library.
+require_once 'cybercourse_base_utilities.inc';
+
 /**
  * Implements hook_menu.
  */
@@ -29,18 +34,6 @@ function cybercourse_base_menu() {
 }
 
 /**
- * Check whether the current user has a role.
- * @global stdClass $user Current user.
- * @param array $roles Roles to check for.
- * @return boolean True if the user has at least one of the roles.
- */
-function cybercourse_base_current_user_has_role(array $roles) {
-  global $user;
-  $check = array_intersect($roles, array_values($user->roles));
-  return empty($check) ? FALSE : TRUE;
-}
-
-/**
  * Implements hook_permission.
  */
 //function cybercourse_exercise_permission() {
@@ -61,4 +54,21 @@ function cybercourse_base_settings_form($form, &$form_state) {
     '#markup' => 'Nothing',
   );
   return $form;
+}
+
+/**
+ * Handle an error.
+ * @staticvar CyberCourseErrorHandler $error_handler Error handling class.
+ * @param string $error_code Code, e.g., ACCESS_DENIED.
+ * @param string $explanation Why? Oh, god, WHY?
+ */
+function cybercourse_base_handle_error( 
+      $error_code = 'UNKNOWN_ERROR',
+      $explanation = 'Something bad.'
+    ) {
+  static $error_handler = NULL;
+  if ( is_null($error_handler) ) {
+    $error_handler = new CyberCourseErrorHandler();
+  }
+  $error_handler->reportError($error_code, $explanation);
 }

@@ -149,6 +149,7 @@ function _cybercourse_exercise_make_replacements($matches) {
         $exercise_node->field_body[LANGUAGE_NONE][0]['pure_rest']
     );
     $result = theme('cyco_embedded_exercise', array(
+      'exercise_nid' => $exercise_nid,
       'title' => $exercise_node->title,
       'body' => $body_content,
       'labeled_links' => $labeled_links,
@@ -173,6 +174,22 @@ function _cybercourse_exercise_make_submit_links( $exercise_node ) {
       $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
       . '/js/cybercourse_exercise_open_links_in_popup.js'
   );
+  
+  drupal_add_js(
+      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
+      . '/js/cybercourse_exercise_submission_links.js'
+  );
+  //Send current user uid to client.
+  drupal_add_js(
+      array('cybercourse_exercise' => 
+        array(
+          'uid' => $user->uid,
+        ),
+      ),
+      'setting'
+  );
+  
+  
   $labeled_links = array();
   $exercise_nid = $exercise_node->nid;
   $query = new EntityFieldQuery();

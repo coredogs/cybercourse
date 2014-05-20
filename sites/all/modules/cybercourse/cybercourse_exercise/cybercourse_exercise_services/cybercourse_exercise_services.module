@@ -1,7 +1,14 @@
 <?php
 
 /**
-* Implements of hook_services_resources().
+* Implements hook_init().
+*/
+function cybercourse_exercise_services_init() {
+  
+}
+
+/**
+* Implements hook_services_resources().
 */
 function cybercourse_exercise_services_resources() {
   $api = array(
@@ -13,7 +20,11 @@ function cybercourse_exercise_services_resources() {
     'exercise' => _cybercourse_exercise_def_exercise_services(),
     
     /** Rubic item categories **/
-    'rubric_item_categories' => _cybercourse_exercise_def_category_services()
+    'rubric_item_categories' => _cybercourse_exercise_def_category_services(),
+    
+    /** Exercise submission. **/
+    'submission' => 
+      _cybercourse_exercise_def_sub_meta_services(),
   );
   return $api;
 }
@@ -213,6 +224,51 @@ function _cybercourse_exercise_def_category_services() {
   return $api;
 }
 
+/**
+ * Define API for client asking server for metadata about one student's
+ * submissions for one exercise.
+ * @return array Definition.
+ */
+function _cybercourse_exercise_def_sub_meta_services() {
+  $api = array(
+      'actions' => array(
+        'getSubmissionMetaStudentExer' => array(
+          'help' => 
+            t('Returns a list of one student\'s submissions for one exercise .'),
+          'access arguments' => array('access content'),
+          'callback' => '_cycoex_get_sub_meta_student_exer',
+       'args' => array(
+         array(
+          'name' => 'data',
+          'type' => 'struct',
+          'description' => 'The student\'s uid and exercise nid',
+          'source' => 'data',
+          'optional' => FALSE,
+          ),
+        ), //End args.
+//        'args' => array(
+//            array(
+//              'name' => 'student_uid',
+//              'type' => 'int',
+//              'description' => 'The id of the student',
+//              'source' => array('path' => '0'),
+//              'optional' => FALSE,
+//            ),
+//            array(
+//              'name' => 'exercise_nid',
+//              'type' => 'int',
+//              'description' => 'The id of the exercise',
+//              'source' => array('path' => '1'),
+//              'optional' => FALSE,
+//            ),
+//          ), //End args.
+          
+        ),
+      ),
+    ); //End rubric_item_categories
+  return $api;
+}
+
 /********************************************
 * Rubric items
 *********************************************/
@@ -254,11 +310,19 @@ function _exri_access($operation, $args) {
   return $access;
 }
 
+/**
+ * Retrieve a rubric item.
+ * @param int $nid Node id.
+ * @return \stdClass Item.
+ */
 function _exri_retrieve( $nid ){
   //Load the node.
   $node = node_load($nid);
   if ( ! $node || $node->type != 'rubric_item') {
-    services_error('Not a rubric item', 666, $nid);
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' Cannot load node: ' . $nid;
+    cybercourse_services_handle_error( 'UNKNOWN_NODE', $message );
+    return;
   }
   $rubric_item = new stdClass();
   $rubric_item->nid = $nid;
@@ -510,12 +574,19 @@ function _exex_delete(){}
 
 function _exex_index(){}
 
+/**
+ * Get the rubric item vocabulary.
+ * @return \stdClass The vocab.
+ */
 function _cycoex_get_tree() {
 //  services_error('Not a rubric item', 666, $nid);
   //Get the vid of the Feedback items categoes vocab.
   $vocab = taxonomy_vocabulary_machine_name_load('rubric_item_categories');
   if ( $vocab === FALSE ) {
-    services_error('Cannot find vocab rubric_item_categories.', 666);
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' Cannot find vocab rubric_item_categories.';
+    cybercourse_services_handle_error( 'UNKNOWN_VOCAB', $message );
+    return;
   }
   $terms = taxonomy_get_tree($vocab->vid);
   $tree = array();
@@ -541,19 +612,25 @@ function _cycoex_attach_2_parent( $tree, $child, $parent_id ) {
  */
 function _exri_check_title( $data ) {
   if ( !isset($data['nid']) ) {
-    services_error('nid missing', 666);
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' nid missing.';
+    cybercourse_services_handle_error( 'NID_MISSING', $message );
+    return;
   }
-  if ( !isset($data['title']) ) {
-    services_error('title missing', 666);
+  if ( !isset($data['title']) || strlen($data['title']) == 0 ) {
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' Title missing.';
+    cybercourse_services_handle_error( 'TITLE_MISSING', $message );
+    return;
   }
   $nid_to_check = $data['nid'];
   $title_to_check = $data['title'];
   $title_to_check = trim($title_to_check);
   if ( ! is_numeric($nid_to_check) || $nid_to_check < -1 ) {
-    services_error('Bad nid: ' . $nid_to_check, 666);
-  }
-  if ( strlen($title_to_check) == 0 ){
-    services_error('MT title', 666);
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' Invalid nid: ' . $nid;
+    cybercourse_services_handle_error( 'INVALID_NID', $message );
+    return;
   }
   //Find a rubric with that title.
   $query = new EntityFieldQuery;
@@ -589,4 +666,96 @@ function _exri_check_title( $data ) {
   $result = new stdClass();
   $result->warn = $warn_user;
   return $result;
+}
+
+/**
+ * Get metadata about one student's submissions for one exercise.
+ * Uid in request must match logged in user, or the logged in user
+ * must have special priveleges.
+ * Dates are ISO8601.
+ * @return \stdClass
+ */
+function _cycoex_get_sub_meta_student_exer( $data ) {
+  //Get params.
+  if ( !isset($data['student']) ) {
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' student uid missing.';
+    cybercourse_services_handle_error( 'UID_MISSING', $message );
+    return;
+  }
+  if ( !isset($data['exercise']) ) {
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' exercise nid missing missing.';
+    cybercourse_services_handle_error( 'NID_MISSING', $message );
+    return;
+  }
+  $student_uid = $data['student'];
+  $exercise_nid = $data['exercise'];
+  //Check user has permission.
+  $permission = FALSE;
+  global $user;
+  if ( $student_uid == $user->uid ) {
+    $permission = TRUE;
+  }
+  else if ( cybercourse_base_current_user_has_role( 
+            array('administrator', 'instructor', 'grader') ) 
+          ) {
+    $permission = TRUE;
+  }
+  if ( ! $permission ) {
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' Cannot load submissions. Exercise: ' . $exercise_nid 
+        . ' User: ' . $student_uid;
+    cybercourse_services_handle_error( 'ACCESS_DENIED', $message );
+    return;
+  }
+  //Run the view.
+  $view = views_get_view('submission_metadata_for_student_exercise');
+  $view->set_arguments(array( $student_uid, $exercise_nid, ));
+  $view->execute();
+  if ( ! $view->executed ) {
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' Cannot run submission metadata view. Exercise:' . $exercise_nid 
+        . ' user ' . $student_uid;
+    cybercourse_services_handle_error( 'VIEW_RUN_FAILURE', $message );
+    return;
+  }
+  $view_results = $view->result;
+  $submissions = array();
+  foreach( $view_results as $view_result ) {
+    $submisson = array();
+    $submisson['nid'] = $view_result->nid;
+    $submisson['version'] = $view_result->field_field_version[0]['raw']['value'];
+    $submisson['whenCreated'] = cybercourse_base_timestamp_to_iso6801(
+        $view_result->node_created
+    );
+    $submisson['whenSubmitted'] = 
+        isset( $view_result->field_field_when_submitted[0] )
+        ? $view_result->field_field_when_submitted[0]['raw']['value']
+        : '';
+    $submisson['whenFeedbackGiven'] = 
+        isset( $view_result->field_field_when_feedback_given[0] )
+        ? $view_result->field_field_when_feedback_given[0]['raw']['value']
+        : '';
+    $submisson['complete'] = 
+        $view_result->field_field_complete[0]['raw']['value'];
+    $submissions[] = $submisson;
+  }
+  return $submissions;
+}
+
+
+/**
+ * Handle a services error.
+ * @staticvar CyberCourseErrorHandler $error_handler Error handling class.
+ * @param string $error_code Code, e.g., ACCESS_DENIED.
+ * @param string $explanation Why? Oh, god, WHY?
+ */
+function cybercourse_services_handle_error( 
+      $error_code = 'UNKNOWN_ERROR',
+      $explanation = 'Something bad.'
+    ) {
+    cybercourse_base_handle_error($error_code, $explanation);
+    //Return to client.
+    services_error($error_code . '. ' . $explanation);
 }
