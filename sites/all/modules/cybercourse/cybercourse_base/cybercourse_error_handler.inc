@@ -16,6 +16,8 @@ class CyberCourseErrorHandler {
     'TITLE_MISSING' => 'Title is missing',
     'INVALID_NID' => 'Invalid nid. Must be a positive integer.',
     'VIEW_RUN_FAILURE' => 'A view failed to run',
+    'UNKNOWN_OPERATION'  => 'Unknown operation',
+    'BAD_VERSION' => 'Bad version',
     //Exercise errors.
     'NOT_RUBRIC_ITEM' => 'Not a rubric item',
   );

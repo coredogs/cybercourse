@@ -18,21 +18,37 @@ Styles for exercises.
   margin-bottom: 1em;
 }
 
-.cyco-inserted-exercise-link-version,
-.cyco-inserted-exercise-link-status,
+/* 
+  Styles for exercise submission links.
+*/
+.cyco-inserted-exercise-links-container {
+  margin-top: 1em;
+}
+
+.cyco-inserted-exercise-link-container {
+  margin-top: 0.5em;
+}
+
+.cyco-inserted-exercise-link-version {
+  display: inline;
+  margin-right: 2em;
+}
+
+.cyco-inserted-exercise-link-status {
+  display: inline;
+  margin-right: 2em;
+}
+
 .cyco-inserted-exercise-link-link {
-  display: inline-block;
-  width: 25em;
+  display: inline;
+  margin-right: 2em;
 }
 
-
-
-/*.entityconnect-add {
-  float: none !important;
-  height: auto !important;
+/* 
+For file selection widget on submission form, hide the description.
+It's misleading.
+*/
+.file-widget .form-item form-type-textfield .description {
+  display: none;
 }
 
-.entityconnect-edit {
-  float: none !important;
-  height: auto !important;
-}*/

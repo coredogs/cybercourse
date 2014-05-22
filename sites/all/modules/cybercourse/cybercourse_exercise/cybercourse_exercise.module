@@ -175,10 +175,6 @@ function _cybercourse_exercise_make_submit_links( $exercise_node ) {
       $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
       . '/js/cybercourse_exercise_submission_links.js'
   );
-//  drupal_add_js(
-//      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
-//      . '/js/cybercourse_exercise_open_links_in_popup.js'
-//  );  
   //Send current user uid to client.
   drupal_add_js(
       array('cybercourse_exercise' => 
@@ -189,145 +185,6 @@ function _cybercourse_exercise_make_submit_links( $exercise_node ) {
       'setting'
   );
   return;
-//  
-//  $labeled_links = array();
-//  $exercise_nid = $exercise_node->nid;
-//  $query = new EntityFieldQuery();
-//  $query->entityCondition('entity_type', 'node')
-//      ->entityCondition('bundle', 'exercise_submission')
-//      ->propertyCondition('status', 1)
-//      ->fieldCondition('field_exercise', 'target_id', $exercise_nid, '=')
-//      ->propertyCondition('uid', $user->uid)
-//      ->propertyOrderBy('created');
-//  $result = $query->execute();
-//  if ( ! isset($result['node']) ) {
-//    //No submission yet. Show an add link.
-//    $link = _cybercourse_exercise_make_submission_link(
-//        'add',
-//        'Work on it',
-//        'Work on the exercise',
-//        $exercise_nid
-//    );
-//    $labeled_links[] = array(
-//      'version_label' => '',
-//      'status_message' => '',
-//      'link' => $link,
-//    );
-//    return $labeled_links;
-//  }
-//  else {
-//    //There is at least one submission for this exercise for this user.
-//    $submissions_nids = array_keys($result['node']);
-//    //Run through the submissions. They are in order by creation date.
-//    //Create triple: version number, version status, link.
-//    $number_submissions = sizeof($submissions_nids);
-//    $html = '';
-//    foreach ( $submissions_nids as $submissions_nid ) {
-//      $submission = node_load( $submissions_nid );
-//      if ( ! $submission ) {
-//        $message = __FUNCTION__ . ': bad nid? ' . $submissions_nid;
-//        throw new Exception( $message );
-//      }
-//      //Set up the version label. Only exists if there is more than one version.
-//      $version_message = '';
-//      if ( $number_submissions > 1 ) {
-//        if ( !isset( $submission->field_version[LANGUAGE_NONE][0]['value'] ) ) {
-//          $message = __FUNCTION__ . ': missing version number.';
-//          throw new Exception( $message );
-//        }
-//        $version = $submission->field_version[LANGUAGE_NONE][0]['value'];
-//        $version_message = 'Version ' . $version;
-//      }
-//      //Set up the status label and the link.
-//      $status_message = '';
-//      $link = '';
-//      if ( ! isset( $submission->field_when_submitted[LANGUAGE_NONE][0]['value'] ) ) {
-//        $status_message = 'Not submitted for grading.';
-//        $link = _cybercourse_exercise_make_submission_link(
-//          'edit',
-//          'Work on it',
-//          'Work on the exercise',
-//          $submissions_nid
-//        );
-//      }
-//      else {
-//        //It has been submitted.
-//        //Has there been feedback?
-//        if ( ! isset( $submission->field_when_feedback_given[LANGUAGE_NONE][0]['value'] ) ) {
-//          //Submitted, but no feedback. User can still work on it.
-//          $status_message = 'Submitted for grading, but no feedback yet.';
-//          $link = _cybercourse_exercise_make_submission_link(
-//            'edit',
-//            'Work on it',
-//            'Work on the exercise',
-//            $submissions_nid
-//          );
-//        }
-//        else {
-//          //Submitted and there is feedback. Can only review it.
-//          $status_message = 'Feedback is available.';
-//          $link = _cybercourse_exercise_make_submission_link(
-//            'review',
-//            'Review',
-//            'Look at the feedback',
-//            $submissions_nid
-//          );
-//        }
-//      }
-//      $labeled_links[] = array(
-//        'version_label' => $version_message,
-//        'status_message' => $status_message,
-//        'link' => $link,
-//      );
-//    } // end foreach submission.
-//    return $labeled_links;
-//  }
-//  
-}
-
-/**
- * Create a link for adding, editing, or reviewing a submission, 
- * in a popup window.
- * @param string $operation Operation the link performs: add, edit, review.
- * @param string $link_text Text to click on.
- * @param string $link_title Text for the title attribute.
- * @param integer $exercise_nid Exercise node id.
- * @param string $urlExtras Extra stuff to append to the to the link URL, 
- *  e.g., submission version number.
- * @return string Link, rendered.
- */
-function _cybercourse_exercise_make_submission_link( 
-    $operation, $link_text, $title_text, $exercise_nid, $urlExtras = ''
-  ) {
-  global $base_url;
-  $url = $base_url;
-  if ( $operation == 'add' ) {
-    $url .= '/node/add/exercise-submission';
-  }
-  else if ( $operation == 'edit' || $operation == 'review' ) {
-    $url .= '/node/' . $exercise_nid . '/edit';
-  }
-  else {
-    throw new Exception(
-      '_cybercourse_exercise_make_submission_link: bad operation: ' . $operation
-    );
-  }
-  //Add the operation type.
-  $url .= '?op=' . $operation;
-  //Add exercise id.
-  $url .= '&field_exercise=' . $exercise_nid;
-  //Add destination after submission that will close the window.
-  $url .= '&destination=cybercourse-exercise-close-popup';
-  //Add extras.
-  $url .= $urlExtras;
-  $link = l( t($link_text), $url, array('attributes' =>
-    array(
-      'title' => t( $title_text ),
-      'class' => array('exercise-work-on-it-link'),
-      'data-target' => 'popup',
-    )
-  ));
-  return $link;
 }
 
 /**
@@ -583,6 +440,16 @@ function cybercourse_exercise_libraries_info() {
  * If form is opened from "Work on it" link, add some stuff.
  */
 function cybercourse_exercise_form_exercise_submission_node_form_alter(&$form, $form_state) {
+  //Get operation from the URL.
+  $operation = NULL;
+  if ( isset( $_GET['op'] ) ) {
+    $operation = $_GET['op'];
+  }
+  //If there is no op, this is a normal edit, not through a popup. 
+  //Don't need to do any of the other processing here.
+  if (is_null($operation) ) {
+    return;
+  }
   global $base_url;
   drupal_add_js(
       $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
@@ -596,87 +463,122 @@ function cybercourse_exercise_form_exercise_submission_node_form_alter(&$form, $
       array('swim' => $settings),
       'setting'
   );
-  //Unless the user has special privilages, hide lots o' fields.
-//  $privilaged = cybercourse_base_current_user_has_role( 
-//      array('administrator', 'instructor', 'grader')
-//  );
-  //Get values from the URL.
-  $operation = NULL;
-  if ( isset( $_GET['op'] ) ) {
-    $operation = $_GET['op'];
+  //Flag - has this been submitted?
+  $has_been_submitted = FALSE;
+  //Compute exerice nid and version.
+  if ( $operation == 'add' ) {
+    //Compute the exercise id.
+    if ( ! isset( $_GET['field_exercise'] ) ) {
+      $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+          . ' exercise id not passed for add';
+      cybercourse_base_handle_error( 'NID_MISSING', $message );
+      return;
+     }
+    $exercise_id = $_GET['field_exercise'];
+    //Save the exercise id in the form.
+    $form['field_exercise'][LANGUAGE_NONE]['#default_value'][0] = $exercise_id;
+    //Version is 1, unless there is a value in the URL.
+    $version = 1;
+    if ( isset( $_GET['version'] ) ) {
+      $version = $_GET['version'];
+      if ( is_nan($version) || $version < 1 ) {
+        //Bad version.
+        $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+            . ' bad version: ' . $version;
+        cybercourse_base_handle_error( 'BAD_VERSION', $message );
+        return;
+      }
+    }
+    $form['field_version'][LANGUAGE_NONE][0]['value']['#default_value'] = $version;
+    
   }
-  //If there is no op, this is a normal edit, not through a popup. 
-  //Don't need to do any of the other processing here.
-  if (is_null($operation) ) {
+  else if ( $operation == 'edit' ) {
+    $exercise_id = $form['field_exercise'][LANGUAGE_NONE]['#default_value'][0];
+    $version = $form['field_version'][LANGUAGE_NONE][0]['value']['#default_value'];
+  }
+  else {
+    //Bad operation.
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' unknown operation: ' + $op;
+    cybercourse_base_handle_error( 'UNKNOWN_OPERATION', $message );
     return;
   }
-  $exercise_id = NULL;
-  if ( isset( $_GET['field_exercise'] ) ) {
-    $exercise_id = $_GET['field_exercise'];
+  //Hide the exercise field.
+  $form['field_exercise']['#access'] = false;
+  //Hide the version field.
+  $form['field_version']['#access'] = false;
+  //Send exercise id to JS.
+  drupal_add_js(
+      array('cybercourse_exercise' => 
+        array(
+          'exerciseNid' => $exercise_id,
+        ),
+      ),
+      'setting'
+  );
+  //Show version number if > 1.
+  if ( $version >= 1 ) {
+    $form['version_display'] = array(
+      '#type' => '#markup',
+      '#markup' => 'Version ' . $version,
+      '#weight' => $form['field_version']['#weight'],
+    );
   }
-  //Version defaults to 1.
-  $version = 1;
-  if ( isset( $_GET['version'] ) ) {
-    $version = $_GET['version'];
-    if ( is_nan($version) || $version < 1 ) {
-      $message = __FUNCTION__ . ': bad version: ' . $version;
-      throw new Exception( $message );
-    }
+  //Kill preview if showing.
+  if ( isset( $form['actions']['preview'] ) ) {
+    unset( $form['actions']['preview'] );
   }
+  //Kill delete if showing.
+  if ( isset( $form['actions']['delete'] ) ) {
+    unset( $form['actions']['delete'] );
+  }
+  unset( $form['additional_settings'] );
+  //Change the rest of the form, depending on the operation.
   if ( $operation == 'add' ) {
     //Adding a new submission.
-    if ( $privilaged ) {
-      //Set the value of the version.
-      $form['field_version']['#default_value'] = $version;
-    }
-    else {
-      //Hide the exercise select.
-      if (is_null($exercise_id) ) {
-        $message = __FUNCTION__ . ': exercise id not passed.';
-        throw new Exception( $message );
-      }
-      unset( $form['field_exercise'] );
-      //Pass the exercise nid.
-      $form['field_exercise_hidden'] = array(
-        '#type' => 'value',
-        '#value' => $exercise_id,
-      );
-      //Send it to JS as well.
-      drupal_add_js(
-          array('cybercourse_exercise' => 
-            array(
-              'exerciseNid' => $exercise_id,
-            ),
-          ),
-          'setting'
-      );
-      //Replace the version text field with a value field.
-      unset ($form['field_version']);
-      $form['field_version_hidden'] = array(
-        '#type' => 'value',
-        '#value' => $version,        
-      );
-      //Kill the when submitted field.
-      unset( $form['field_when_submitted'] );
-      //Kill the when feedback form.
-      unset( $form['field_when_feedback_given'] );
-      //Kill the feedback source field.
-      unset( $form['field_feedback_source'] );
-      //Kill the feedback field.
-      unset( $form['field_feedback'] );
-      //Kill the conversation field.
-      unset( $form['field_conversation'] );
-      //Kill the rubric item ratings field.
-      unset( $form['field_rubric_item_ratings'] );
-      //Kill the complete field.
-      unset( $form['field_complete'] );
-      //Kill preview.
-      if ( isset( $form['actions']['preview'] ) ) {
-        unset( $form['actions']['preview'] );
-      }
-      unset( $form['additional_settings'] );
-    }
+//    unset( $form['field_when_submitted'] );
+    $form['field_when_submitted']['#access'] = FALSE;
+    unset( $form['field_when_feedback_given'] );
+    unset( $form['field_feedback_source'] );
+    unset( $form['field_feedback'] );
+    unset( $form['field_conversation'] );
+    unset( $form['field_rubric_item_ratings'] );
+    unset( $form['field_complete'] );
   }
+  else if ( $operation == 'edit' ) {
+    //Show the when submitted field if there is something there.
+    if ( isset( $form['field_when_submitted'][LANGUAGE_NONE][0]['#default_value']['value'] ) ) {
+      $has_been_submitted = TRUE;
+      $when = $form['field_when_submitted'][LANGUAGE_NONE][0]['#default_value'];
+      $form['field_when_submitted_display'] = array(
+        '#type' => '#markup',
+        '#markup' => 'Submitted: ' . $when,
+      );
+      if ( isset( $form['field_when_submitted']['#weight'] ) ) {
+        $form['field_when_submitted_display']['#weight'] = 
+            $form['field_when_submitted']['#weight'];
+      }
+    }
+    $form['field_when_submitted']['#access'] = FALSE;
+    //unset( $form['field_when_submitted'] );
+    //Unset other things.
+    unset( $form['field_when_feedback_given'] );
+    unset( $form['field_feedback_source'] );
+    unset( $form['field_feedback'] );
+    unset( $form['field_conversation'] );
+    unset( $form['field_rubric_item_ratings'] );
+    unset( $form['field_complete'] );    
+  }
+  //Add Submit checkbox.
+  $submit_button_weight = $form['actions']['submit']['#weight'];
+  $form['submit_solution'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Submitted for feedback',
+    '#default_value' => $has_been_submitted,
+    '#weight' => $submit_button_weight,
+  );
+  $form['actions']['submit']['#weight']++;
+  
   //Set the page title.
   $exercise_node = node_load( $exercise_id );
   drupal_set_title( 'Solution for exercise: ' . $exercise_node->title );
@@ -690,10 +592,53 @@ function cybercourse_exercise_form_exercise_submission_node_form_alter(&$form, $
   }
 }
 
+/**
+ * Exercise submission form has been submitted.
+ * @param type $form
+ * @param type $form_state
+ */
 function _cybercourse_exercise_submission_form_submission($form, &$form_state) {
-  $r=5;
-  $exercise_nid = $form_state['values']['field_exercise_hidden'];
-  $version = $form_state['values']['field_version_hidden'];
-  $form_state['values']['field_exercise'][LANGUAGE_NONE][0]['target_id'] = $exercise_nid;
-  $form_state['values']['field_version'][LANGUAGE_NONE][0]['value'] = $version;
+  //Restore hidden values for saving.
+//  $exercise_nid = $form_state['values']['field_exercise_hidden'];
+//  $version = $form_state['values']['field_version_hidden'];
+//  $form_state['values']['field_exercise'][LANGUAGE_NONE][0]['target_id'] = $exercise_nid;
+//  $form_state['values']['field_version'][LANGUAGE_NONE][0]['value'] = $version;
+  //Record whether it has been submitted.
+  $submit_checked = ($form_state['values']['submit_solution'] == 1);
+  if ( $submit_checked ) {
+    //Is there already a submission date?
+    if ( isset($form_state['values']['field_when_submitted'][LANGUAGE_NONE][0]['value'] ) ) {
+      //Yes, nothing to change.
+    }
+    else {
+      //Record current date/time as the submission date/time.
+      //This is clunky.
+      $now = date_now('UTC');
+      watchdog('DOG', '<pre>' . print_r($now, TRUE) . '</pre>');
+      //Make an array with the rep used by the date api for form field 
+      //in $form_state.
+      $temp = array();
+      //Date is almost OK. Replace space between date and time with a T.
+      $temp['value'] = str_replace(' ', 'T', $now->date);
+      $temp['value2'] = $temp['value'];
+      $temp['show_todate'] = 0;
+      $temp['timezone'] = $now->timezone;
+      //Compute timezone offset.
+      $phpNow = new DateTime( $temp['value'], new DateTimeZone($now->timezone) );
+      $offset = $phpNow->getOffset();
+      $temp['offset'] = $offset;
+      $temp['offset2'] = $offset;
+      $form_state['values']['field_when_submitted'][LANGUAGE_NONE][0] = $temp;
+    }
+  }
+  else {
+    //Submit not checked.
+    if ( ! isset($form_state['values']['field_when_submitted'][LANGUAGE_NONE][0]['value'] ) ) {
+      //Nothing to change.
+    }
+    else {
+      //There is a date. Clear it.
+      $form_state['values']['field_when_submitted'][LANGUAGE_NONE][0] = '';
+    }
+  }
 }

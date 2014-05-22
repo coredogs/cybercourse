@@ -25,14 +25,19 @@
    */
   Drupal.theme.prototype.linkLabel = function(versionLabel, statusMessage, link){
     var html = 
-          "<div class='cyco-inserted-exercise-link'>"
-        +   "<div class='cyco-inserted-exercise-link-version'>"
-        +       versionLabel 
-        +   "</div>"
-        +   "<div class='cyco-inserted-exercise-link-status'>"
+          "<div class='cyco-inserted-exercise-link-container'>";
+    if ( versionLabel ) {
+      html += "<div class='cyco-inserted-exercise-link-version'>"
+        +       versionLabel
+        +     "</div>"
+
+    }
+    if ( statusMessage ) {
+      html += "<div class='cyco-inserted-exercise-link-status'>"
         +       statusMessage 
-        +   "</div>"
-        +   "<div class='cyco-inserted-exercise-link-link'>"
+        +     "</div>";
+    }
+    html += "<div class='cyco-inserted-exercise-link-link'>"
         +       link 
         +   "</div>"
         + "</div>";
@@ -194,7 +199,7 @@
         event.stopPropagation();
         windowObjectReference = window.open(
                 $(this).attr("href"),
-                "Work on your exercise",
+                "Exercise: " + exerciseNid,
                 "resizable,scrollbars,height=600,width=600"
                 );
         return false; //Cancel standard action.
@@ -247,7 +252,7 @@
           var link = "";
           if ( ! submission.whenSubmitted ) {
             //Has not been submitted yet.
-            statusMessage = "Not submitted for grading.";
+            statusMessage = "Not submitted for feedback.";
             link = uiNamespace.makeSubmissionLink(
                 "edit", "Work on it", "Work on the exercise", submissionId, ""
             );
@@ -260,7 +265,7 @@
             //Is there feedback?
             if ( ! submission.whenFeedbackGiven ) {
               //Submitted, but no feedback. User can still work on it.
-              statusMessage = "Submitted for grading, but no feedback yet.";
+              statusMessage = "Submitted, but no feedback yet.";
               link = uiNamespace.makeSubmissionLink(
                   "edit", "Work on it", "Work on the exercise", submissionId, ""
               );
@@ -316,8 +321,12 @@
       if ( operation == "add" ) {
         url += "node/add/exercise-submission";
       }
-      else if ( operation == "edit" || operation == "review" ) {
+      else if ( operation == "edit" ) {
         url += "node/" + exerciseNid + "/edit";
+      }
+      else if ( operation == "review" ) {
+        //View the node.
+        url += "node/" + exerciseNid;
       }
       else {
         alert("Bad operation: " + operation);
