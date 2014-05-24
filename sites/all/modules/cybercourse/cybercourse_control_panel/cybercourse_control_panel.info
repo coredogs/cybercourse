@@ -4,4 +4,5 @@ package = CyberCourse
 core = 7.x
 dependencies[] = cybercourse_base
 dependencies[] = cybercourse_groups
+dependencies[] = cybercourse_exercise
 stylesheets[all][] = css/cybercourse_control_panel.css

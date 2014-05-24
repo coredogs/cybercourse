@@ -1,0 +1,90 @@
+    
+    
+    //Find the rubric item the clicked level is part of.
+    var rubricItemDomElement = $(clickedLevelDomElement).closest('.rubric-item');
+    //Clear old selection marker.
+    var previousSelectedDomElement = $(rubricItemDomElement).find('.selected');
+    if ( previousSelectedDomElement.length > 0 ) {
+      $(previousSelectedDomElement).removeClass('selected');
+    }
+    //Mark the new selected item.
+    $(clickedLevelDomElement).addClass('selected');
+    //Collapse the dropdown list.
+    rubricItemDomElement.find('ul').hide('fast');
+    //Get the name of the selected level.
+    var levelViewId = $(clickedLevelDomElement).attr('data-view-id');
+    var levelView = app.viewsRefs[levelViewId];
+    var levelName = levelView.model.getLevelName();
+    //Show as the selected level.
+    $(rubricItemDomElement).find('.rubric-item-selected').html(levelName);
+
+    
+        
+    
+    //Find parent of target with data-view-id attribute. Get its view id.
+    var viewId = $(event.target).closest('[data-view-id]').attr('data-view-id');
+    if ( viewId ) {
+      //Send it a click event.
+      app.viewsRefs[viewId].clickEvent(evnt);
+    }
+
+    
+    
+
+  showSelectedLevel: function(clickedLevelDomElement) {
+    //Find the collection parent the clicked level is part of.
+    var collectionDomElement = $(clickedLevelDomElement).closest('ul');
+    //Remove the current selected marker.
+    var previousSelectedDomElement = $(collectionDomElement).find('.selected');
+    if ( previousSelectedDomElement.length > 0 ) {
+      $(previousSelectedDomElement).removeClass('selected');
+    }
+    //Mark the new selected item.
+    $(clickedLevelDomElement).addClass('selected');
+    //Collapse the dropdown list.
+    collectionDomElement.removeClass('expanded');
+    collectionDomElement.addClass('collapsed');
+  } //End clearSelectedLevel
+
+
+
+
+    
+    this.model.setComment( commentId );
+    //Clear the display of the old selected comment.
+    var commentListDom = $(clickedCommentDomElement).closest('.rubric-item-comment-collection');
+    $(commentListDom).find('.selected').removeClass('selected');
+    //Add the display class of the new selected comment.
+    $(clickedCommentDomElement).addClass('selected');
+    //Collapse the comment list.
+    commentListDom.hide('fast');
+    //Display the name of the new selected comment.
+    var itemDom = $(clickedCommentDomElement).closest('.rubric-item');
+    var selectedCommentNameDom = itemDom.find('.rubric-item-comment-selected');
+    $(selectedCommentNameDom).html( clickedCommentDomElement.innerHTML );
+
+
+
+    
+    
+    //
+    //Find the rubric item's comment list.
+    var rubricItemDomElement = $(target).closest('.rubric-item');
+    var commentListDomElement = $(rubricItemDomElement).find('ul.rubric-item-comment-collection');
+    //What is the current state of the list?
+    if ( $(commentListDomElement).is(":visible") ) {
+      //Collapse
+      commentListDomElement.hide('fast');
+      //Set the arrow.
+      $(rubricItemDomElement).find('.comments-display-state').html('&blacktriangle;');
+    }
+    else {
+      //Expand.
+      commentListDomElement.show('fast');
+      //Set the arrow.
+      $(rubricItemDomElement).find('.comments-display-state').html('&blacktriangledown;');
+    }
+
+
+
+

@@ -23,8 +23,11 @@ function cybercourse_exercise_services_resources() {
     'rubric_item_categories' => _cybercourse_exercise_def_category_services(),
     
     /** Exercise submission. **/
-    'submission' => 
-      _cybercourse_exercise_def_sub_meta_services(),
+    'submission' => _cybercourse_exercise_def_sub_meta_services(),
+    
+    /** Feedback system. **/
+    'feedback' => _cybercourse_exercise_def_feedback_services(),
+      
   );
   return $api;
 }
@@ -759,3 +762,27 @@ function cybercourse_services_handle_error(
     //Return to client.
     services_error($error_code . '. ' . $explanation);
 }
+
+
+function _cybercourse_exercise_def_feedback_services() {
+  $api = array(
+      'actions' => array(
+        'getGraderSubmissionsNeedingFeedback' => array(
+          'help' => t('Returns a list of submissions needing feedback from the current user.'),
+          'access arguments' => array('access content'),
+          'callback' => '_cycoex_get_grader_sub_need_feedback',
+        ),
+      ),
+    ); //End rubric_item_categories
+  return $api;
+}
+
+/**
+ * Get the submissions ready for the current user to grade.
+ * @return array Submission data.
+ */
+function _cycoex_get_grader_sub_need_feedback() {
+  $submissions = _cybercourse_exercise_get_submissions_to_grade();
+  return $submissions;
+}
+

@@ -30,57 +30,181 @@ function _cybercourse_render_control_panel() {
         . '/js/cybercourse_control_panel.js'
   );
   $result = array();
-  $result['introduction'] = array(
+  //Wrap all in a class with a known name.
+  $result['all_content'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array(
+        'cybercourse-control-panel',
+      ),
+    ),
+  );
+  //Add intro elements.
+  $result['all_content']['introduction'] = array(
     '#type' => 'markup',
-    '#markup' => t('The control panel lets you manage '
-        . 'your course options.'),
+    '#markup' => t('The control panel lets you manage your course options.'),
   );
   $groups = cybercourse_groups_render_basic_list();
-  $result['groups'] = array(
+  $result['all_content']['groups_title'] =
+        _cybercourse_control_panel_show_title( 'Your groups' );
+  $result['all_content']['groups'] = array(
     '#type' => 'markup',
     '#markup' => $groups,
   );
   if ( cybercourse_base_current_user_has_role( array('administrator') ) ) {
-    _cybercourse_control_panel_render_menu_block('Administrator actions', 'menu-cp-administrators', $result );
+    $result['all_content']['admin_title'] =
+        _cybercourse_control_panel_show_title( 'Administrator actions' );
+    $result['all_content']['admin_menu'] =
+        _cybercourse_control_panel_show_menu_block( 'menu-cp-administrators' );
   }
   if ( cybercourse_base_current_user_has_role( array('author') ) ) {
-    _cybercourse_control_panel_render_menu_block( 'Author actions', 'menu-cp-authors', $result );
+    $result['all_content']['author_title'] = 
+        _cybercourse_control_panel_show_title( 'Author actions' );
+    $result['all_content']['author_menu'] = 
+        _cybercourse_control_panel_show_menu_block( 'menu-cp-authors' );
   }
   if ( cybercourse_base_current_user_has_role( array('instructor') ) ) {
-    _cybercourse_control_panel_render_menu_block('', 'menu-cp-instructors', $result );
+    $result['all_content']['instructor_title'] = 
+        _cybercourse_control_panel_show_title( 'Instructor actions' );
+    $result['all_content']['instructor_menu'] = 
+        _cybercourse_control_panel_show_menu_block( 'menu-cp-instructors' );
   }
   if ( cybercourse_base_current_user_has_role( array('grader') ) ) {
-    _cybercourse_control_panel_render_menu_block('', 'menu-cp-graders', $result );
+    $result['all_content']['grader_title'] = 
+        _cybercourse_control_panel_show_title( 'Grader actions' );
+    $result['all_content']['num_submissions'] = 
+        _cybercourse_control_panel_show_waiting_submissions();
+    $result['all_content']['grader_menu'] = 
+        _cybercourse_control_panel_show_menu_block( 'menu-cp-graders' );
   }
   if ( cybercourse_base_current_user_has_role( array('reviewer') ) ) {
-    _cybercourse_control_panel_render_menu_block('', 'menu-cp-reviewers', $result );
+    $result['all_content']['reviewer_title'] = 
+      _cybercourse_control_panel_show_title( 'Reviewer actions' );
+    $result['all_content']['reviewer_menu'] = 
+      _cybercourse_control_panel_show_menu_block( 'menu-cp-reviewers' );
   }
   if ( cybercourse_base_current_user_has_role( array('student') ) ) {
-    _cybercourse_control_panel_render_menu_block('', 'menu-cp-students', $result );
+    $result['all_content']['student_title'] = 
+      _cybercourse_control_panel_show_title( 'Student actions' );
+    $result['all_content']['student_menu'] = 
+      _cybercourse_control_panel_show_menu_block( 'menu-cp-students' );
   }
   return $result;
 }
 
 /**
- * Add menu block to a renderable array.
- * Note that <h2> is used. I couldn't figure out how to create the title
- * without adding an explicit tag. Use the CSS class for styling, if needed.
- * @param string $title Title for the menu block.
- * @param string $block_name Block name, e.g., menu-cp-authors.
- * @param array $render_array Array to add to.
+ * Make a renderable array element for a title.
+ * @param string $title Title.
+ * @return array Renderable element.
  */
-function _cybercourse_control_panel_render_menu_block( $title, $block_name, &$render_array ) {
-  $block = module_invoke('menu', 'block_view', $block_name);
+function _cybercourse_control_panel_show_title( $title ) {
   $title_element = array(
     '#type' => 'markup',
-    '#markup' => $title,
-    '#prefix' => '<h2 class="cyco-menu-block-title">',
-    '#suffix' =>'</h2>',
+    '#markup' => theme(
+        'cybercourse_control_panel_section_title', 
+         array( 'title' => $title )
+    ),
   );
-  $rendered_title = render($title_element);
-  $markup = $rendered_title . render($block['content']);
-  $render_array[$block_name] = array(
+  return $title_element;
+}
+
+/**
+ * Make a renderable array element for a menu block.
+ * @param string $block_name Block name, e.g., menu-cp-authors.
+ */
+function _cybercourse_control_panel_show_menu_block( $block_name ) {
+  $block = module_invoke('menu', 'block_view', $block_name);
+  $markup = render($block['content']);
+  $element = array(
     '#type' => 'markup',
     '#markup' => $markup,
   );
+  return $element;
+}
+
+/**
+ * Implement hook_theme().
+ */
+function cybercourse_control_panel_theme() {
+  $result = array(
+    'cybercourse_control_panel_section_title' => array(
+      //Default variable values
+      'variables' => array(
+        'title' => '(no title)',
+      ),
+    ),
+    'cybercourse_control_panel_submissions_waiting_grading' => array(
+      //Default variable values
+      'variables' => array(
+        'num_submissions' => 0,
+      ),
+    ),
+  );
+  return $result;
+}
+
+/**
+ * Theme the title for a section on the CP.
+ * @param type $variables Array with title.
+ * @return string HTML.
+ */
+function theme_cybercourse_control_panel_section_title( $variables ) {
+  $title = $variables['title'];
+  $html =  '<h3 class="cybercourse-control-panel-section-title">' . $title . '</h3>';
+  return $html;
+}
+
+/**
+ * Show how many submissions are waiting the grader.
+ * @return array Renderable element.
+ */
+function _cybercourse_control_panel_show_waiting_submissions() {
+  $num_submissions = _cybercourse_exercise_get_number_submissions_to_grade();
+  $result = array(
+    '#type' => 'markup',
+    '#markup' => theme(
+        'cybercourse_control_panel_submissions_waiting_grading', 
+         array( 'num_submissions' => $num_submissions )
+    ),
+  );  
+  return $result;
+}
+
+/**
+ * Theme the number of submissions waiting for grading.
+ * @param type $variables
+ * @return string HTML.
+ */
+function theme_cybercourse_control_panel_submissions_waiting_grading( $variables ) {
+  global $base_path;
+  $num_submissions = $variables['num_submissions'];
+  $message = '';
+  if ( $num_submissions == 0 ) {
+    $message = t('You have no submissions to grade.');
+  }
+  else {
+    if ( $num_submissions == 1 ) {
+      $message = t('You have one submission to grade.');
+    }
+    else {
+      $message = t('You have ' . $num_submissions . ' submissions to grade.');
+    }
+    $link = l( 
+      'Give feedback', 
+      drupal_get_path('module', 'cybercourse_exercise') 
+        . '/feedback_client/index.html', 
+      array( 'attributes' => 
+        array( 'class' => 
+          array ( 'cybercourse-control-panel-grade-link' ) 
+        ), 
+      ) 
+    );
+    drupal_add_js(
+        $base_path . drupal_get_path('module', 'cybercourse_exercise')
+          . '/js/cybercourse_exercise_start_grading_ui.js'
+    );
+  }
+  $html =  '<p class="cybercourse-control-panel-submissions-waiting">'
+      . $message . $link . '</p>';
+  return $html;  
 }

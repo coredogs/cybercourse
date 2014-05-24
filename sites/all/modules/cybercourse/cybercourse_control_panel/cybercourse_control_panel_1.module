@@ -1,0 +1,90 @@
+<?php
+/**
+ * Create the control panel.
+ */
+
+/**
+ * Implements hook_menu.
+ */
+function cybercourse_control_panel_menu() {
+  $items = array();
+  $items['user/control-panel'] = array(
+    'title' => 'Control panel',
+    'description' => 'Your CyberCourse options.',
+    'page callback' => '_cybercourse_render_control_panel',
+    'access callback' => 'cybercourse_base_current_user_has_role',
+    'access arguments' => array(array('authenticated user')),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Generate HTML for the control panel.
+ * @return string HTML.
+ */
+function _cybercourse_render_control_panel() {
+  //Add JS to show menu titles as text.
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_control_panel')
+        . '/js/cybercourse_control_panel.js'
+  );
+  $result = array();
+  $result['introduction'] = array(
+    '#type' => 'markup',
+    '#markup' => t('The control panel lets you manage '
+        . 'your course options.'),
+  );
+  $groups = cybercourse_groups_render_basic_list();
+  $result['groups'] = array(
+    '#type' => 'markup',
+    '#markup' => $groups,
+  );
+  if ( cybercourse_base_current_user_has_role( array('administrator') ) ) {
+    $result['admin_title'] =
+      _cybercourse_control_panel_show_title('Administrator actions');
+    $result['admin_menu'] =
+      _cybercourse_control_panel_show_menu_block('menu-cp-administrators');
+  }
+  if ( cybercourse_base_current_user_has_role( array('author') ) ) {
+    _cybercourse_control_panel_render_menu_block( 'Author actions', 'menu-cp-authors', $result );
+  }
+  if ( cybercourse_base_current_user_has_role( array('instructor') ) ) {
+    _cybercourse_control_panel_render_menu_block('', 'menu-cp-instructors', $result );
+  }
+  if ( cybercourse_base_current_user_has_role( array('grader') ) ) {
+    _cybercourse_control_panel_show_waiting_submissions();
+    _cybercourse_control_panel_render_menu_block('', 'menu-cp-graders', $result );
+  }
+  if ( cybercourse_base_current_user_has_role( array('reviewer') ) ) {
+    _cybercourse_control_panel_render_menu_block('', 'menu-cp-reviewers', $result );
+  }
+  if ( cybercourse_base_current_user_has_role( array('student') ) ) {
+    _cybercourse_control_panel_render_menu_block('', 'menu-cp-students', $result );
+  }
+  return $result;
+}
+
+/**
+ * Add menu block to a renderable array.
+ * Note that <h2> is used. I couldn't figure out how to create the title
+ * without adding an explicit tag. Use the CSS class for styling, if needed.
+ * @param string $title Title for the menu block.
+ * @param string $block_name Block name, e.g., menu-cp-authors.
+ * @param array $render_array Array to add to.
+ */
+function _cybercourse_control_panel_render_menu_block( $title, $block_name, &$render_array ) {
+  $block = module_invoke('menu', 'block_view', $block_name);
+  $title_element = array(
+    '#type' => 'markup',
+    '#markup' => $title,
+    '#prefix' => '<h2 class="cyco-menu-block-title">',
+    '#suffix' =>'</h2>',
+  );
+  $rendered_title = render($title_element);
+  $markup = $rendered_title . render($block['content']);
+  $render_array[$block_name] = array(
+    '#type' => 'markup',
+    '#markup' => $markup,
+  );
+}

@@ -37,7 +37,49 @@ function cybercourse_groups_render_basic_list() {
     return '<p>Not found or access denied</p>';
   }
   $view_content = $view->preview($display_id);
-  $title = $view->get_title();
-  $html = '<h2>' . $title . '</h2>' . $view_content;
-  return $html;
+  return $view_content;
 }
+
+/**
+ * Get the groups of a given type that a user has a given role in.
+ * @global stdClass $user The current user.
+ * @param string $group_type Type of group, e.g., class.
+ * @param string $role_name Role name, e.g., grader.
+ * @param stdClass $user_to_check User to check. Defaults to current user.
+ * @return array Group ids.
+ */
+function cybercourse_groups_get_groups_by_role( 
+    $group_type, $role_name, $user_to_check = NULL ) {
+  if ( is_null($user_to_check) ) {
+    global $user;
+    $user_to_check = $user;
+  }
+  //Find groups the user is in.
+  $user_group_gids = og_get_groups_by_user($user_to_check, $group_type);
+  $user_groups = array();
+  foreach ( $user_group_gids as $gid ) {
+    $roles = og_get_user_roles($group_type, $gid);
+    if ( in_array($role_name, $roles) ) {
+      $user_groups[] = $gid;
+    }
+  }
+  return $user_groups;
+}
+
+
+/**
+ * Get all users of a group.
+ * See http://codekarate.com/blog/drupal-7-getting-all-members-organic-group
+ */
+function cybercourse_groups_get_group_users($gid) {
+  $query = db_select('users', 'u');
+  $query
+    ->condition('u.uid', 0, '<>')
+    ->condition('u.status', 1, '=')
+    ->fields('u', array('uid', 'name'))
+    ->join('og_membership', 'ogm', "ogm.gid = :gid AND u.uid = ogm.etid AND ogm.entity_type = 'user'", array(':gid' => $gid));
+  return $query->execute();
+}
+
+
+

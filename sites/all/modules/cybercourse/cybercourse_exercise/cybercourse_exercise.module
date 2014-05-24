@@ -1,27 +1,5 @@
 <?php
 
-/*
- * Implements hook_init.
- * 
- * Insert JS files to make a popup.
- */
-
-function cybercourse_exercise_init() {
-//  global $base_url;
-//  drupal_add_js(
-//      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
-//      . '/js/popup/jquery.popupwindow.js'
-//  );
-//  drupal_add_js(
-//      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise')
-//      . '/js/cybercourse_exercise.js'
-//  );
-//  drupal_add_css(
-//      $base_url . '/' . drupal_get_path('module', 'cybercourse_exercise') 
-//        . '/css/cybercourse_exercise.css'
-//  );
-}
-
 /**
  * Implements hook_menu.
  */
@@ -507,6 +485,8 @@ function cybercourse_exercise_form_exercise_submission_node_form_alter(&$form, $
   $form['field_exercise']['#access'] = false;
   //Hide the version field.
   $form['field_version']['#access'] = false;
+  //Hide the model solution field.
+  $form['field_model_solution']['#access'] = false;
   //Send exercise id to JS.
   drupal_add_js(
       array('cybercourse_exercise' => 
@@ -614,7 +594,6 @@ function _cybercourse_exercise_submission_form_submission($form, &$form_state) {
       //Record current date/time as the submission date/time.
       //This is clunky.
       $now = date_now('UTC');
-      watchdog('DOG', '<pre>' . print_r($now, TRUE) . '</pre>');
       //Make an array with the rep used by the date api for form field 
       //in $form_state.
       $temp = array();
@@ -641,4 +620,105 @@ function _cybercourse_exercise_submission_form_submission($form, &$form_state) {
       $form_state['values']['field_when_submitted'][LANGUAGE_NONE][0] = '';
     }
   }
+}
+
+/**
+ * Get the submissions ready to grade. 
+ * @global stdClass $user Current user object.
+ * @param int $uid Grader UID, defaults to current user.
+ * @return array Submission info.
+ */
+function _cybercourse_exercise_get_submissions_to_grade($uid = NULL) {
+  if ( is_null($uid) ) {
+    global $user;
+    $uid = $user->uid;
+  }
+  //Get the id of the grader group role.
+  $query = db_select('og_role')
+    ->fields('og_role', array('rid'))
+    ->condition('group_type', 'node')
+    ->condition('group_bundle', 'class')
+    ->condition('name', 'grader');
+  $grader_role_id = $query->execute()->fetchField();
+  //Get the groups the user is a grader in.
+  $query = db_select('og_membership', 'ogm');
+  $query->fields('ogm', array('id', 'gid', 'group_type'))
+    ->condition('entity_type', 'user')
+    ->condition('etid', $uid)
+    ->innerJoin('og_users_roles', 'usersroles', 
+        'usersroles.uid = ' . $uid . ' and ogm.gid = usersroles.gid');
+  $query->condition('usersroles.rid', $grader_role_id);
+  $records = $query
+    ->execute()
+    ->fetchAll();
+  $gids = array();
+  foreach ( $records as $record ) {
+    $gids[] = $record->gid;
+  }
+  //Get all the members of those groups.
+  $query = db_select('og_membership', 'ogm');
+  $query
+      ->distinct()
+      ->fields( 'ogm', array('etid') )
+      ->condition('entity_type', 'user')
+      ->condition('gid', $gids, 'IN');
+  $records = $query->execute()->fetchAll();
+  $users_in_groups = array();
+  foreach( $records as $record ) {
+    $users_in_groups[] = $record->etid;
+  }
+  //Get the submissions for those users that have a submission date, but
+  //no feedback date.
+  $sql = <<<EOT
+select 
+  submission_node.nid as submission_nid,
+  submission_node.uid as submitter_uid,
+  lastname_table.field_last_name_value as last_name,
+  firstname_table.field_first_name_value as first_name,
+  when_submitted_table.field_when_submitted_value as when_submitted,
+  when_feedback_table.field_when_feedback_given_value as when_feedback_given,
+  exercise_node.nid as exercise_nid,
+  exercise_node.title as exercise_title
+from {node} as submission_node
+/* Grab the submitter's last name. */
+inner join {field_data_field_last_name} as lastname_table on 
+  lastname_table.entity_id = submission_node.uid
+/* Grab the submitter's first name. */
+inner join {field_data_field_first_name} as firstname_table on 
+  firstname_table.entity_id = submission_node.uid
+/* Grab the exericse title. */
+inner join {field_data_field_exercise} as exercise_ref_table on 
+  exercise_ref_table.entity_id = submission_node.nid
+inner join {node} as exercise_node on 
+  exercise_ref_table.field_exercise_target_id = exercise_node.nid
+/* Grab the date submitted for testing. */
+inner join {field_data_field_when_submitted} as when_submitted_table on 
+  when_submitted_table.entity_id = submission_node.nid
+/* Grab the feedback date for testing. */
+left join {field_data_field_when_feedback_given} as when_feedback_table on 
+  when_feedback_table.entity_id = submission_node.nid
+where
+  submission_node.type = 'exercise_submission'
+  and when_submitted_table.field_when_submitted_value is not null
+  and when_feedback_table.field_when_feedback_given_value is null
+order by submission_node.created;
+EOT;
+  $records = db_query($sql);
+  $submissions = array();
+  if ( $records ) {
+    while ( $row = $records->fetchAssoc() ) {
+      $submissions[] = $row;
+    }
+  }
+  return $submissions;
+}
+
+/**
+ * Find the number of submissions waiting for a grader.
+ * @param int $uid Grader UID, defaults to current user.
+ * @return int Number of submissions waiting.
+ */
+function _cybercourse_exercise_get_number_submissions_to_grade($uid = NULL) {
+  $submissions = _cybercourse_exercise_get_submissions_to_grade($uid);
+  return sizeof($submissions);
 }

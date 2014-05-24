@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dolfinity formative feedback system (prototype)</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="js_lib/jquery-layout/layout-default.css">
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
+    <link charset="utf-8" media="screen" type="text/css" href="css/custom.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/custom.css">
+  </head>
+  <body>
+    <!-- For a level in the dropdown list of available levels. -->
+    <script type="text/template" id="rubric_item_available_level_template">
+      <li class="rubric-item-available-level not-selected" 
+          data-level-id="<%= levelId %>" 
+          data-view-id="<%= viewId %>" data-guid="<%= guid %>" >
+        <%= levelName %>
+      </li>
+    </script>
+    <!-- For a level in the list of selected levels. -->
+    <script type="text/template" id="rubric_item_selected_level_template">
+      <li class="rubric-item-selected-level <%= selected ? 'selected' : 'not-selected' %>"
+          data-guid="<%= guid %>" >
+        <%= level %>
+      </li>
+    </script>    
+    <!-- For a comment in the dropdown list of available comments. -->
+    <script type="text/template" id="rubric_item_available_comment_template">
+      <li class="rubric-item-available-comment not-selected" 
+          data-comment-id="<%= commentId %>" 
+          data-view-id="<%= viewId %>" data-guid="<%= guid %>" >
+        <%= comment %>
+      </li>
+    </script>
+    <!-- For an input box for a new comment in the list of available comments. -->
+    <script type="text/template" id="rubric_item_new_comment_template">
+      <li class="rubric-item-available-comment new-comment not-selected" 
+          data-guid="<%= guid %>" >
+        <input class="new-comment-input" type="text">
+      </li>
+    </script>    
+    <!-- For a comment in the list of selected comments. -->
+    <script type="text/template" id="rubric_item_selected_comment_template">
+      <li class="rubric-item-selected-comment <%= selected ? 'selected' : 'not-selected' %>" 
+          data-guid="<%= guid %>" >
+        <%= comment %>
+      </li>
+    </script>
+    <script type="text/template" id="solution_rubric_item_assessment_template">
+      <div data-view-id="<%= viewId %>" data-item-id="<%=itemId %>"
+            data-selected-level-id="" 
+            data-selected-comment-ids="" 
+            class="rubric-item">
+        <div class="rubric-item-name"><%= itemName %></div>
+        <div class="rubric-item-selected-level-container">
+          <span class="levels-label button">
+            Assess <span class="levels-display-state">&blacktriangledown;</span>
+          </span>
+          <ul class="selected-level">
+            <!-- HTML added for all levels. Selected level shown, others hidden.  -->
+            <%= selectedLevels %>
+          </ul>
+        </div>
+        <ul class="rubric-item-level-collection">
+          <%= availableLevels %>
+        </ul>
+        <div class="rubric-item-selected-comments-container">
+          <span class="comments-label button">
+            Comments <span class="comments-display-state">&blacktriangledown;</span>
+          </span>
+          <ul class="selected-comments">
+            <!-- HTML added for all comments. Selected comments shown, others hidden.  -->
+            <%= selectedComments %>
+          </ul>
+        </div>
+        <ul class="rubric-item-comment-collection">
+          <%= availableComments %>
+        </ul>
+      </div>
+    </script>
+    <script type="text/template" id="exercise_rubric_template">
+      <div class="exercise_rubric" data-view-id="<%= viewId %>" >
+        <%= rubric %>
+      </div>
+    </script>
+    
+    <!-- Outer north -->
+    <div id="submission-list-pane" class="ui-layout-north">
+      <div class="pane-title-container">
+        <h2 class="pane-title">Submission list</h2>
+      </div>
+      <div class="pane-content"></div>
+    </div>
+
+    <!-- Outer west -->
+    <div class="ui-layout-west">
+
+      <div id="solution-pane" class="ui-layout-center">
+        <div class="pane-title-container">
+          <h2 class="pane-title">Solution</h2>
+        </div>
+        <div class="pane-content">
+          <h3>Correct solution</h3> 
+          <p>Blah blah.</p>
+        </div>
+      </div>
+
+      <div id="exercise-pane" class="ui-layout-south">
+        <div class="pane-title-container">
+          <h2 class="pane-title">Exercise</h2>
+        </div>
+        <div class="pane-content"></div>
+      </div>
+      
+    </div>
+
+    <!-- Outer center -->
+    <div class="ui-layout-center">
+    
+      <div id="submission-pane" class="ui-layout-center">
+        <div class="pane-title-container">
+          <h2 class="pane-title">Submission</h2>
+        </div>
+        <div class="pane-content">
+        </div>
+      </div>
+
+      <div id="feedback-pane" class="ui-layout-south">
+        <div class="pane-title-container">
+          <h2 class="pane-title">Feedback</h2>
+        </div>
+        <div class="pane-content">
+          <textarea name="feedbackEditor"></textarea>
+          <p>
+            <span id="send-feedback-button" class="button">Send to Cai</span>
+          </p>
+        </div>
+      </div>
+      
+    </div>
+    
+    <!-- Outer east -->
+    <div class="ui-layout-east">
+      
+      <div id="rubric-pane">
+        <div class="pane-title-container">
+          <h2 class="pane-title"><span 
+              class='button generate-feedback-button' id="generate-feedback">Generate feedback</span>Rubric
+          </h2>
+        </div>
+        <div class="pane-content"></div>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript" src="js_lib/jquery-layout/jquery.js"></script>
+    <script type="text/javascript" src="js_lib/jquery-layout/jquery-ui.js"></script>
+    <script type="text/javascript" src="js_lib/jquery-layout/jquery-layout.js"></script>
+
+    <script src="js_lib/libs/underscore/underscore-min.js"></script>
+    <script src="js_lib/libs/backbone.js-0.9.9-amdjs/backbone-min.js"></script>
+    
+    <script src="models/rubric_item_level/rubric_item_level_model.js"></script>
+    <script src="models/rubric_item_level/rubric_item_level_collection.js"></script>
+    <script src="models/rubric_item_comment/rubric_item_comment_model.js"></script>
+    <script src="models/rubric_item_comment/rubric_item_comment_collection.js"></script>
+    <script src="models/rubric_item/rubric_item_model.js"></script>
+    <script src="models/exercise_rubric_item/exercise_rubric_item_model.js"></script>
+    <script src="models/exercise_rubric_item/exercise_rubric_item_collection.js"></script>
+    <script src="models/exercise/exercise_model.js"></script>
+    <script src="models/rubric_item_comment_to_student/rubric_item_comment_to_student_model.js"></script>
+    <script src="models/rubric_item_comment_to_student/rubric_item_comment_to_student_collection.js"></script>
+    <script src="models/solution_rubric_item_assessment/solution_rubric_item_assessment_model.js"></script>
+    <script src="models/solution_rubric_item_assessment/solution_rubric_item_assessment_collection.js"></script>
+    <script src="models/exercise_solution/exercise_solution_model.js"></script>
+
+    <script src="views/rubric_item_comment_view.js"></script>
+    <script src="views/rubric_item_level_view.js"></script>
+    <script src="views/solution_rubric_item_assessment_view.js"></script>
+    <script src="views/solution_rubric_assessment_view.js"></script>
+    <script src="views/feedback_strings.js"></script>
+    
+    <script src="js_lib/ckeditor/ckeditor.js"></script>
+    
+    <script src="views_helper.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
