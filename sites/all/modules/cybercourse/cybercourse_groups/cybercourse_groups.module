@@ -81,5 +81,75 @@ function cybercourse_groups_get_group_users($gid) {
   return $query->execute();
 }
 
+/**
+ * Get the names of group(s) given their id(s).
+ * @param int or array $gids A group id, or an array of them.
+ * @return string or array One group name, or an array of names,
+ *    keyed by group id.
+ */
+function cybercourse_groups_get_group_names( $gids ) {
+  $query = db_select('node', 'n')
+      ->fields('n', array('nid', 'title'));
+  //Add a condition for an array, or a single value.
+  if ( is_array( $gids ) ) {
+    $query->condition('n.nid', $gids, 'IN');
+  }
+  else {
+    $query->condition('n.nid', $gids);
+  }
+  $records = $query->execute();
+  if ( is_array( $gids ) ) {
+    //Array passed. Return array of nid/title pairs.
+    $result = array();
+    while ( $record = $records->fetchAssoc() ) {
+      $result[ $record['nid'] ] = $record['title'];
+    }
+  }
+  else {
+    //Just one gid passed. Return its title.
+    $record = $records->fetchAssoc();
+    $result = $record['title'];
+  }
+  return $result;
+}
 
+/**
+ * Get the members of group(s) given their id(s).
+ * @param int or array $gids A group id, or an array of them.
+ * @return array Entity ids (one gid), or array of arrays of member ids,
+ *    keyed by group id.
+ */
+function cybercourse_groups_get_group_members( $gids ) {
+  $query = db_select('og_membership', 'ogm')
+      ->fields('ogm', array('gid', 'etid'));
+  //Add a condition for an array, or a single value.
+  if ( is_array( $gids ) ) {
+    $query->condition('ogm.gid', $gids, 'IN');
+  }
+  else {
+    $query->condition('ogm.gid', $gids);
+  }
+  $records = $query->execute();
+  if ( is_array( $gids ) ) {
+    //Array passed. Return array of arrays.
+    $result = array();
+    while ( $record = $records->fetchAssoc() ) {
+      $gid = $record['gid'];
+      $etid = $record['etid'];
+      if ( ! isset( $result[ $gid ] ) ) {
+        $result[ $gid ] = array();
+      }
+      $result[ $gid ][] = $etid;
+    }
+  }
+  else {
+    //Just one gid passed. Return its members.
+    $result = array();
+    while ( $record = $records->fetchAssoc() ) {
+      $etid = $record['etid'];
+      $result[] = $etid;
+    }
+  }
+  return $result;
+}
 

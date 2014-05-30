@@ -240,33 +240,16 @@ function _cybercourse_exercise_def_sub_meta_services() {
             t('Returns a list of one student\'s submissions for one exercise .'),
           'access arguments' => array('access content'),
           'callback' => '_cycoex_get_sub_meta_student_exer',
-       'args' => array(
-         array(
-          'name' => 'data',
-          'type' => 'struct',
-          'description' => 'The student\'s uid and exercise nid',
-          'source' => 'data',
-          'optional' => FALSE,
-          ),
-        ), //End args.
-//        'args' => array(
-//            array(
-//              'name' => 'student_uid',
-//              'type' => 'int',
-//              'description' => 'The id of the student',
-//              'source' => array('path' => '0'),
-//              'optional' => FALSE,
-//            ),
-//            array(
-//              'name' => 'exercise_nid',
-//              'type' => 'int',
-//              'description' => 'The id of the exercise',
-//              'source' => array('path' => '1'),
-//              'optional' => FALSE,
-//            ),
-//          ), //End args.
-          
-        ),
+          'args' => array(
+            array(
+             'name' => 'data',
+             'type' => 'struct',
+             'description' => 'The student\'s uid and exercise nid',
+             'source' => 'data',
+             'optional' => FALSE,
+             ),
+           ), //End args.
+        ), // End getSubmissionMetaStudentExer
       ),
     ); //End rubric_item_categories
   return $api;
@@ -324,7 +307,7 @@ function _exri_retrieve( $nid ){
   if ( ! $node || $node->type != 'rubric_item') {
     $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
         . ' Cannot load node: ' . $nid;
-    cybercourse_services_handle_error( 'UNKNOWN_NODE', $message );
+    cybercourse_base_handle_services_error( $message );
     return;
   }
   $rubric_item = new stdClass();
@@ -515,7 +498,8 @@ function _exric_retrieve( $tid ){
   
   $node = node_load($nid);
   if ( ! $node || $node->type != 'rubric_item') {
-    services_error('Not a rubric item', 666, $nid);
+    cybercourse_base_handle_services_error('Not a rubric item');
+    return;
   }
   $rubric_item = new stdClass();
   $rubric_item->type = $node->type;
@@ -582,13 +566,12 @@ function _exex_index(){}
  * @return \stdClass The vocab.
  */
 function _cycoex_get_tree() {
-//  services_error('Not a rubric item', 666, $nid);
   //Get the vid of the Feedback items categoes vocab.
   $vocab = taxonomy_vocabulary_machine_name_load('rubric_item_categories');
   if ( $vocab === FALSE ) {
     $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
         . ' Cannot find vocab rubric_item_categories.';
-    cybercourse_services_handle_error( 'UNKNOWN_VOCAB', $message );
+    cybercourse_base_handle_services_error( $message );
     return;
   }
   $terms = taxonomy_get_tree($vocab->vid);
@@ -617,13 +600,13 @@ function _exri_check_title( $data ) {
   if ( !isset($data['nid']) ) {
     $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
         . ' nid missing.';
-    cybercourse_services_handle_error( 'NID_MISSING', $message );
+    cybercourse_base_handle_services_error( $message );
     return;
   }
   if ( !isset($data['title']) || strlen($data['title']) == 0 ) {
     $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
         . ' Title missing.';
-    cybercourse_services_handle_error( 'TITLE_MISSING', $message );
+    cybercourse_base_handle_services_error( $message );
     return;
   }
   $nid_to_check = $data['nid'];
@@ -632,7 +615,7 @@ function _exri_check_title( $data ) {
   if ( ! is_numeric($nid_to_check) || $nid_to_check < -1 ) {
     $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
         . ' Invalid nid: ' . $nid;
-    cybercourse_services_handle_error( 'INVALID_NID', $message );
+    cybercourse_base_handle_services_error( $message );
     return;
   }
   //Find a rubric with that title.
@@ -683,13 +666,13 @@ function _cycoex_get_sub_meta_student_exer( $data ) {
   if ( !isset($data['student']) ) {
     $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
         . ' student uid missing.';
-    cybercourse_services_handle_error( 'UID_MISSING', $message );
+    cybercourse_base_handle_services_error( $message );
     return;
   }
   if ( !isset($data['exercise']) ) {
     $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
         . ' exercise nid missing missing.';
-    cybercourse_services_handle_error( 'NID_MISSING', $message );
+    cybercourse_base_handle_services_error( $message );
     return;
   }
   $student_uid = $data['student'];
@@ -709,7 +692,7 @@ function _cycoex_get_sub_meta_student_exer( $data ) {
     $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
         . ' Cannot load submissions. Exercise: ' . $exercise_nid 
         . ' User: ' . $student_uid;
-    cybercourse_services_handle_error( 'ACCESS_DENIED', $message );
+    cybercourse_base_handle_services_error( $message );
     return;
   }
   //Run the view.
@@ -720,7 +703,7 @@ function _cycoex_get_sub_meta_student_exer( $data ) {
     $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
         . ' Cannot run submission metadata view. Exercise:' . $exercise_nid 
         . ' user ' . $student_uid;
-    cybercourse_services_handle_error( 'VIEW_RUN_FAILURE', $message );
+    cybercourse_base_handle_services_error( $message );
     return;
   }
   $view_results = $view->result;
@@ -747,23 +730,6 @@ function _cycoex_get_sub_meta_student_exer( $data ) {
   return $submissions;
 }
 
-
-/**
- * Handle a services error.
- * @staticvar CyberCourseErrorHandler $error_handler Error handling class.
- * @param string $error_code Code, e.g., ACCESS_DENIED.
- * @param string $explanation Why? Oh, god, WHY?
- */
-function cybercourse_services_handle_error( 
-      $error_code = 'UNKNOWN_ERROR',
-      $explanation = 'Something bad.'
-    ) {
-    cybercourse_base_handle_error($error_code, $explanation);
-    //Return to client.
-    services_error($error_code . '. ' . $explanation);
-}
-
-
 function _cybercourse_exercise_def_feedback_services() {
   $api = array(
       'actions' => array(
@@ -772,6 +738,51 @@ function _cybercourse_exercise_def_feedback_services() {
           'access arguments' => array('access content'),
           'callback' => '_cycoex_get_grader_sub_need_feedback',
         ),
+        'getSubmissionRendered' => array(
+          'help' => 
+            t('Returns a submission, rendered, ready for display.'),
+          'access arguments' => array('access content'),
+          'callback' => '_cycoex_get_sub_rendered',
+          'args' => array(
+            array(
+             'name' => 'data',
+             'type' => 'struct',
+             'description' => 'Submission id.',
+             'source' => 'data',
+             'optional' => FALSE,
+             ),
+           ), //End args.
+        ), // End getSubmissionRendered
+        'getExerciseRendered' => array(
+          'help' => 
+            t('Returns an exercise and its model solution, ready for display.'),
+          'access arguments' => array('access content'),
+          'callback' => '_cycoex_get_exercise_rendered',
+          'args' => array(
+            array(
+             'name' => 'data',
+             'type' => 'struct',
+             'description' => 'Exercise id.',
+             'source' => 'data',
+             'optional' => FALSE,
+             ),
+           ), //End args.
+        ), // End getExerciseRendered
+        'getRubricItems' => array(
+          'help' => 
+            t('Returns rubric items in list.'),
+          'access arguments' => array('access content'),
+          'callback' => '_cycoex_get_rubric_items',
+          'args' => array(
+            array(
+             'name' => 'data',
+             'type' => 'struct',
+             'description' => 'Rubric ids.',
+             'source' => 'data',
+             'optional' => FALSE,
+             ),
+           ), //End args.
+        ), // End getRubricItems
       ),
     ); //End rubric_item_categories
   return $api;
@@ -782,7 +793,217 @@ function _cybercourse_exercise_def_feedback_services() {
  * @return array Submission data.
  */
 function _cycoex_get_grader_sub_need_feedback() {
-  $submissions = _cybercourse_exercise_get_submissions_to_grade();
+  $submissions = cybercourse_exercise_get_submissions_to_grade();
   return $submissions;
 }
 
+/**
+ * Get rendered body of submission, plus file attachment data.
+ * @param array $data Parameters passed from client.
+ * @return array Da goods.
+ */
+function _cycoex_get_sub_rendered( $data ) {
+  //Get a submission, return it rendered.
+  //Get params.
+  if ( !isset($data['sub_nid']) ) {
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' sub_nid missing.';
+    cybercourse_base_handle_services_error( $message );
+    return;
+  }
+  $sub_nid = $data['sub_nid'];
+  $submission = node_load($sub_nid);
+  if ( ! $submission ){
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' could not load submission for nid=' . $sub_nid;
+    cybercourse_base_handle_services_error( $message );
+    return;
+  }
+  $solution = $submission->field_solution[LANGUAGE_NONE][0]['pure_rest'];
+  $solution_rendered = swim_rest2html($solution);
+  //Are there attachments?
+  if ( isset( $submission->field_attachments[LANGUAGE_NONE][0] ) ) {
+    $attached_files = _cybercourse_exercise_package_attachment_data(
+        $submission->field_attachments
+    );
+  }
+  $result = array(
+    'status' => 'ok',
+    'rendered' => $solution_rendered,
+  );
+  if ( isset( $attached_files ) ) {
+    $result['attachments'] = $attached_files;
+  }
+  return $result;
+}
+
+/**
+ * Get rendered body of exercise, plus file attachment data.
+ * Same for the model solution.
+ * @param array $data Parameters passed from client.
+ * @return array Da goods.
+ */
+function _cycoex_get_exercise_rendered( $data ) {
+  //Get a submission, return it rendered.
+  //Get params.
+  if ( !isset($data['exer_nid']) ) {
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' exer_nid missing.';
+    cybercourse_base_handle_services_error( $message );
+    return;
+  }
+  $exer_nid = $data['exer_nid'];
+  $exercise = node_load($exer_nid);
+  if ( ! $exercise ){
+    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+        . ' could not load exercise for nid=' . $exer_nid;
+    cybercourse_base_handle_services_error( $message );
+    return;
+  }
+  $body = $exercise->field_body[LANGUAGE_NONE][0]['pure_rest'];
+  $body_rendered = swim_rest2html($body);
+  //Render the notes.
+  $notes_rendered = '';
+  if ( isset( $exercise->field_notes[LANGUAGE_NONE][0] ) ) {
+    $notes_rendered = swim_rest2html( 
+        $exercise->field_notes[LANGUAGE_NONE][0]['pure_rest'] 
+    );
+  }
+  //Are there attachments?
+  if ( isset( $exercise->field_attachments[LANGUAGE_NONE][0] ) ) {
+    $attached_files = _cybercourse_exercise_package_attachment_data(
+        $exercise->field_attachments
+    );
+  }
+  //Are there hidden attachments?
+  if ( isset( $exercise->field_hidden_attachments[LANGUAGE_NONE][0] ) ) {
+    $hidden_attached_files = _cybercourse_exercise_package_attachment_data(
+        $exercise->field_hidden_attachments
+    );
+  }
+  //Pass rubrics.
+  if ( isset( $exercise->field_rubric_items[LANGUAGE_NONE][0] ) ) {
+    $rubric_items = array();
+    foreach ( $exercise->field_rubric_items[LANGUAGE_NONE] as $index => $item ) {
+      $rubric_items[] = $item['target_id'];
+    }
+  }
+  //Get the model solution, if there is one.
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'model_exercise_solution')
+    ->propertyCondition('status', 1)
+    ->fieldCondition('field_exercise', 'target_id', $exer_nid);
+  $result = $query->execute();
+  if (isset($result['node'])) {
+    $model = array();
+    $keys = array_keys($result['node']); //Just use the first one.
+    $model['model_nid'] = $keys[0];
+    $model_node = node_load( $model['model_nid'] );
+    if ( isset( $model_node->field_exercise[LANGUAGE_NONE][0] ) ) {
+      $model['exercise_nid'] = $model_node->field_exercise[LANGUAGE_NONE][0]['target_id'];
+    }
+    if ( isset( $model_node->field_body[LANGUAGE_NONE][0]['pure_rest'] ) ) {
+      $model['rendered'] = swim_rest2html( $model_node->field_body[LANGUAGE_NONE][0]['pure_rest'] );
+    }
+    if ( isset( $model_node->field_notes[LANGUAGE_NONE][0] ) ) {
+      $model['notes'] = swim_rest2html( $model_node->field_notes[LANGUAGE_NONE][0]['pure_rest'] );
+    }
+    if ( isset( $model_node->field_attachments[LANGUAGE_NONE][0] ) ) {
+      $model['attachments'] = _cybercourse_exercise_package_attachment_data(
+        $model_node->field_attachments
+      );
+    }
+  }
+  //Package output for the client.
+  $result = array(
+    'status' => 'ok',
+    'rendered' => $body_rendered,
+  );
+  if ( isset( $notes_rendered ) ) {
+    $result['notes'] = $notes_rendered;
+  }
+  if ( isset( $attached_files ) ) {
+    $result['attachments'] = $attached_files;
+  }
+  if ( isset( $hidden_attached_files ) ) {
+    $result['hidden_attachments'] = $hidden_attached_files;
+  }
+  if ( isset( $rubric_items ) ) {
+    $result['rubric_items'] = $rubric_items;
+  }
+  if ( isset( $model ) ) {
+    $result['model'] = $model;
+  }
+  return $result;
+}
+
+/**
+ * Extract data about file attachments from a field, and package it for 
+ * return to the client.
+ * @param array $field Field data.
+ * @return array Data about attachments.
+ */
+function _cybercourse_exercise_package_attachment_data( $field ) {
+  $attached_files = array();
+  foreach( $field[LANGUAGE_NONE] as $attachment ) {
+    $filename = $attachment['filename'];
+    $url = file_create_url( $attachment['uri'] );
+    $attached_files[] = array(
+      'filename' => $filename,
+      'url' => $url,
+    );
+  }
+  return $attached_files;
+}
+
+/**
+ * Get rubric items whose ids are in passed array.
+ * @param array $rubric_item_nids Ids.
+ * @return array Da goods.
+ */
+function _cycoex_get_rubric_items( $rubric_item_nids ) {
+  //Get params.
+//  if ( !isset($rubric_item_nids['sub_nid']) ) {
+//    $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+//        . ' sub_nid missing.';
+//    cybercourse_base_handle_services_error( $message );
+//    return;
+//  }
+  $rubric_items_jsony = array();
+  foreach( $rubric_item_nids as $rubric_item_nid ) {
+    $rubric_item_node = node_load($rubric_item_nid);
+    if ( ! $rubric_item_node ){
+      $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
+          . ' could not load rubric item for nid=' . $rubric_item_nid;
+      cybercourse_base_handle_services_error( $message );
+      return;
+    }
+    $rubric_item_jsony = array();
+    $rubric_item_jsony['nid'] = $rubric_item_nid;
+    $rubric_item_jsony['title'] = $rubric_item_node->title;
+    if ( isset( $rubric_item_node->field_notes[LANGUAGE_NONE][0] ) ) {
+      $rubric_item_jsony = $rubric_item_node->field_notes[LANGUAGE_NONE][0]['pure_rest'];
+    }
+    if ( isset( $rubric_item_node->field_feedback_good[LANGUAGE_NONE][0] ) ) {
+      $rubric_item_jsony['good'] = array();
+      foreach( $rubric_item_node->field_feedback_good[LANGUAGE_NONE] as $index => $comment) {
+        $rubric_item_jsony['good'][] = $comment['value'];
+      }
+    }
+    if ( isset( $rubric_item_node->field_feedback_needs_work[LANGUAGE_NONE][0] ) ) {
+      $rubric_item_jsony['needs_work'] = array();
+      foreach( $rubric_item_node->field_feedback_needs_work[LANGUAGE_NONE] as $index => $comment) {
+        $rubric_item_jsony['needs_work'][] = $comment['value'];
+      }
+    }
+    if ( isset( $rubric_item_node->field_feedback_poor[LANGUAGE_NONE][0] ) ) {
+      $rubric_item_jsony['poor'] = array();
+      foreach( $rubric_item_node->field_feedback_poor[LANGUAGE_NONE] as $index => $comment) {
+        $rubric_item_jsony['poor'][] = $comment['value'];
+      }
+    }
+    $rubric_items_jsony[] = $rubric_item_jsony;
+  } //End for each rubric item nid.
+  return $rubric_items_jsony;
+}

@@ -5,15 +5,21 @@
  */
 
 /**
- * Check whether the current user has a role.
+ * Check whether the current user has a give role(s).
  * @global stdClass $user Current user.
- * @param array $roles Roles to check for.
+ * @param string or array $roles Role(s) to check for.
  * @return boolean True if the user has at least one of the roles.
  */
-function cybercourse_base_current_user_has_role(array $roles) {
+function cybercourse_base_current_user_has_role($roles) {
   global $user;
-  $check = array_intersect($roles, array_values($user->roles));
-  return empty($check) ? FALSE : TRUE;
+  if ( is_array($roles) ) {
+    $check = array_intersect($roles, array_values($user->roles));
+    $result = empty($check) ? FALSE : TRUE;
+  }
+  else {
+    $result = in_array($roles, $user->roles);
+  }
+  return $result;
 }
 
 /**
@@ -25,3 +31,4 @@ function cybercourse_base_timestamp_to_iso6801( $timestamp ) {
   $result = format_date($timestamp, 'custom', 'c', date_default_timezone());
   return $result;
 }
+

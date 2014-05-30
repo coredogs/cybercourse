@@ -4,10 +4,8 @@
  * Defines some basic CyCo stuff.
  */
 
-//Load the error handler.
-require_once 'cybercourse_error_handler.inc';
-//Load utilities library.
-require_once 'cybercourse_base_utilities.inc';
+include 'cybercourse_base_utilities.inc';
+include 'cybercourse_error_handler.inc';
 
 /**
  * Implements hook_menu.
@@ -29,6 +27,12 @@ function cybercourse_base_menu() {
     'page arguments' => array('cybercourse_base_settings_form'),
     'access arguments' => array('administer site configuration'),
 //    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  //Client-side error handler callback.
+  $items['cybercourse_handle_client_error'] = array(
+    'page callback' => 'cybercourse_base_client_error',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
   );
   return $items;
 }
@@ -57,18 +61,20 @@ function cybercourse_base_settings_form($form, &$form_state) {
 }
 
 /**
- * Handle an error.
- * @staticvar CyberCourseErrorHandler $error_handler Error handling class.
- * @param string $error_code Code, e.g., ACCESS_DENIED.
- * @param string $explanation Why? Oh, god, WHY?
+ * Handle a client-side error.
+ * Most of the error handling is in another file. This function is here so
+ * the menu processor can handle it.
+ * @param string $message The Bad Thing that happened.
  */
-function cybercourse_base_handle_error( 
-      $error_code = 'UNKNOWN_ERROR',
-      $explanation = 'Something bad.'
-    ) {
+function cybercourse_base_client_error() {
+  $message = t( $_GET['message'] );
+  $message = 'Something bad happened on the client-side: ' . $message;
   static $error_handler = NULL;
   if ( is_null($error_handler) ) {
     $error_handler = new CyberCourseErrorHandler();
   }
-  $error_handler->reportError($error_code, $explanation);
+  $error_handler->reportError($message, FALSE);
+  drupal_json_output(
+      array('status' => TRUE)
+  );
 }

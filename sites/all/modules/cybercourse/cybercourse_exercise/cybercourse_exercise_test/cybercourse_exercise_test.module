@@ -79,6 +79,13 @@ function cybercourse_exercise_test_menu() {
 //    'access callback' => '_cybercourse_exercise_test_authenticated_user',
     'type' => MENU_CALLBACK,
   );
+  $items['cyco-et13'] = array(
+    'title' => 'Exercise test 13',
+    'page callback' => 'cyco_et13',
+    'access callback' => TRUE,
+//    'access callback' => '_cybercourse_exercise_test_authenticated_user',
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -439,3 +446,24 @@ function cyco_et12() {
 EOT;
   return $html;
 }
+
+/**
+ * Test function.
+ */
+function cyco_et13() {
+  drupal_add_library('system', 'ui.dialog');
+  drupal_add_js(
+      drupal_get_path('module', 'cybercourse_exercise_test')
+        . '/js/cyco_et13.js'
+  );
+  $html = <<<EOT
+<div id="t13">
+    <input id="subNid" type="text">
+    <button id="test">Test</button>
+      <p id="loading">Loading...</p>
+    <div id="solution"></div>
+</div>
+EOT;
+  return $html;
+}
+

@@ -1,138 +1,120 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Dolfinity formative feedback system (prototype)</title>
+    <title>CyberCourse feedback system</title>
+    <link rel="stylesheet" href="css/reset.css" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" type="text/css" href="js_lib/jquery-layout/layout-default.css">
+    <link rel="stylesheet" type="text/css" href="lib/jquery-layout/layout-default.css">
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
     <link charset="utf-8" media="screen" type="text/css" href="css/custom.css" rel="stylesheet">
     <link rel="stylesheet" href="css/custom.css">
   </head>
   <body>
-    <!-- For a level in the dropdown list of available levels. -->
-    <script type="text/template" id="rubric_item_available_level_template">
-      <li class="rubric-item-available-level not-selected" 
-          data-level-id="<%= levelId %>" 
-          data-view-id="<%= viewId %>" data-guid="<%= guid %>" >
-        <%= levelName %>
-      </li>
+    <script id="submissionListTemplate" type="text/template">
+      <table>
+      {{#submissionMeta}}
+        <tr data-submission-nid="{{submissionNid}}">
+          <td class="cybercourse_timeago" title="{{timeAgo}}">
+            {{timeAgo}}
+          </td>
+          <td title="Exercise">
+            {{exerciseName}}
+          </td>
+          <td title="Student">
+            {{studentName}}
+          </td>
+          <td title="Group">
+            {{#each groups}}
+              {{#if @last}}
+                {{title}}
+              {{else}}
+                {{title}}<br>
+              {{/if}}
+            {{/each}}
+          </td>
+          <td class="cyco-submission-list-wait" data-submission-nid="{{submissionNid}}">
+          </td>
+        </tr>
+      {{/submissionMeta}}
+      </table>
     </script>
-    <!-- For a level in the list of selected levels. -->
-    <script type="text/template" id="rubric_item_selected_level_template">
-      <li class="rubric-item-selected-level <%= selected ? 'selected' : 'not-selected' %>"
-          data-guid="<%= guid %>" >
-        <%= level %>
-      </li>
-    </script>    
-    <!-- For a comment in the dropdown list of available comments. -->
-    <script type="text/template" id="rubric_item_available_comment_template">
-      <li class="rubric-item-available-comment not-selected" 
-          data-comment-id="<%= commentId %>" 
-          data-view-id="<%= viewId %>" data-guid="<%= guid %>" >
-        <%= comment %>
-      </li>
-    </script>
-    <!-- For an input box for a new comment in the list of available comments. -->
-    <script type="text/template" id="rubric_item_new_comment_template">
-      <li class="rubric-item-available-comment new-comment not-selected" 
-          data-guid="<%= guid %>" >
-        <input class="new-comment-input" type="text">
-      </li>
-    </script>    
-    <!-- For a comment in the list of selected comments. -->
-    <script type="text/template" id="rubric_item_selected_comment_template">
-      <li class="rubric-item-selected-comment <%= selected ? 'selected' : 'not-selected' %>" 
-          data-guid="<%= guid %>" >
-        <%= comment %>
-      </li>
-    </script>
-    <script type="text/template" id="solution_rubric_item_assessment_template">
-      <div data-view-id="<%= viewId %>" data-item-id="<%=itemId %>"
-            data-selected-level-id="" 
-            data-selected-comment-ids="" 
-            class="rubric-item">
-        <div class="rubric-item-name"><%= itemName %></div>
-        <div class="rubric-item-selected-level-container">
-          <span class="levels-label button">
-            Assess <span class="levels-display-state">&blacktriangledown;</span>
-          </span>
-          <ul class="selected-level">
-            <!-- HTML added for all levels. Selected level shown, others hidden.  -->
-            <%= selectedLevels %>
-          </ul>
+    
+    <script id="rubricItemTemplate" type="text/template">
+      <div class="cybercourse-rubric-item-container">
+        <div class="cybercourse-rubric-item-title">
+          {{title}}
         </div>
-        <ul class="rubric-item-level-collection">
-          <%= availableLevels %>
-        </ul>
-        <div class="rubric-item-selected-comments-container">
-          <span class="comments-label button">
-            Comments <span class="comments-display-state">&blacktriangledown;</span>
-          </span>
-          <ul class="selected-comments">
-            <!-- HTML added for all comments. Selected comments shown, others hidden.  -->
-            <%= selectedComments %>
-          </ul>
+        {{#each commentsGroups }}
+          {{> commentsGroup}}
+        {{/each}}
+        {{#if notes}}
+          <div class="cybercourse-rubric-item-notes">{{notes}}</div>
+        {{/if}}
         </div>
-        <ul class="rubric-item-comment-collection">
-          <%= availableComments %>
-        </ul>
-      </div>
-    </script>
-    <script type="text/template" id="exercise_rubric_template">
-      <div class="exercise_rubric" data-view-id="<%= viewId %>" >
-        <%= rubric %>
       </div>
     </script>
     
+    <!-- Partial for set of good/needs work/poor comments. -->
+    <script id="rubricItemCommentsTemplate" type="text/template">
+      <div class="cybercourse-rubric-item-comment-set {{set}}-comments">
+        <p class="cybercourse-rubric-item-comment-title {{set}}-comment">{{set}}</p>
+        {{#each comments}}
+          <p class="cybercourse-rubric-item-comment {{set}}-comment">{{comment}}</p>
+        {{/each}}
+        <p class="cybercourse-rubric-item-new-comment-container {{set}}-comment">
+          <input type="checkbox" 
+            class="cybercourse-rubric-item-new-comment-remember"
+            title="Remember this comment">
+          <input type="text" class="cybercourse-rubric-item-new-comment"
+            title="New comment">
+        </p>
+      </div>
+    </script>
+    
+    
+    
+    <div id="global-wait-message" class="wait-message">
+      Preparing...
+      <div class='ajax-progress ajax-progress-throbber'>
+        <div class='throbber'>&nbsp;</div>
+      </div>
+    </div>
+
     <!-- Outer north -->
     <div id="submission-list-pane" class="ui-layout-north">
-      <div class="pane-title-container">
-        <h2 class="pane-title">Submission list</h2>
-      </div>
+      <header>Submission list</header>
       <div class="pane-content"></div>
     </div>
 
     <!-- Outer west -->
-    <div class="ui-layout-west">
+    <div class="ui-layout-west" id="outer-west">
 
-      <div id="solution-pane" class="ui-layout-center">
-        <div class="pane-title-container">
-          <h2 class="pane-title">Solution</h2>
-        </div>
-        <div class="pane-content">
-          <h3>Correct solution</h3> 
-          <p>Blah blah.</p>
-        </div>
+      <div id="model-solution-pane" class="ui-layout-center">
+        <header>Model solution</header>
+        <div class="pane-content"></div>
       </div>
 
       <div id="exercise-pane" class="ui-layout-south">
-        <div class="pane-title-container">
-          <h2 class="pane-title">Exercise</h2>
-        </div>
+        <header>Exercise</header>
         <div class="pane-content"></div>
       </div>
       
     </div>
 
     <!-- Outer center -->
-    <div class="ui-layout-center">
+    <div class="ui-layout-center" id="outer-center">
     
       <div id="submission-pane" class="ui-layout-center">
-        <div class="pane-title-container">
-          <h2 class="pane-title">Submission</h2>
-        </div>
-        <div class="pane-content">
-        </div>
+        <header>Submission</header>
+        <div class="pane-content"></div>
       </div>
 
       <div id="feedback-pane" class="ui-layout-south">
-        <div class="pane-title-container">
-          <h2 class="pane-title">Feedback</h2>
-        </div>
+        <header>Feedback</header>
         <div class="pane-content">
           <textarea name="feedbackEditor"></textarea>
           <p>
-            <span id="send-feedback-button" class="button">Send to Cai</span>
+            <span id="send-feedback-button" class="button">Send</span>
           </p>
         </div>
       </div>
@@ -140,49 +122,52 @@
     </div>
     
     <!-- Outer east -->
-    <div class="ui-layout-east">
+    <div class="ui-layout-east" id="outer-east">
       
       <div id="rubric-pane">
-        <div class="pane-title-container">
-          <h2 class="pane-title"><span 
-              class='button generate-feedback-button' id="generate-feedback">Generate feedback</span>Rubric
-          </h2>
+        <header>Rubric</header>
+        <div class="button generate-feedback-button">
+          Generate feedback
         </div>
         <div class="pane-content"></div>
+        <div class="button generate-feedback-button">
+          Generate feedback
+        </div>
       </div>
       
     </div>
     
-    <script type="text/javascript" src="js_lib/jquery-layout/jquery.js"></script>
-    <script type="text/javascript" src="js_lib/jquery-layout/jquery-ui.js"></script>
-    <script type="text/javascript" src="js_lib/jquery-layout/jquery-layout.js"></script>
-
-    <script src="js_lib/libs/underscore/underscore-min.js"></script>
-    <script src="js_lib/libs/backbone.js-0.9.9-amdjs/backbone-min.js"></script>
+    <script src="lib/jquery-layout/jquery.js"></script>
+    <script src="lib/jquery-layout/jquery-ui.js"></script>
+    <script src="lib/jquery-layout/jquery-layout.js"></script>
+    <!--<script src="lib/mustache.js/mustache.js"></script>-->
+    <script src="lib/handlebars-v1.3.0.js"></script>
+    <script src="lib/jquery.timeago.js"></script>
     
-    <script src="models/rubric_item_level/rubric_item_level_model.js"></script>
-    <script src="models/rubric_item_level/rubric_item_level_collection.js"></script>
-    <script src="models/rubric_item_comment/rubric_item_comment_model.js"></script>
-    <script src="models/rubric_item_comment/rubric_item_comment_collection.js"></script>
-    <script src="models/rubric_item/rubric_item_model.js"></script>
-    <script src="models/exercise_rubric_item/exercise_rubric_item_model.js"></script>
-    <script src="models/exercise_rubric_item/exercise_rubric_item_collection.js"></script>
-    <script src="models/exercise/exercise_model.js"></script>
-    <script src="models/rubric_item_comment_to_student/rubric_item_comment_to_student_model.js"></script>
-    <script src="models/rubric_item_comment_to_student/rubric_item_comment_to_student_collection.js"></script>
-    <script src="models/solution_rubric_item_assessment/solution_rubric_item_assessment_model.js"></script>
-    <script src="models/solution_rubric_item_assessment/solution_rubric_item_assessment_collection.js"></script>
-    <script src="models/exercise_solution/exercise_solution_model.js"></script>
-
-    <script src="views/rubric_item_comment_view.js"></script>
-    <script src="views/rubric_item_level_view.js"></script>
-    <script src="views/solution_rubric_item_assessment_view.js"></script>
-    <script src="views/solution_rubric_assessment_view.js"></script>
-    <script src="views/feedback_strings.js"></script>
+    <script>
+      //Mimic the global Drupal object.
+      //Give standard CyCo error handler something to attach.
+      //Also for other things, like the basePath.
+      var Drupal = { behaviors: {}, settings: {} };
+      //Add basePath.
+      Drupal.settings.basePath = window.opener.Drupal.settings.basePath;
+    </script>
     
-    <script src="js_lib/ckeditor/ckeditor.js"></script>
+    <script src="../../cybercourse_base/js/cybercourse_base_error_handling.js"></script>
     
-    <script src="views_helper.js"></script>
-    <script src="app.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/lib.js"></script>
+    <script src="js/server_data_handling.js"></script>
+    <script src="js/data_models.js"></script>
+    <script src="js/submission_list_view_controller.js"></script>
+    <script src="js/submission_pane_view_controller.js"></script>
+    <script src="js/exercise_pane_view_controller.js"></script>
+    <script src="js/model_solution_view_controller.js"></script>
+    <script src="js/rubric_pane_view_controller.js"></script>
+    <script>
+      $(document).ready(function(){
+        app.start();
+      });
+    </script>
   </body>
 </html>

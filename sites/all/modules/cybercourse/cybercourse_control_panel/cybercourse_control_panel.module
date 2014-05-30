@@ -13,7 +13,7 @@ function cybercourse_control_panel_menu() {
     'description' => 'Your CyberCourse options.',
     'page callback' => '_cybercourse_render_control_panel',
     'access callback' => 'cybercourse_base_current_user_has_role',
-    'access arguments' => array(array('authenticated user')),
+    'access arguments' => array('authenticated user'),
     'type' => MENU_NORMAL_ITEM,
   );
   return $items;
@@ -30,7 +30,7 @@ function _cybercourse_render_control_panel() {
         . '/js/cybercourse_control_panel.js'
   );
   $result = array();
-  //Wrap all in a class with a known name.
+  //Wrap all in a class with a known name, so menu code (above) can target.
   $result['all_content'] = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -44,6 +44,7 @@ function _cybercourse_render_control_panel() {
     '#type' => 'markup',
     '#markup' => t('The control panel lets you manage your course options.'),
   );
+  //Show user's groups.
   $groups = cybercourse_groups_render_basic_list();
   $result['all_content']['groups_title'] =
         _cybercourse_control_panel_show_title( 'Your groups' );
@@ -184,10 +185,10 @@ function theme_cybercourse_control_panel_submissions_waiting_grading( $variables
   }
   else {
     if ( $num_submissions == 1 ) {
-      $message = t('You have one submission to grade.');
+      $message = t('You have one submission to grade. ');
     }
     else {
-      $message = t('You have ' . $num_submissions . ' submissions to grade.');
+      $message = t('You have ' . $num_submissions . ' submissions to grade. ');
     }
     $link = l( 
       'Give feedback', 

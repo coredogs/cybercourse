@@ -1,9 +1,5 @@
 <?php
 
-//URL (from root) of a page on how to fix errors reported by docutils (ReST).
-define( 'SWIM_FORMAT_ERROR_HELP_URL', 'swim-format-error-help' );
-
-
 /**
  * Implements hook_help().
  */
@@ -196,17 +192,13 @@ function _swim_add_client_pieces() {
   global $base_url;
   //Set up UI stuff.
   drupal_add_library('system', 'ui.dialog');
-//  //Load MathQuill.
-//  drupal_add_css('sites/all/libraries/mathquill/mathquill.css');
-//  drupal_add_js('sites/all/libraries/mathquill/mathquill.js');
   //Load CKEditor.
   $ckLibraryInfo = libraries_load('ckeditor');
   $numFilesLoaded = libraries_load_files($ckLibraryInfo);
 //return;
   if ( $numFilesLoaded <= 0 ) {
     $mess = t('SWIM error: no CKEditor files loaded. Is CK installed?');
-    watchdog('SWIM', $mess);
-    drupal_set_message(t($mess), 'error');
+    cybercourse_base_handle_error( $mess );
     return;
   }
   drupal_add_css( drupal_get_path('module', 'swim') . '/css/swim.css' );
@@ -549,8 +541,7 @@ function swim_render_field( $entity, $field_name, $format = 'default',
     //Render it.
     $html = swim_rest2html( $html );
   } catch ( Exception $exc ) {
-    watchdog( 'swim', $exc->getMessage() );
-    drupal_set_message( $exc->getMessage(), 'error' );
+    cybercourse_base_handle_error( $exc->getMessage() );
   }
   return $html;
 }
@@ -586,15 +577,15 @@ function swim_rest2html( $rest ) {
   fclose($pipes[0]);
   // read the output from the engine
   $html = stream_get_contents($pipes[1]);
-  $error_messages = stream_get_contents($pipes[2]);
+  $error_message = stream_get_contents($pipes[2]);
   // all done! Clean up
   fclose($pipes[1]);
   fclose($pipes[2]);
   proc_close($p);
-  //Show error messages, if any.
-  if ( $error_messages ) {
-    drupal_set_message($error_messages, 'error');
-    $error_messages = _swim_format_docutils_errors( $error_messages );
+  //Show error messages, if any. These are not CyCo errors, but author errors.
+  if ( $error_message ) {
+    $error_message = _swim_format_docutils_errors( $error_message );
+    drupal_set_message($error_message, 'warning');
   }
   //Remove extra formula markers added by docutils math directive.
   $html = str_ireplace('\begin{equation*}', '', $html);
@@ -769,7 +760,6 @@ function _swim_format_docutils_errors( $docutils_error_messages ) {
       'swim_format_error', 
       array(
         'message' => $drupal_message,
-        'help_url' => SWIM_FORMAT_ERROR_HELP_URL,
       )
   );
   return $themed_message;
@@ -823,7 +813,18 @@ function swim_theme() {
           $base_url . '/' . drupal_get_path('module', 'swim') . '/',
       ),
     ),
+    'swim_format_error' => array(
+      'variables' => array(
+        'message' => NULL,
+      ),
+    ),
   );
   return $info;
 }
 
+function theme_swim_format_error( $variables ) {
+  $message = $variables['message'];
+  $html = "Problems in translating your ReST.<br><br>" . $message
+        . "<br>ReST can be tricky. Check the CyberCourse wiki for help.";
+  return $html;
+}

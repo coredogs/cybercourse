@@ -449,7 +449,7 @@ function cybercourse_exercise_form_exercise_submission_node_form_alter(&$form, $
     if ( ! isset( $_GET['field_exercise'] ) ) {
       $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
           . ' exercise id not passed for add';
-      cybercourse_base_handle_error( 'NID_MISSING', $message );
+      cybercourse_base_handle_error( $message );
       return;
      }
     $exercise_id = $_GET['field_exercise'];
@@ -463,7 +463,7 @@ function cybercourse_exercise_form_exercise_submission_node_form_alter(&$form, $
         //Bad version.
         $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
             . ' bad version: ' . $version;
-        cybercourse_base_handle_error( 'BAD_VERSION', $message );
+        cybercourse_base_handle_error( $message );
         return;
       }
     }
@@ -478,7 +478,7 @@ function cybercourse_exercise_form_exercise_submission_node_form_alter(&$form, $
     //Bad operation.
     $message = __FILE__ . ' (line ' . __LINE__ . ') ' . __FUNCTION__ 
         . ' unknown operation: ' + $op;
-    cybercourse_base_handle_error( 'UNKNOWN_OPERATION', $message );
+    cybercourse_base_handle_error( $message );
     return;
   }
   //Hide the exercise field.
@@ -628,7 +628,7 @@ function _cybercourse_exercise_submission_form_submission($form, &$form_state) {
  * @param int $uid Grader UID, defaults to current user.
  * @return array Submission info.
  */
-function _cybercourse_exercise_get_submissions_to_grade($uid = NULL) {
+function cybercourse_exercise_get_submissions_to_grade($uid = NULL) {
   if ( is_null($uid) ) {
     global $user;
     $uid = $user->uid;
@@ -655,21 +655,34 @@ function _cybercourse_exercise_get_submissions_to_grade($uid = NULL) {
   foreach ( $records as $record ) {
     $gids[] = $record->gid;
   }
+  //Get the names of those groups.
+  $groups = cybercourse_groups_get_group_names($gids);
   //Get all the members of those groups.
   $query = db_select('og_membership', 'ogm');
   $query
       ->distinct()
-      ->fields( 'ogm', array('etid') )
+      ->fields( 'ogm', array('gid', 'etid') )
       ->condition('entity_type', 'user')
       ->condition('gid', $gids, 'IN');
   $records = $query->execute()->fetchAll();
+  //Array of uids to be imploded to use in SQL INI.
   $users_in_groups = array();
+  //Track the groups a user is in.
+  $groups_users_are_in = array();
   foreach( $records as $record ) {
-    $users_in_groups[] = $record->etid;
+    $gid = $record->gid;
+    $etid = $record->etid;
+    //Add to array of all members in all groups.
+    $users_in_groups[] = $etid;
+    //Track groups for each individual member.
+    if ( ! isset( $groups_users_are_in[ $etid ] ) ) {
+      $groups_users_are_in[ $etid ] = array();
+    }
+    $groups_users_are_in[ $etid ][] = $gid;
   }
   //Get the submissions for those users that have a submission date, but
   //no feedback date.
-  $sql = <<<EOT
+  $sql = "
 select 
   submission_node.nid as submission_nid,
   submission_node.uid as submitter_uid,
@@ -699,10 +712,11 @@ left join {field_data_field_when_feedback_given} as when_feedback_table on
   when_feedback_table.entity_id = submission_node.nid
 where
   submission_node.type = 'exercise_submission'
+  and submission_node.uid in (" . implode( ',', $users_in_groups ) . ")
   and when_submitted_table.field_when_submitted_value is not null
   and when_feedback_table.field_when_feedback_given_value is null
 order by submission_node.created;
-EOT;
+";
   $records = db_query($sql);
   $submissions = array();
   if ( $records ) {
@@ -710,7 +724,18 @@ EOT;
       $submissions[] = $row;
     }
   }
-  return $submissions;
+  //Only pass group membership info for students with submissions.
+  $memberships = array();
+  foreach ( $submissions as $submission ) {
+    $submitter_uid = $submission['submitter_uid'];
+    $memberships[ $submitter_uid ] = $groups_users_are_in[ $submitter_uid ];
+  }
+  $result = array( 
+    'submissions' => $submissions,
+    'groups' => $groups,
+    'memberships' => $memberships,
+  );
+  return $result;
 }
 
 /**
@@ -719,6 +744,7 @@ EOT;
  * @return int Number of submissions waiting.
  */
 function _cybercourse_exercise_get_number_submissions_to_grade($uid = NULL) {
-  $submissions = _cybercourse_exercise_get_submissions_to_grade($uid);
+  $submissions_data = cybercourse_exercise_get_submissions_to_grade($uid);
+  $submissions = $submissions_data['submissions'];
   return sizeof($submissions);
 }
