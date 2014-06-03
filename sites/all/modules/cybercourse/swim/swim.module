@@ -417,8 +417,13 @@ function swim_field_formatter_view(
     case 'swim_default':
     case 'swim_trimmed':
       foreach ($items as $delta => $item) {
+        //Replace tokens.
+        $tokenized = swim_process_tokens( 
+            $obj_type, $object, $field, $item['pure_rest']
+        );
         //Convert from ReST to HTML
-        $output = swim_rest2html( $item['pure_rest'] );
+        $output = swim_rest2html( $tokenized );
+//        $output = swim_rest2html( $item['pure_rest'] );
         //$output = check_markup($output, NULL, $langcode);
         if ($display['type'] == 'swim_trimmed') {
           $output = text_summary($output, NULL, $display['settings']['trim_length']);
@@ -490,6 +495,35 @@ function swim_field_formatter_view(
   } //end switch
   
   return $element;
+}
+
+
+function swim_process_tokens( $obj_type, $object, $field, $content ) {
+  if ( $obj_type == 'node' ) {
+    //Is this a content type supporting tokens?
+    $content_type = $object->type;
+    $types_supporting_tokens = cybercourse_base_get_types_supporting_tokens();
+    if ( in_array( $content_type, $types_supporting_tokens ) ) {
+      //Is this a field that supports tokens?
+      $field_name = $field['field_name'];
+      $fields_supporting_tokens 
+          = cybercourse_base_get_fields_supporting_tokens($content_type);
+      if (in_array($field_name, $fields_supporting_tokens) ) {
+        //Is the page owned by a user allowed to substitute tokens?
+        $page_owner_uid = $object->uid;
+        $page_owner = user_load($page_owner_uid);
+        if (  cybercourse_base_user_has_role(
+                $page_owner,
+                array( 'author', 'administrator', 'grader', 'instructor')
+              ) 
+           ) {
+          //Replace tokens.
+          $content = token_replace($content);
+        }
+      }
+    }
+  }
+  return $content;
 }
 
 /**

@@ -63,6 +63,9 @@ app.initUi = function() {
   app.setupAttachmentLinks();
   //Fix pane headers in place.
   app.fixHeaders();
+  //Hide everything in the rubric and feedback panes
+  $("#rubric-pane div").hide();
+  $("#feedback-pane div").hide();
 };
 
 /**
@@ -133,10 +136,18 @@ app.compileTemplates = function() {
   //Compile templates.
   app.compiledTemplates.submissionListTemplate
       = Handlebars.compile($("#submissionListTemplate").html());
+  //Compile template for new comment.
+  app.compiledTemplates.newCommentTemplate
+      = Handlebars.compile($("#newCommentContainerTemplate").html());
   //Rubric item template uses a partial for comment lists.
   Handlebars.registerPartial(
       "commentsGroup", 
       $("#rubricItemCommentsTemplate").html()
+  );
+  //Comments group template uses a partial for new comment.
+  Handlebars.registerPartial(
+      "newCommentContainer", 
+      $("#newCommentContainerTemplate").html()
   );
   app.compiledTemplates.rubricItemTemplate 
       = Handlebars.compile($("#rubricItemTemplate").html());

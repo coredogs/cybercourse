@@ -1,5 +1,10 @@
 <?php
 
+//First name to use when the user did not give one.
+define( 'GENERIC_FIRST_NAME', 'Willow' );
+//Last name to use when the user did not give one.
+define( 'GENERIC_LAST_NAME', 'Rosenberg' );
+
 /**
  * Implements hook_menu.
  */
@@ -171,7 +176,7 @@ function _cybercourse_exercise_make_submit_links( $exercise_node ) {
 function cybercourse_exercise_theme() {
   $result = array(
     'cyco_embedded_exercise' => array(
-      'template' => 'templates/cybercourse-inserted-exercise',
+      'template' => 'templates/cyco-inserted-exercise',
       //Default variable values
       'variables' => array(
         'title' => '(no title)',
@@ -179,6 +184,12 @@ function cybercourse_exercise_theme() {
         'labeled_links' => array(),
       ),
     ),
+    'cyco_feedback_phrases' => array(
+      'template' => 'templates/cyco-feedback-phrase-preview',
+      'variables' => array(
+        'phrases_groups' => array(),
+      )
+    )
   );
   return $result;
 }
@@ -254,12 +265,26 @@ function _cybercourse_exercise_get_submission_theme() {
  * If the user can edit course pages, then add the id of the exercise
  * to the end of the title. Helps when inserting exercise 
  * references in a course page.
+ * 
+ * Also does some token replacement.
  */
 function cybercourse_exercise_node_view($node, $view_mode, $langcode) {
   if ($node->type == 'exercise' && $view_mode == 'full') {
     if (user_access('edit any course_page')) {
       drupal_set_title($node->title . ' (' . $node->nid . ')');
     }
+  }
+  //Data needed to replace some tokens.
+  $token_data = array('feedback');
+  //If this is an exercise submission...
+  if ( $node->type == 'exercise_submission' ) {
+    //Ready the exercise id for the token parser.
+    $exercise_nid = null;
+    if ( isset( $node->field_exercise[LANGUAGE_NONE][0] ) ) {
+      $exercise_nid = $node->field_exercise[LANGUAGE_NONE][0]['target_id'];
+      $token_data['exercise_nid'] = $exercise_nid;
+    }
+    $replaced_text = token_replace($node, $token_data);
   }
 }
 
@@ -747,4 +772,269 @@ function _cybercourse_exercise_get_number_submissions_to_grade($uid = NULL) {
   $submissions_data = cybercourse_exercise_get_submissions_to_grade($uid);
   $submissions = $submissions_data['submissions'];
   return sizeof($submissions);
+}
+
+/**
+ * Implements hook_form_alter().
+ * 
+ * Change the user profile form, adjusting grading things.
+ */
+function cybercourse_exercise_form_user_profile_form_alter( &$form, $form_state ) {
+  global $user;
+  if ( cybercourse_base_current_user_has_role( 'grader' ) ) {
+//    $form['#validate'][] = '_cybercourse_exercise_user_profile_form_validate';
+    $form['#submit'][] = '_cybercourse_exercise_user_profile_form_submit';
+    //Insert the token display.
+    $form['tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Tokens'),
+      '#description' => 
+          t('Text like [feedback:student_first_name] are replaced with '
+            . 'values like Sara or Mike when content is displayed. '
+            . 'See the CyberCourse wiki for more information.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#weight' => 8,
+    );
+    $form['tokens']['list'] = array(
+      '#theme' => 'token_tree',
+      '#token_types' => array('node'),
+      '#global_types' => TRUE,
+      '#click_insert' => FALSE,
+    );
+  }
+  else {
+    //Not a grader. Hide all thoe fields.
+    field_group_hide_field_groups( $form, array('group_feedback_phrases'));
+  }
+}
+
+/**
+ * Validate the user profile form.
+ */
+//function _cybercourse_exercise_user_profile_form_validate( $form, &$form_state ) {
+//}
+
+/**
+ * Structure data needed to make a preview of a group of 
+ * feedback phrases for the user.
+ * @param array $form_state From form_submit.
+ * @param string $field_name Name of the field to check.
+ * @param string $group Title of the group.
+ * @return array Data structured appropriately.
+ */
+function _cyco_structure_feedback_phrases_preview_data( $form_state, $field_name, $group ) {
+  $result = array();
+  if ( $form_state['values'][$field_name][LANGUAGE_NONE][0]['value'] ) {
+    $result['group_title'] = $group;
+    $phrases = array();
+    foreach ( 
+        $form_state['values'][$field_name][LANGUAGE_NONE] as $key => $entry ) {
+      if ( $entry['value'] ) {
+        $phrases[] = $entry['value'];
+      }
+    }
+    $result['phrases'] = $phrases;
+  }
+  return $result;
+}
+
+function _cybercourse_exercise_user_profile_form_submit( $form, &$form_state ) {
+  //Check the cutoff percentages.
+  $good_cutoff = null;
+  if ( $form_state['values']['field_good_cutoff'][LANGUAGE_NONE][0]['value'] ) {
+    $good_cutoff = $form_state['values']['field_good_cutoff'][LANGUAGE_NONE][0]['value'];
+  }
+  $needs_work_cutoff = null;
+  if ( $form_state['values']['field_needs_work_cutoff'][LANGUAGE_NONE][0]['value'] ) {
+    $needs_work_cutoff = $form_state['values']['field_good_cutoff'][LANGUAGE_NONE][0]['value'];
+  }
+  if ( ! $good_cutoff || ! $needs_work_cutoff ) {
+    drupal_set_message(
+          'Note: both "good" cutoff and "needs work" cutoff need to '
+        . 'be set before either will be used.');
+  }
+  else {
+    if ( $good_cutoff <= $needs_work_cutoff ) {
+      form_set_error(
+          'field_good_cutoff', 
+          'The "good" cutoff should be greater than the "needs work" cutoff.'
+      );
+    }
+  }
+  //Show the user samples of feedback messages with name replacements, so
+  // s/he can check them.
+  $phrases_groups = array();
+  if ( $form_state['values']['field_greetings'][LANGUAGE_NONE][0]['value'] ) {
+      $phrases_groups[] = _cyco_structure_feedback_phrases_preview_data( 
+          $form_state, 'field_greetings', 'Greetings' 
+        );
+  }
+  if ( $form_state['values']['field_overall_good'][LANGUAGE_NONE][0]['value'] ) {
+      $phrases_groups[] = _cyco_structure_feedback_phrases_preview_data( 
+          $form_state, 'field_overall_good', 'Overall good' 
+        );
+  }
+  if ( $form_state['values']['field_overall_needs_work'][LANGUAGE_NONE][0]['value'] ) {
+      $phrases_groups[] = _cyco_structure_feedback_phrases_preview_data( 
+          $form_state, 'field_overall_needs_work', 'Overall needs work' 
+        );
+  }
+  if ( $form_state['values']['field_overall_poor'][LANGUAGE_NONE][0]['value'] ) {
+      $phrases_groups[] = _cyco_structure_feedback_phrases_preview_data( 
+          $form_state, 'field_overall_poor', 'Overall poor' 
+        );
+  }
+  if ( $form_state['values']['field_signature'][LANGUAGE_NONE][0]['value'] ) {
+      $phrases_groups[] = _cyco_structure_feedback_phrases_preview_data( 
+          $form_state, 'field_signature', 'Signature' 
+        );
+  }
+  if ( sizeof( $phrases_groups > 0 ) ) {
+    drupal_set_message( 
+        theme(
+            'cyco_feedback_phrases', 
+            array( 'phrases_groups' => $phrases_groups)
+        )
+    );
+  }
+}
+
+/**
+ * Implements hook_token_info().
+ */
+function cybercourse_exercise_token_info() {
+  $info = array();
+  // Add any new tokens.
+  $info['tokens']['feedback'] = array(
+    'student_first_name' => t('First name of the student receiving feedback.'),
+    'student_last_name' => t('Last name of the student receiving feedback.'),
+    'exercise_title' => t('Title of the exercise being assessed.'),
+  );
+  // Return them.
+  return $info;
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function cybercourse_exercise_tokens($type, $tokens, array $data = array(), 
+    array $options = array()) {
+  $replacements = array();
+  // The first thing that we're going to check for is the type of token - node,
+  // user etc...
+  if ($type == 'feedback') {
+    // Loop through each of the available tokens.
+    foreach ($tokens as $name => $original) {
+      // Find the desired token by name.
+      switch ($name) {
+        case 'student_first_name':
+          //Replace with the student's first name if the current user
+          //has the student role, else use a generic name. 
+          $first_name = 'Willow'; //Default name.
+          if ( cybercourse_base_current_user_has_role( 'student' ) ) {
+            global $user;
+            if ( isset( $user->field_first_name[LANGUAGE_NONE][0] ) ) {
+              $first_name = $user->field_first_name[LANGUAGE_NONE][0]['value'];
+            }
+          }
+          // Add the new value into the replacements array.
+          $replacements[$original] = $first_name;
+          break;
+        case 'student_last_name':
+          //Replace with the student's last name if the current user
+          //has the student role, else use a generic name. 
+          $last_name = 'Rosenberg'; //Default name.
+          if ( cybercourse_base_current_user_has_role( 'student' ) ) {
+            global $user;
+            if ( isset( $user->field_last_name[LANGUAGE_NONE][0] ) ) {
+              $last_name = $user->field_last_name[LANGUAGE_NONE][0]['value'];
+            }
+          }
+          // Add the new value into the replacements array.
+          $replacements[$original] = $last_name;
+          break;
+        case 'exercise_title':
+          //Replace with an exercise's title if available, else 
+          //use a generic title. 
+          $exercise_title = 'Generic exercise title'; //Default name.
+          if ( isset( $data['exercise_nid'] ) ) {
+            $exercise = node_load( $data['exercise_nid'] );
+            $exercise_title = $exercise->title;
+          }
+          // Add the new value into the replacements array.
+          $replacements[$original] = $exercise_title;
+          break;
+      }
+    }
+  } //End processing feedback type.
+  else if ($type == 'current-user') {
+    // Loop through each of the available tokens.
+    foreach ($tokens as $name => $original) {
+      // Find the desired token by name.
+      switch ($name) {
+        case 'field_first_name':
+        case 'field-first-name':
+          //Replace with a generic name for anonymous users, or
+          //where the user did not give a first name.
+          global $user;
+          if ( $user->uid == 0 ) {
+            $replacements[$original] = GENERIC_FIRST_NAME;
+          }
+          else {
+            $users = entity_load('user', array($user->uid) );
+            $user_all_data = $users[ $user->uid ];
+            if ( _cyco_test_use_generic_name( $user_all_data->field_first_name ) ) {
+              //Use the generic name.
+              $replacements[$original] = GENERIC_FIRST_NAME;
+            }
+          }
+          break;
+        case 'field_last_name':
+        case 'field-last-name':
+          //Replace with a generic name for anonymous users, or
+          //where the user did not give a last name.
+          global $user;
+          if ( $user->uid == 0 ) {
+            $replacements[$original] = GENERIC_LAST_NAME;
+          }
+          else {
+            $users = entity_load('user', array($user->uid) );
+            $user_all_data = $users[ $user->uid ];
+            if ( _cyco_test_use_generic_name( $user_all_data->field_last_name ) ) {
+              //Use the generic name.
+              $replacements[$original] = GENERIC_LAST_NAME;
+            }
+          }
+          break;
+      }
+    } //End foreach
+  }
+  // Return the replacements.
+  return $replacements;
+}
+
+/**
+ * Test whether need to replace first/last name tokens with
+ * a generic value.
+ * @global stdClass $user The logged in user.
+ * @param string $field_to_check Name of the user entity field that might
+ * have a value for a name.
+ * @return boolean True if the generic name should be used.
+ */
+function _cyco_test_use_generic_name( $field_to_check ) {
+  //Replace with a generic name for anonymous users, or
+  //where the user did not give a last name.
+  $replace_flag = FALSE;
+  if ( ! isset( $field_to_check[LANGUAGE_NONE][0]['value'] ) ) {
+      $replace_flag = TRUE;
+  }
+  else {
+    //Get the data in the field.
+    $data = trim( $field_to_check[LANGUAGE_NONE][0]['value'] );
+    if ( strlen($data) == 0 ) {
+      $replace_flag = TRUE;
+    }
+  }
+  return $replace_flag;
 }

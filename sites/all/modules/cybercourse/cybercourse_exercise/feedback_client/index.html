@@ -8,6 +8,16 @@
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
     <link charset="utf-8" media="screen" type="text/css" href="css/custom.css" rel="stylesheet">
     <link rel="stylesheet" href="css/custom.css">
+    <!--[if lte IE 9]><script>
+    //Adds timeout compatibility. 
+    //See https://developer.mozilla.org/en-US/docs/Web/API/Window.setTimeout.
+    (function(f){
+    window.setTimeout =f(window.setTimeout);
+    window.setInterval =f(window.setInterval);
+    })(function(f){return function(c,t){
+    var a=[].slice.call(arguments,2);return f(function(){c.apply(this,a)},t)}
+    });
+    </script><![endif]-->
   </head>
   <body>
     <script id="submissionListTemplate" type="text/template">
@@ -43,13 +53,18 @@
       <div class="cybercourse-rubric-item-container">
         <div class="cybercourse-rubric-item-title">
           {{title}}
+          <span class="button display-state">▴</span>
         </div>
-        {{#each commentsGroups }}
-          {{> commentsGroup}}
-        {{/each}}
-        {{#if notes}}
-          <div class="cybercourse-rubric-item-notes">{{notes}}</div>
-        {{/if}}
+        <div class="cybercourse-rubric-item-chosen-text">
+          (Nothing chosen)
+        </div>
+        <div class="cybercourse-rubric-item-details">
+          {{#if notes}}
+            <div class="cybercourse-rubric-item-notes">{{notes}}</div>
+          {{/if}}
+          {{#each commentsGroups }}
+            {{> commentsGroup}}
+          {{/each}}
         </div>
       </div>
     </script>
@@ -57,18 +72,25 @@
     <!-- Partial for set of good/needs work/poor comments. -->
     <script id="rubricItemCommentsTemplate" type="text/template">
       <div class="cybercourse-rubric-item-comment-set {{set}}-comments">
-        <p class="cybercourse-rubric-item-comment-title {{set}}-comment">{{set}}</p>
+        <p class="cybercourse-rubric-item-comment-title {{set}}-comment">
+          {{set}}
+        </p>
         {{#each comments}}
           <p class="cybercourse-rubric-item-comment {{set}}-comment">{{comment}}</p>
         {{/each}}
-        <p class="cybercourse-rubric-item-new-comment-container {{set}}-comment">
-          <input type="checkbox" 
-            class="cybercourse-rubric-item-new-comment-remember"
-            title="Remember this comment">
-          <input type="text" class="cybercourse-rubric-item-new-comment"
-            title="New comment">
-        </p>
+        {{> newCommentContainer }}
       </div>
+    </script>
+    
+    <!-- Partial for new comment container. -->
+    <script id="newCommentContainerTemplate" type="text/template">
+      <p class="cybercourse-rubric-item-new-comment-container">
+        <input type="checkbox" 
+          class="cybercourse-rubric-item-new-comment-remember"
+          title="Remember this comment">
+        <textarea class="cybercourse-rubric-item-new-comment-text"
+          title="Custom comment"></textarea>
+      </p>
     </script>
     
     
@@ -126,7 +148,7 @@
       
       <div id="rubric-pane">
         <header>Rubric</header>
-        <div class="button generate-feedback-button">
+        <div class="button generate-feedback-button above">
           Generate feedback
         </div>
         <div class="pane-content"></div>
