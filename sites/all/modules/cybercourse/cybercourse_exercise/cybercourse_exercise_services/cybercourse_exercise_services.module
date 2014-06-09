@@ -1317,7 +1317,7 @@ function _cycoex_save_feedback( $feedback_data ) {
       = $complete ? 1 : 0;
   node_save( $submission_node );
   //Add new rubric item rating nodes.
-  foreach ($rubric_ratings as $key => $rubric_rating) {
+  foreach ($rubric_ratings as $key => $rubric_rating) { 
     $rubric_item_nid = $rubric_rating['rubric_item_nid'];
     $comment = $rubric_rating['comment'];
     $comment_rating = $rubric_rating['comment_rating'];
