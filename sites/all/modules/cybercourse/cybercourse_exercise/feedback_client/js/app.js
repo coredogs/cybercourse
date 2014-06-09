@@ -19,6 +19,8 @@ app.compiledTemplates = {
 
 
 app.start = function() {
+  //Hide everything to start.
+  $("body > div").hide();
   
   app.basePath = window.opener.Drupal.settings.basePath;
   
@@ -52,6 +54,8 @@ app.start = function() {
 };
 
 app.initUi = function() {
+  //Show the UI.
+  $(app.outputAreaSelector).show();
   //Compile Handlbars templates.
   app.compileTemplates();
   //Where all the output goes.
@@ -65,7 +69,7 @@ app.initUi = function() {
   app.fixHeaders();
   //Hide everything in the rubric and feedback panes
   $("#rubric-pane div").hide();
-  $("#feedback-pane div").hide();
+  $("#feedback-pane .pane-content").hide();
 };
 
 /**
@@ -120,20 +124,21 @@ app.sizePanes = function() {
  * Fix the pane headers at the top of their panes.
  */
 app.fixHeaders = function() {
-  $("body > div header").parent().scroll(function(event){
+  $(app.outputAreaSelector + " > div header").parent().scroll(function(event){
     var scrollTop = $(this).scrollTop();
     var scrollLeft = $(this).scrollLeft();
     $(this).find("header")
       .css("top", scrollTop)
       .css("left", scrollLeft);
   });
-}
+};
 
 /**
  * Compile Handlbars templates.
  */
 app.compileTemplates = function() {
   //Compile templates.
+  //Submission list.
   app.compiledTemplates.submissionListTemplate
       = Handlebars.compile($("#submissionListTemplate").html());
   //Compile template for new comment.
@@ -151,5 +156,8 @@ app.compileTemplates = function() {
   );
   app.compiledTemplates.rubricItemTemplate 
       = Handlebars.compile($("#rubricItemTemplate").html());
-}
+  //Throbber.
+  app.compiledTemplates.throbber
+      = Handlebars.compile($("#throbberTemplate").html());
+};
 

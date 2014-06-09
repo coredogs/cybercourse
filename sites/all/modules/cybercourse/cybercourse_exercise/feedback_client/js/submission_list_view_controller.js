@@ -1,5 +1,8 @@
 var app = app || {};
 
+//Create a namespacey object for this pane.
+app.submissionListPane = {};
+
 /**
  * Initialize the submission list display in the outer north pane.
  * Display data and setup events.
@@ -48,12 +51,17 @@ app.initSubmissionList = function() {
  * @param {int} submissionNid Id of the submission list item click on.
  */
 app.submissionListItemClicked = function( submissionNid ) {
+  $("#submission-list-pane table tr").removeClass("current-submission");
+  $("#submission-list-pane table tr[data-submission-nid=" + submissionNid + "]")
+      .addClass("current-submission");
   //Grab the submission clicked on.
   var submissionItem = app.submissionsToGrade[ submissionNid ];
+  var exerciseNid = submissionItem.exerciseNid;
+  var studentUid = submissionItem.studentUid;
   //Remember current state.
   app.currentState.submissionNid = submissionNid;
-  var exerciseNid = submissionItem.exerciseNid;
   app.currentState.exerciseNid = exerciseNid;
+  app.currentState.studentUid = studentUid;
   //Tell user to wait.
   app.showPrepForSubmissionGradingWait( submissionNid );
   $.when(
@@ -66,6 +74,7 @@ app.submissionListItemClicked = function( submissionNid ) {
     app.initSubmissionPane( submissionNid );
     app.initExercisePane( exerciseNid );
     var modelSolutionNid = app.allExercises[ exerciseNid ].modelSolutionNid;
+    app.currentState.modelSolutionNid = modelSolutionNid;
     app.initModelSolutionPane( modelSolutionNid );
 //    app.initFeedbackPane( submissionNid ),
     //Load rubric items that haven't been loaded yet.
@@ -105,3 +114,15 @@ app.hidePrepForSubmissionGradingWait = function( submissionNid ) {
       .hide();  
 };
 
+/**
+ * Clear the UI, ready to grade a new submission. 
+ * @param {type} submissionNid If set, show this submission has been graded.
+ */
+app.submissionListPane.resetUi = function( submissionNid ) {
+  //Line through the submission listing.
+  $("tr[data-submission-nid=" + submissionNid + "]")
+      .addClass("submission-graded");
+  
+  //Clear current state.
+  
+};

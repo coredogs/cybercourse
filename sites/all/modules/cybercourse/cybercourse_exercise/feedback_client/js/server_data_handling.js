@@ -203,7 +203,7 @@ app.loadExerciseFromServer = function( exerciseNid ) {
       //Is there a model solution?
       if ( result.model ) {
         //Extract it from the server data.
-        app.loadModelSolutionFromExercsie( exerciseNid, result.model );
+        app.loadModelSolutionFromExercise( exerciseNid, result.model );
       }
     })
     .fail(function(jqXHR, textStatus, errorThrown) {
@@ -222,7 +222,7 @@ app.loadExerciseFromServer = function( exerciseNid ) {
  * @param {int} exerciseNid Exercise this is a model for.
  * @param {Array} dataFromServer Model solution data from server.
  */
-app.loadModelSolutionFromExercsie = function( exerciseNid, dataFromServer ) {
+app.loadModelSolutionFromExercise = function( exerciseNid, dataFromServer ) {
   var model = new app.ModelSolution();
   model.modelSolutionNid = dataFromServer.model_nid;
   model.exerciseNid = exerciseNid;

@@ -52,3 +52,6 @@ It's misleading.
   display: none;
 }
 
+.cyco-feedback-phrases-preview-container div {
+  margin-top: 1em;
+}

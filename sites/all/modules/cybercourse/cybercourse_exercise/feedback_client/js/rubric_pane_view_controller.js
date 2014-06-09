@@ -121,6 +121,24 @@ app.initRubricPane = function( exerciseNid ) {
           }
         }
     );
+  //When the user clicks the Complete checkbox...
+  $(".cyco-exercise-complete").change(function(event){
+    //Set both checkboxes to the same value.
+    var newState = $(this).prop("checked");
+    $(".cyco-exercise-complete").prop("checked", newState);
+    //Change the complete indicator in feedback pane.
+    app.feedbackPane.setCompleteMessage( newState );
+  });
+  //When user clicks a generate feedback button...
+  $(".generate-feedback-button").click(function() {
+    $.when(
+      app.rubricPane.createFeedbackMessage()
+    )
+    .then(function() {
+      var complete = $(".cyco-exercise-complete").prop("checked");
+      app.feedbackPane.initFeedbackPane( complete );
+    });
+  });
   //Show everything - hidden when UI loads.
   $("#rubric-pane div").show();
 };
@@ -154,7 +172,10 @@ app.rubricPane.choosePopulatedTextarea = function(textarea) {
 app.renderRubricItem = function( rubricNid, currentSelections ) {
   var rubricItem = app.allRubricItems[ rubricNid ];
   //Convert data format into that used by the tempate.
-  var templateData = { title: rubricItem.title };
+  var templateData = { 
+    title: rubricItem.title,
+    rubricItemNid: rubricNid
+  };
   templateData.commentsGroups = new Array();
   //Good comments.
   var commentsGroup = app.formatCommentsGroup( "Good", rubricItem.good );
@@ -177,7 +198,13 @@ app.renderRubricItem = function( rubricNid, currentSelections ) {
  * @returns {object} Data in template format.
  */
 app.formatCommentsGroup = function( groupName, commentsList ) {
-  var commentsGroup = { set: groupName };
+  //Compute an id for an HTML 5 data- property.
+  var groupDataId = groupName.toLowerCase();
+  groupDataId = groupDataId.replace( " ", "_" );
+  var commentsGroup = { 
+    set: groupName,
+    setId: groupDataId
+  };
   commentsGroup.comments = new Array();
   for( var index in commentsList ) {
     var comment = commentsList[ index ];
@@ -275,4 +302,73 @@ app.rubricPane.showChosen = function( chosenOne ) {
       .removeClass("cybercourse-rubric-item-chosen-indicator");
   //Add the class to the Chosen One.
   $chosenOne.addClass("cybercourse-rubric-item-chosen-indicator");
+};
+
+/**
+ * Create a feedback message to send to the student.
+ */
+app.rubricPane.createFeedbackMessage = function() {
+  app.feedbackPane.showGeneratingThrobber();
+  var webServiceUrl = app.basePath + "exercise/feedback/makeFeedbackMessage";
+  var dataToSend = {};
+  dataToSend.submission_nid = app.currentState.submissionNid;
+  dataToSend.student_uid = app.currentState.studentUid;
+  dataToSend.exercise_nid = app.currentState.exerciseNid;
+  dataToSend.model_solution_nid = app.currentState.modelSolutionNid;
+  dataToSend.rubric_ratings = app.rubricPane.packageRubicRatings();
+  dataToSend = JSON.stringify( dataToSend );
+  var promise = $.ajax({
+    type: "POST",
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    data: dataToSend,
+    url: webServiceUrl,
+    beforeSend: function (request) {
+      request.setRequestHeader("X-CSRF-Token", app.csrfToken);
+    }
+  })
+  .done(function(message){
+    $("#cyco-feedback-editor").val( message );
+    $("#feedback-pane .pane-content").fadeIn('fast');
+  })
+  .fail(function(jqXHR, textStatus, errorThrown) {
+    Drupal.behaviors.cybercourseErrorHandler.reportError(
+      "Fail in app.rubricPane.createFeedbackMessage."  
+        + " textStatus: " + textStatus + ", errorThrown: " + errorThrown
+    );
+  })
+  .always(function() {
+    app.feedbackPane.hideGeneratingThrobber();
+  });
+  return promise;
+};
+
+/**
+ * Package users's selections ready to send to server.
+ * @returns object Selections.
+ */
+app.rubricPane.packageRubicRatings = function() {
+  var result = new Array();
+  $("#rubric-pane .cybercourse-rubric-item-container").each(function(index, rubricItemDom){
+    var $chosenCommentDom 
+        = $($(rubricItemDom).find(".cybercourse-rubric-item-chosen-indicator"));
+    var chosenCommentHtml;
+    //Comment could be in a textarea (for a new comment) or not (existing comment).
+    if ( $chosenCommentDom.hasClass("cybercourse-rubric-item-new-comment-container") ) {
+      chosenCommentHtml = $chosenCommentDom.find("textarea").val();
+    }
+    else {
+      chosenCommentHtml = $chosenCommentDom.html();
+    }
+    var chosenCommentRating 
+        = $chosenCommentDom
+            .parents(".cybercourse-rubric-item-comment-set")
+            .attr("data-comment-set");
+    var rubric_item = {};
+    rubric_item.rubric_item_nid = $(rubricItemDom).attr("data-rubric-item-nid");
+    rubric_item.comment = chosenCommentHtml;
+    rubric_item.comment_rating = chosenCommentRating;
+    result.push( rubric_item );
+  });
+  return result;
 };

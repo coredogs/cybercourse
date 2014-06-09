@@ -274,18 +274,18 @@ function cybercourse_exercise_node_view($node, $view_mode, $langcode) {
       drupal_set_title($node->title . ' (' . $node->nid . ')');
     }
   }
-  //Data needed to replace some tokens.
-  $token_data = array('feedback');
-  //If this is an exercise submission...
-  if ( $node->type == 'exercise_submission' ) {
-    //Ready the exercise id for the token parser.
-    $exercise_nid = null;
-    if ( isset( $node->field_exercise[LANGUAGE_NONE][0] ) ) {
-      $exercise_nid = $node->field_exercise[LANGUAGE_NONE][0]['target_id'];
-      $token_data['exercise_nid'] = $exercise_nid;
-    }
-    $replaced_text = token_replace($node, $token_data);
-  }
+//  //Data needed to replace some tokens.
+//  $token_data = array('feedback');
+//  //If this is an exercise submission...
+//  if ( $node->type == 'exercise_submission' ) {
+//    //Ready the exercise id for the token parser.
+//    $exercise_nid = null;
+//    if ( isset( $node->field_exercise[LANGUAGE_NONE][0] ) ) {
+//      $exercise_nid = $node->field_exercise[LANGUAGE_NONE][0]['target_id'];
+//      $token_data['exercise_nid'] = $exercise_nid;
+//    }
+//    $replaced_text = token_replace($node->field_body[LANGUAGE_NONE][0]['pure_rest'], $token_data);
+//  }
 }
 
 /**
@@ -617,22 +617,8 @@ function _cybercourse_exercise_submission_form_submission($form, &$form_state) {
     }
     else {
       //Record current date/time as the submission date/time.
-      //This is clunky.
-      $now = date_now('UTC');
-      //Make an array with the rep used by the date api for form field 
-      //in $form_state.
-      $temp = array();
-      //Date is almost OK. Replace space between date and time with a T.
-      $temp['value'] = str_replace(' ', 'T', $now->date);
-      $temp['value2'] = $temp['value'];
-      $temp['show_todate'] = 0;
-      $temp['timezone'] = $now->timezone;
-      //Compute timezone offset.
-      $phpNow = new DateTime( $temp['value'], new DateTimeZone($now->timezone) );
-      $offset = $phpNow->getOffset();
-      $temp['offset'] = $offset;
-      $temp['offset2'] = $offset;
-      $form_state['values']['field_when_submitted'][LANGUAGE_NONE][0] = $temp;
+      $now = cybercourse_base_format_time();
+      $form_state['values']['field_when_submitted'][LANGUAGE_NONE][0] = $now;
     }
   }
   else {
@@ -780,8 +766,10 @@ function _cybercourse_exercise_get_number_submissions_to_grade($uid = NULL) {
  * Change the user profile form, adjusting grading things.
  */
 function cybercourse_exercise_form_user_profile_form_alter( &$form, $form_state ) {
-  global $user;
-  if ( cybercourse_base_current_user_has_role( 'grader' ) ) {
+  //Get the uid of the user who is the subject of this form.
+  $subject_uid = $form['#entity']->uid;
+  $subject = user_load($subject_uid);
+  if (cybercourse_base_user_has_role( $subject, 'grader' ) ) {
 //    $form['#validate'][] = '_cybercourse_exercise_user_profile_form_validate';
     $form['#submit'][] = '_cybercourse_exercise_user_profile_form_submit';
     //Insert the token display.
@@ -798,7 +786,7 @@ function cybercourse_exercise_form_user_profile_form_alter( &$form, $form_state 
     );
     $form['tokens']['list'] = array(
       '#theme' => 'token_tree',
-      '#token_types' => array('node'),
+      '#token_types' => array('all'),
       '#global_types' => TRUE,
       '#click_insert' => FALSE,
     );
@@ -831,7 +819,7 @@ function _cyco_structure_feedback_phrases_preview_data( $form_state, $field_name
     foreach ( 
         $form_state['values'][$field_name][LANGUAGE_NONE] as $key => $entry ) {
       if ( $entry['value'] ) {
-        $phrases[] = $entry['value'];
+        $phrases[] = token_replace( $entry['value'] );
       }
     }
     $result['phrases'] = $phrases;
@@ -904,14 +892,30 @@ function _cybercourse_exercise_user_profile_form_submit( $form, &$form_state ) {
  * Implements hook_token_info().
  */
 function cybercourse_exercise_token_info() {
-  $info = array();
-  // Add any new tokens.
-  $info['tokens']['feedback'] = array(
-    'student_first_name' => t('First name of the student receiving feedback.'),
-    'student_last_name' => t('Last name of the student receiving feedback.'),
-    'exercise_title' => t('Title of the exercise being assessed.'),
+  $info = array(
+    'types' => array(
+      'feedback' => array(
+        'name' => t('Feedback system tokens'),
+        'description' => t('Used in the grading UI'),
+      ),
+    ),
+    'tokens' => array(
+      'feedback' => array(
+        'student_first_name' => array(
+          'name' => t('Student first name'),
+          'description' => t('First name of the student receiving feedback.'),
+        ),
+        'student_last_name' => array(
+          'name' => t('Student last name'),
+          'description' => t('Last name of the student receiving feedback.'),
+        ),
+        'exercise_title' => array(
+          'name' => t('Exercise title'),
+          'description' => t('Title of the exercise being assessed.'),
+        ),
+      ),
+    ),
   );
-  // Return them.
   return $info;
 }
 
@@ -932,12 +936,19 @@ function cybercourse_exercise_tokens($type, $tokens, array $data = array(),
           //Replace with the student's first name if the current user
           //has the student role, else use a generic name. 
           $first_name = 'Willow'; //Default name.
-          if ( cybercourse_base_current_user_has_role( 'student' ) ) {
-            global $user;
-            if ( isset( $user->field_first_name[LANGUAGE_NONE][0] ) ) {
-              $first_name = $user->field_first_name[LANGUAGE_NONE][0]['value'];
+          if ( 
+                 isset( $data['context'] ) 
+              && $data['context'] == 'creating_feedback_message' 
+             ) {
+            $student_uid = $data['student_uid'];
+            $users = entity_load('user', array( $student_uid ) );
+            $student_all_data = $users[ $student_uid ];
+            if ( cybercourse_base_user_has_role( $student_all_data, 'student' ) ) {
+              if ( isset( $student_all_data->field_first_name[LANGUAGE_NONE][0] ) ) {
+                $first_name = $student_all_data->field_first_name[LANGUAGE_NONE][0]['value'];
+              }
             }
-          }
+             }
           // Add the new value into the replacements array.
           $replacements[$original] = $first_name;
           break;
@@ -947,8 +958,10 @@ function cybercourse_exercise_tokens($type, $tokens, array $data = array(),
           $last_name = 'Rosenberg'; //Default name.
           if ( cybercourse_base_current_user_has_role( 'student' ) ) {
             global $user;
-            if ( isset( $user->field_last_name[LANGUAGE_NONE][0] ) ) {
-              $last_name = $user->field_last_name[LANGUAGE_NONE][0]['value'];
+            $users = entity_load('user', array($user->uid) );
+            $user_all_data = $users[ $user->uid ];
+            if ( isset( $user_all_data->field_last_name[LANGUAGE_NONE][0] ) ) {
+              $last_name = $user_all_data->field_last_name[LANGUAGE_NONE][0]['value'];
             }
           }
           // Add the new value into the replacements array.
@@ -1038,3 +1051,4 @@ function _cyco_test_use_generic_name( $field_to_check ) {
   }
   return $replace_flag;
 }
+

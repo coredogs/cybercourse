@@ -1,8 +1,0 @@
-As soon as start typing in, the new comment is selected.
-
-When it is selected, typing more text updates the selected comment area automatically.
-
-Can select and unselect as normal.
-
-When start typing in an MT comment field, a new MT field is automatically added.
-

@@ -50,7 +50,7 @@
     </script>
     
     <script id="rubricItemTemplate" type="text/template">
-      <div class="cybercourse-rubric-item-container">
+      <div class="cybercourse-rubric-item-container" data-rubric-item-nid="{{rubricItemNid}}">
         <div class="cybercourse-rubric-item-title">
           {{title}}
           <span class="button display-state">▴</span>
@@ -71,12 +71,12 @@
     
     <!-- Partial for set of good/needs work/poor comments. -->
     <script id="rubricItemCommentsTemplate" type="text/template">
-      <div class="cybercourse-rubric-item-comment-set {{set}}-comments">
-        <p class="cybercourse-rubric-item-comment-title {{set}}-comment">
+      <div class="cybercourse-rubric-item-comment-set" data-comment-set="{{setId}}">
+        <p class="cybercourse-rubric-item-comment-title">
           {{set}}
         </p>
         {{#each comments}}
-          <p class="cybercourse-rubric-item-comment {{set}}-comment">{{comment}}</p>
+          <p class="cybercourse-rubric-item-comment">{{comment}}</p>
         {{/each}}
         {{> newCommentContainer }}
       </div>
@@ -93,6 +93,15 @@
       </p>
     </script>
     
+    <!-- Wait throbber -->
+    <script id="throbberTemplate" type="text/template">
+      <div id='{{id}}'>
+        {{message}}
+        <div class='ajax-progress ajax-progress-throbber'>
+          <div class='throbber'>&nbsp;</div>
+        </div>
+      </div>
+    </script>
     
     
     <div id="global-wait-message" class="wait-message">
@@ -134,9 +143,11 @@
       <div id="feedback-pane" class="ui-layout-south">
         <header>Feedback</header>
         <div class="pane-content">
-          <textarea name="feedbackEditor"></textarea>
-          <p>
-            <span id="send-feedback-button" class="button">Send</span>
+          <textarea id="cyco-feedback-editor"></textarea>
+          <p id="send-feedback-button-container">
+            <span id="send-feedback-button" class="button"
+                  title="Send the feedback to the student">Save</span>
+            <span id="exercise-complete">Not complete</span>
           </p>
         </div>
       </div>
@@ -148,12 +159,28 @@
       
       <div id="rubric-pane">
         <header>Rubric</header>
-        <div class="button generate-feedback-button above">
-          Generate feedback
+        <div class="cyco-rubric-top-controls-container">
+          <span class="button generate-feedback-button above"
+                title="Create feedback message">
+            Create feedback
+          </span>
+          <span class="cyco-exercise-complete-container">
+            <label title="Mark exercise as complete">
+            <input type="checkbox" class="cyco-exercise-complete">
+            Complete</label>
+          </span>
         </div>
         <div class="pane-content"></div>
-        <div class="button generate-feedback-button">
-          Generate feedback
+        <div class="cyco-rubric-top-controls-container">
+          <span class="button generate-feedback-button above"
+                title="Create feedback message">
+            Create feedback
+          </span>
+          <span class="cyco-exercise-complete-container">
+            <label title="Mark exercise as complete">
+            <input type="checkbox" class="cyco-exercise-complete">
+            Complete</label>
+          </span>
         </div>
       </div>
       
@@ -186,6 +213,7 @@
     <script src="js/exercise_pane_view_controller.js"></script>
     <script src="js/model_solution_view_controller.js"></script>
     <script src="js/rubric_pane_view_controller.js"></script>
+    <script src="js/feedback_pane_view_controller.js"></script>
     <script>
       $(document).ready(function(){
         app.start();

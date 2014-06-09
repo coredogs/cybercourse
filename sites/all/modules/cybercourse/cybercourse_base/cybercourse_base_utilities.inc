@@ -67,3 +67,28 @@ function cybercourse_base_timestamp_to_iso6801( $timestamp ) {
   return $result;
 }
 
+/**
+ * Format date/time as needed by Date/Time field.
+ * @param date $when Date/time to format. Defaults to now.
+ * @return array Formatted date/time.
+ */
+function cybercourse_base_format_time( $when = NULL ) {
+  //This is clunky.
+  if ( is_null( $when ) ) {
+    $when = date_now('UTC');
+  }
+  //Make an array with the rep used by the date api for form field 
+  //in $form_state.
+  $temp = array();
+  //Date is almost OK. Replace space between date and time with a T.
+  $temp['value'] = str_replace(' ', 'T', $when->date);
+  $temp['value2'] = $temp['value'];
+  $temp['show_todate'] = 0;
+  $temp['timezone'] = $when->timezone;
+  //Compute timezone offset.
+  $phpNow = new DateTime( $temp['value'], new DateTimeZone($when->timezone) );
+  $offset = $phpNow->getOffset();
+  $temp['offset'] = $offset;
+  $temp['offset2'] = $offset;
+  return $temp;
+}
